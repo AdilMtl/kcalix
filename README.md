@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# Kcalix
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SaaS PWA de nutrição e treino — sucessor do [Kcal.ix (blocos-tracker)](https://adilmtl.github.io/blocos-tracker/).
 
-Currently, two official plugins are available:
+**URL:** https://kcalix.vercel.app
+**Stack:** React + Vite + TypeScript + Tailwind CSS + Supabase
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Documentação do projeto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Arquivo | O que contém |
+|---|---|
+| [memory/ROADMAP.md](memory/ROADMAP.md) | Plano de execução completo — fases, SQL do banco, checklists de validação, FAQ de arquitetura |
+| [memory/MEMORY.md](memory/MEMORY.md) | Contexto persistente para sessões com Claude Code |
+| [.claude/commands/](/.claude/commands/) | Skills do Claude Code adaptados para este projeto |
 
-## Expanding the ESLint configuration
+**Leia o ROADMAP antes de iniciar qualquer sessão de trabalho.**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Iniciar sessão de trabalho
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Abra esta pasta no VS Code e use:
+```
+/start
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+O skill `/start` lê o `memory/ROADMAP.md`, identifica a fase atual e apresenta o próximo passo concreto.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Desenvolvimento local
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev        # localhost:5173
+npm run build      # build de produção (rodar antes de qualquer deploy)
 ```
+
+## Variáveis de ambiente
+
+Crie `.env.local` na raiz (nunca commitar):
+```
+VITE_SUPABASE_URL=https://klvqyczfqxrbybgljnhe.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_anon_key
+```
+
+## Deploy
+
+Push para `main` → Vercel publica automaticamente em ~1 minuto.
+
+Use `/end` para encerrar a sessão com CHANGELOG + commit + push.
+
+---
+
+## Projeto original (paralelo, intocado)
+
+O app anterior continua ativo em https://adilmtl.github.io/blocos-tracker/ e **não deve ser modificado** até a Fase 5 (ferramenta de migração) estar concluída.
