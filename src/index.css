@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* ── Tokens de design Kcalix ── */
+:root {
+  --bg:        #0a0e18;
+  --surface:   rgba(255,255,255,.04);
+  --surface2:  rgba(255,255,255,.07);
+  --surface3:  rgba(255,255,255,.10);
+  --text:      #f0f4ff;
+  --text2:     #a0b4d8;
+  --text3:     #6b82a8;
+  --accent:    #7c5cff;
+  --accent2:   #a78bfa;
+  --good:      #34d399;
+  --warn:      #fbbf24;
+  --bad:       #f87171;
+  --line:      rgba(255,255,255,.06);
+  --radius:    16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --shadow:    0 8px 32px rgba(0,0,0,.4);
+  --font:      'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* font-size mínimo 16px em inputs para evitar zoom automático no iOS */
+input, textarea, select { font-size: 16px; }
