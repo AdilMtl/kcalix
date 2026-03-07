@@ -1,9 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
+import Nav from './components/Nav'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
-import DashboardPage from './pages/DashboardPage'
 import AdminPage from './pages/AdminPage'
+import HomePage from './pages/HomePage'
+import DiarioPage from './pages/DiarioPage'
+import TreinoPage from './pages/TreinoPage'
+import CorpoPage from './pages/CorpoPage'
+import MaisPage from './pages/MaisPage'
 
 function Spinner() {
   return (
@@ -32,22 +37,36 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuthStore()
   if (loading) return <Spinner />
   if (!user) return <Navigate to="/login" replace />
-  if (!isAdmin) return <Navigate to="/" replace />
+  if (!isAdmin) return <Navigate to="/home" replace />
   return <>{children}</>
 }
 
-// Guard: redireciona para / se ja estiver logado
+// Guard: redireciona para /home se ja estiver logado
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore()
   if (loading) return <Spinner />
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/home" replace />
   return <>{children}</>
+}
+
+// Layout com Nav inferior — usado em todas as rotas privadas com abas
+function AppLayout() {
+  return (
+    <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg)' }}>
+      {/* Conteúdo da página — padding-bottom para não ficar atrás do Nav */}
+      <main className="flex-1 overflow-y-auto pb-20">
+        <Outlet />
+      </main>
+      <Nav />
+    </div>
+  )
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rotas públicas */}
         <Route
           path="/login"
           element={
@@ -70,18 +89,24 @@ export default function App() {
           }
         />
 
-        {/* Dashboard — requer login */}
+        {/* Rotas privadas com Nav inferior */}
         <Route
-          path="/"
           element={
             <PrivateRoute>
-              <DashboardPage />
+              <AppLayout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route path="/home"   element={<HomePage />} />
+          <Route path="/diario" element={<DiarioPage />} />
+          <Route path="/treino" element={<TreinoPage />} />
+          <Route path="/corpo"  element={<CorpoPage />} />
+          <Route path="/mais"   element={<MaisPage />} />
+        </Route>
 
-        {/* Qualquer rota desconhecida vai para home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Qualquer rota desconhecida vai para /home */}
+        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="/"  element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
   )

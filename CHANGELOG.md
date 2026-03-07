@@ -2,6 +2,32 @@
 
 ---
 
+## [0.2.0] — 2026-03-07
+
+### Adicionado
+- [feat] Nav — barra de 5 abas (Home, Diário, Treino, Corpo, Mais) com safe-area-inset-bottom para iPhone X+
+- [feat] AppLayout — layout com Outlet + Nav inferior, rotas /home /diario /treino /corpo /mais
+- [feat] HomePage — cards de energia (kcal consumida/meta, barra de progresso), macros (P/C/G), balanço calórico, gráfico semanal, hábitos placeholder
+- [feat] useSettings — hook que lê/salva user_settings (JSONB) no Supabase
+- [feat] useDiary — hook que lê/salva diary_entries do dia (JSONB) no Supabase, com addFood/removeFood/setKcalTreino
+- [feat] goalPresets.ts — GOAL_PRESETS, WZ_ACTIVITY_LABELS, GoalType (portado do app original linha 4608)
+- [feat] calculators.ts — bmrMifflin, bmrKatch, bodyDensityJP7, bfSiri, calcFromProfile() (portado do app original linhas 5124-5208)
+
+### Removido
+- [remove] DashboardPage.tsx — substituído pela estrutura de abas (AppLayout + HomePage)
+
+### Decisoes tecnicas
+- calcAll() do app original não é portável (acoplada ao DOM) — substituída por calcFromProfile(profile) com parâmetros tipados
+- Card de hábitos na HomePage = placeholder estático — hook real implementado na Sessão 4 junto com CorpoPage/HabitosPage
+- Gráfico semanal exibe apenas o dia atual enquanto não há histórico acumulado — Sessão 2B completa isso
+
+### Pendencias
+- Sessão 2B: DiarioPage + FoodDrawer + FoodPortionModal + foodDb.ts
+- Testar reset de senha por email (rate limit atingido em 2026-03-07)
+- Testar no celular real (375px, toque, teclado virtual)
+
+---
+
 ## [0.1.0] — 2026-03-07
 
 ### Adicionado

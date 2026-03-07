@@ -186,19 +186,42 @@ supabase/migrations/
 
 ---
 
-## FASE 2 — Home e Diario (Planejado)
+## FASE 2 — Home e Diario (Em execucao)
 
 > Antes de iniciar: leia `memory/contexto-port.md` — contém estruturas de dados, constantes e ordem de implementação detalhada por sessão.
 
-### Sessao 2A — HomePage
-- Dashboard de energia (BMR, TDEE, consumido, saldo)
-- Card de habitos, grafico semanal
-- Conectar a `user_settings` e `diary_entries` no Supabase
+### Sessao 2A — HomePage (Em execucao)
+
+**Decisoes tomadas em 2026-03-07:**
+- Card de habitos na HomePage = placeholder estático — hook real implementado apenas na Sessao 4 junto com CorpoPage/HabitosPage
+- `calcAll()` do app original nao e portavel (acoplada ao DOM) — substituida por `calcFromProfile(profile)` com parâmetros tipados
+- `DashboardPage.tsx` sera deletado e substituido pela estrutura de abas (Nav + rotas)
+
+**Ordem de implementacao (contexto-port.md sessao 2A):**
+1. `src/data/goalPresets.ts` — GOAL_PRESETS + WZ_ACTIVITY_LABELS (linha 4608 do index.html original)
+2. `src/lib/calculators.ts` — bmrMifflin, bmrKatch, bodyDensityJP7, bfSiri + calcFromProfile (linhas 5124-5208)
+3. `src/hooks/useSettings.ts` — le/salva `user_settings` (campo `data` JSONB)
+4. `src/hooks/useDiary.ts` — le/salva `diary_entries` do dia (campo `data` JSONB)
+5. `src/components/Nav.tsx` — 5 abas fixas no bottom, safe-area-inset-bottom
+6. `src/App.tsx` — refatorar roteamento, deletar DashboardPage
+7. `src/pages/HomePage.tsx` — cards de energia + macros + balanco + habitos (placeholder) + grafico semanal
+
+**Checklist de validacao 2A:**
+- [x] Build sem erros TypeScript (v0.2.0 — 93 modulos)
+- [ ] 5 abas funcionando na barra inferior (testar no dispositivo)
+- [ ] HomePage renderiza estado vazio sem user_settings com CTA (testar no dispositivo)
+- [ ] HomePage renderiza cards quando ha configuracao salva (depende de wizard Fase 4)
+- [x] Nenhuma chamada Supabase direta em componente (via useSettings + useDiary)
+- [ ] Testa em 375px sem overflow horizontal (testar no dispositivo)
 
 ### Sessao 2B — DiarioPage + FoodDrawer
-- Estrutura de refeicoes (cafe, almoco, jantar, snacks)
-- FoodDrawer completo (busca, categorias, recentes)
-- Persistencia em `diary_entries`
+- Criar `src/data/foodDb.ts` (extrair FOOD_DB do index.html linha ~3500)
+- Implementar `DiarioPage.tsx` com estrutura de refeicoes (cafe, almoco, jantar, snack)
+- Implementar `FoodDrawer.tsx` — bottom sheet 88dvh, busca, abas por categoria, aba "Recentes"
+- Implementar `FoodPortionModal.tsx` — ajuste de quantidade com botoes +-1/+-5
+- `getRecentFoods()` — ultimos 10 alimentos unicos por foodId varrendo diary_entries
+- Persistencia em `diary_entries` via `useDiary.ts`
+- Testar persistencia multi-dispositivo
 
 ---
 
