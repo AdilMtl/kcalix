@@ -2,6 +2,33 @@
 
 ---
 
+## [0.3.0] — 2026-03-07
+
+### Adicionado
+- [feat] foodDb.ts — FOOD_DB extraído do app original, 9 categorias, ~130 itens tipados
+- [feat] DiarioPage — 6 seções de refeição (Café, Lanche 1, Almoço, Lanche 2, Jantar, Ceia), totais do dia, barras de macro
+- [feat] FoodDrawer — bottom sheet 88dvh, busca global em tempo real, abas Recentes/Todos/categorias
+- [feat] FoodPortionModal — ajuste de quantidade, preview ao vivo de macros, persistência no Supabase
+- [feat] getRecentFoods() — últimos 10 alimentos únicos varrendo histórico de diary_entries
+
+### Corrigido
+- [fix] useDiary — corrigido de 4 para 6 refeições (cafe, lanche1, almoco, lanche2, jantar, ceia)
+- [fix] Optimistic update em addFood/removeFood — UI atualiza imediatamente, reverte em caso de erro de rede
+- [fix] FoodPortionModal — quantidade mínima 1, steps inteiros (removido clamp de 0.5 que impedia adicionar)
+
+### Decisoes tecnicas
+- MEALS do app original tem 6 refeições (não 4 como estava no useDiary inicial) — corrigido após leitura do referência.index.html
+- Optimistic update: setDiary(next) antes do await upsert, rollback com setDiary(previous) se error
+
+### Pendencias (Sessao 2C — polish)
+- Layout geral da DiarioPage e FoodDrawer precisa de refinamento visual
+- FoodPortionModal: aceitar input numérico direto além dos botões +-
+- Gráfico semanal na HomePage: ler últimos 7 dias do Supabase (atualmente só mostra dia atual)
+- Testar persistência multi-dispositivo
+- Testar no celular real (375px, toque, teclado virtual, safe-area)
+
+---
+
 ## [0.2.0] — 2026-03-07
 
 ### Adicionado

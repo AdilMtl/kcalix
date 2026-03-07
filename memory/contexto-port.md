@@ -19,7 +19,7 @@ A lógica do app original é **boa e está testada** — o objetivo do port é p
 ## Estratégia geral de port
 
 ```
-App original (index.html)          Kcalix (React)
+App original (referência.index.html)          Kcalix (React) dentro e development\kcalix\memory
 ─────────────────────────          ──────────────
 Constante JS (FOOD_DB, etc.)  →    src/data/*.ts (arquivo de dados TypeScript)
 Função de cálculo (calcAll)   →    src/lib/calculators.ts (função pura)

@@ -214,14 +214,24 @@ supabase/migrations/
 - [x] Nenhuma chamada Supabase direta em componente (via useSettings + useDiary)
 - [ ] Testa em 375px sem overflow horizontal (testar no dispositivo)
 
-### Sessao 2B — DiarioPage + FoodDrawer
-- Criar `src/data/foodDb.ts` (extrair FOOD_DB do index.html linha ~3500)
-- Implementar `DiarioPage.tsx` com estrutura de refeicoes (cafe, almoco, jantar, snack)
-- Implementar `FoodDrawer.tsx` — bottom sheet 88dvh, busca, abas por categoria, aba "Recentes"
-- Implementar `FoodPortionModal.tsx` — ajuste de quantidade com botoes +-1/+-5
-- `getRecentFoods()` — ultimos 10 alimentos unicos por foodId varrendo diary_entries
-- Persistencia em `diary_entries` via `useDiary.ts`
-- Testar persistencia multi-dispositivo
+### Sessao 2B — DiarioPage + FoodDrawer (Implementado — pendente polish)
+
+**Implementado em 2026-03-07:**
+- [x] `src/data/foodDb.ts` — FOOD_DB extraido do app original (9 categorias, ~130 itens)
+- [x] `src/hooks/useDiary.ts` — corrigido para 6 refeicoes (cafe, lanche1, almoco, lanche2, jantar, ceia) + getRecentFoods
+- [x] `src/pages/DiarioPage.tsx` — 6 secoes de refeicao, totais do dia, barras de macro
+- [x] `src/components/FoodDrawer.tsx` — bottom sheet 88dvh, busca, abas Recentes/Todos/categorias
+- [x] `src/components/FoodPortionModal.tsx` — ajuste de quantidade, preview de macros, salva no Supabase
+
+**Bugs e melhorias pendentes para Sessao 2C (polish):**
+- [ ] FIX: adicao de alimentos lenta — upsert do Supabase bloqueia UI, precisa de otimistic update (atualiza estado local imediatamente, persiste em background)
+- [ ] FIX: quantidade minima de 0.5 no FoodPortionModal impede adicionar alguns alimentos — revisar logica do clamp(), permitir qty inteiros simples (min 1, steps de 1)
+- [ ] FIX: alguns alimentos nao adicionam — investigar se e erro de persistencia ou de validacao de qty
+- [ ] IMPROVE: layout geral da DiarioPage e FoodDrawer esta funcional mas precisa de polish visual (espacamentos, tipografia, cores dos cards de refeicao)
+- [ ] IMPROVE: FoodPortionModal — campo de quantidade deve aceitar input numerico direto alem dos botoes +-
+- [ ] IMPROVE: gráfico semanal na HomePage — atualmente so mostra dia atual, implementar leitura dos ultimos 7 dias do Supabase
+- [ ] TEST: persistencia multi-dispositivo (mesmo dado em dois navegadores)
+- [ ] TEST: celular real (375px, toque, teclado virtual, safe-area)
 
 ---
 
