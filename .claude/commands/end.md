@@ -1,6 +1,10 @@
 # /end — Encerrar sessão de trabalho
 
-Finaliza a sessão com documentação e registro do estado para a próxima sessão.
+Finaliza a sessão com documentação, CHANGELOG e deploy. É o comando principal de publicação — use `/deploy` apenas para publicações rápidas no meio de uma sessão sem encerrar.
+
+**Fluxo recomendado:**
+- Fim de sessão → `/end` (documenta + deploy + fecha)
+- Publicação rápida sem encerrar → `/deploy`
 
 ## Processo obrigatório
 
@@ -57,9 +61,9 @@ ARQUIVOS MODIFICADOS:
 - [decisões técnicas, pendências]
 ```
 
-### 4. Atualizar o plano de execução (se fase avançou)
+### 4. Atualizar o roadmap (se fase avançou)
 
-Se a fase atual foi concluída ou parcialmente concluída, atualizar o status em `memory/kcalix-v3-plano-execucao.md`.
+Se a fase atual foi concluída ou parcialmente concluída, atualizar o status em `memory/ROADMAP.md` — mudar de "Próxima" para "✅ CONCLUÍDA (data)" e registrar o checklist preenchido.
 
 ### 5. Executar deploy (se aprovado)
 

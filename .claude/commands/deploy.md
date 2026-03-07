@@ -1,6 +1,8 @@
-# /deploy — Publicar alterações
+# /deploy — Publicar alterações (mid-session)
 
-Commita as alterações e faz push para o GitHub. O Vercel publica automaticamente em ~1 minuto.
+Commita e publica sem encerrar a sessão. Use quando precisar publicar uma correção rápida e continuar trabalhando.
+
+Para encerrar a sessão com deploy + CHANGELOG + registro de fase, use `/end`.
 
 ## Processo
 

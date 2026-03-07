@@ -5,7 +5,7 @@ O usuário vai descrever o que quer em linguagem natural. Transforme isso numa m
 ## Processo
 
 1. **Leia a descrição** em $ARGUMENTS
-2. **Consulte o plano de execução** em `memory/kcalix-v3-plano-execucao.md` para entender a fase atual
+2. **Consulte o roadmap** em `memory/ROADMAP.md` para entender a fase atual e não implementar features de fases futuras
 3. **Produza a spec** no formato abaixo
 4. **Aguarde aprovação** antes de prosseguir
 

@@ -5,8 +5,8 @@ Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nut
 ## Ao receber este comando, execute na ordem:
 
 1. **Verifique o estado do Git**: branch atual, mudanças não commitadas, último commit
-2. **Leia o plano de execução**: `memory/kcalix-v3-plano-execucao.md` para identificar a fase atual
-3. **Verifique o build**: `npm run build` — se falhar, reporte imediatamente
+2. **Leia o roadmap**: `memory/ROADMAP.md` — identifique a fase atual e o próximo passo concreto
+3. **Verifique o build**: `npm run build` — se falhar, reporte imediatamente antes de qualquer outra coisa
 4. **Apresente o resumo:**
 
 ```
@@ -50,7 +50,8 @@ Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nut
 │ /migrate     │ Trabalhar na migração    │ Exportador/importador de dados do app antigo│
 └──────────────┴──────────────────────────┴─────────────────────────────────────────────┘
 
-💡 Fluxo recomendado: /spec → /feature ou /fix → /review → /deploy → /end
+💡 Fluxo recomendado: /spec → /feature ou /fix → /review → /end (inclui deploy)
+⚠️  Use /deploy apenas para publicações rápidas sem encerrar a sessão
 ```
 
 $ARGUMENTS

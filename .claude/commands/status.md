@@ -6,7 +6,7 @@ Apresenta um resumo rápido do estado atual sem precisar ler todos os arquivos.
 
 1. Verificar `git status` e último commit
 2. Verificar `npm run build` (apenas se solicitado ou se houver suspeita de erro)
-3. Identificar a fase atual no plano de execução
+3. Ler `memory/ROADMAP.md` para identificar fase atual e próximo passo
 4. Apresentar:
 
 ```
