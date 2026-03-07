@@ -1,12 +1,35 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { supabase } from '../lib/supabase'
 import { updatePassword } from '../lib/auth'
 
+type PageState = 'loading' | 'ready' | 'success' | 'invalid'
+
 export default function SetPasswordPage() {
+  const [pageState, setPageState] = useState<PageState>('loading')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    // O Supabase processa automaticamente os tokens da URL (#access_token=...)
+    // e dispara onAuthStateChange com evento PASSWORD_RECOVERY ou SIGNED_IN (convite)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        setPageState('ready')
+      }
+    })
+
+    // Timeout: se nao chegou nenhum evento em 3s, o link e invalido/expirado
+    const timeout = setTimeout(() => {
+      setPageState(prev => prev === 'loading' ? 'invalid' : prev)
+    }, 3000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -26,9 +49,9 @@ export default function SetPasswordPage() {
     const { error } = await updatePassword(password)
 
     if (error) {
-      setError('Nao foi possivel definir a senha. O link pode ter expirado.')
+      setError('Nao foi possivel definir a senha. Tente solicitar um novo link.')
     } else {
-      setSuccess(true)
+      setPageState('success')
     }
 
     setLoading(false)
@@ -48,7 +71,7 @@ export default function SetPasswordPage() {
             Kcalix
           </h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--text3)' }}>
-            {success ? 'Senha definida!' : 'Crie sua senha'}
+            {pageState === 'success' ? 'Senha definida!' : 'Crie sua senha'}
           </p>
         </div>
 
@@ -56,26 +79,31 @@ export default function SetPasswordPage() {
           className="rounded-2xl p-6"
           style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}
         >
-          {success ? (
-            <div className="flex flex-col items-center gap-4 text-center">
+          {pageState === 'loading' && (
+            <div className="flex justify-center py-4">
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
-                style={{ background: 'var(--surface2)' }}
-              >
-                ✓
-              </div>
-              <p className="text-sm" style={{ color: 'var(--text2)' }}>
-                Sua senha foi definida com sucesso. Voce ja pode acessar o app.
+                className="h-7 w-7 animate-spin rounded-full border-2 border-transparent"
+                style={{ borderTopColor: 'var(--accent)' }}
+              />
+            </div>
+          )}
+
+          {pageState === 'invalid' && (
+            <div className="flex flex-col gap-4 text-center">
+              <p className="text-sm" style={{ color: 'var(--bad)' }}>
+                Link invalido ou expirado.
               </p>
               <a
-                href="/"
+                href="/login"
                 className="w-full rounded-xl py-3 text-center text-sm font-semibold"
-                style={{ background: 'var(--accent)', color: '#fff', display: 'block' }}
+                style={{ background: 'var(--surface2)', color: 'var(--text2)', display: 'block' }}
               >
-                Ir para o app
+                Voltar ao login
               </a>
             </div>
-          ) : (
+          )}
+
+          {pageState === 'ready' && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <label
@@ -142,6 +170,27 @@ export default function SetPasswordPage() {
                 {loading ? 'Salvando...' : 'Definir senha'}
               </button>
             </form>
+          )}
+
+          {pageState === 'success' && (
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold"
+                style={{ background: 'var(--surface2)', color: 'var(--good)' }}
+              >
+                ✓
+              </div>
+              <p className="text-sm" style={{ color: 'var(--text2)' }}>
+                Senha definida com sucesso. Voce ja pode acessar o app.
+              </p>
+              <a
+                href="/"
+                className="w-full rounded-xl py-3 text-center text-sm font-semibold"
+                style={{ background: 'var(--accent)', color: '#fff', display: 'block' }}
+              >
+                Ir para o app
+              </a>
+            </div>
           )}
         </div>
       </div>
