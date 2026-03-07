@@ -17,8 +17,10 @@
 
 ## Fase atual
 - **Fase 0:** ✅ CONCLUÍDA (2026-03-07)
-- **Fase 1:** Autenticação — PRÓXIMA
+- **Fase 1:** ✅ CONCLUÍDA (2026-03-07) — autenticação email/senha + admin panel
+- **Fase 2:** Home e Diario — PRÓXIMA
 - **Roadmap completo:** `memory/ROADMAP.md`
+- **Contexto técnico do port:** `memory/contexto-port.md` — leia antes de qualquer Fase 2+
 
 ## Convenções críticas
 1. NUNCA commitar `.env.local` (chaves Supabase)

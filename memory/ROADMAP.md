@@ -188,6 +188,8 @@ supabase/migrations/
 
 ## FASE 2 — Home e Diario (Planejado)
 
+> Antes de iniciar: leia `memory/contexto-port.md` — contém estruturas de dados, constantes e ordem de implementação detalhada por sessão.
+
 ### Sessao 2A — HomePage
 - Dashboard de energia (BMR, TDEE, consumido, saldo)
 - Card de habitos, grafico semanal
