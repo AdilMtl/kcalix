@@ -135,7 +135,7 @@ supabase/migrations/
 |---|---|---|
 | 0 | Setup do repositorio | CONCLUIDA (2026-03-07) |
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
-| 2 | Home e Diario | CONCLUIDA (2026-03-08) |
+| 2 | Home e Diario | Em execucao — Sessao 2E pendente |
 | 3 | Treino | Planejado |
 | 4 | Corpo, Habitos, Mais | Planejado |
 | 5 | Ferramenta de migracao | Planejado |
@@ -186,10 +186,9 @@ supabase/migrations/
 
 ---
 
-## FASE 2 — Home e Diario — CODIGO CONCLUIDO (2026-03-08)
+## FASE 2 — Home e Diario — EM EXECUCAO (Sessao 2E pendente)
 
-> Funcionalidades implementadas. Pendencias restantes dependem de funcoes de outras fases.
-> Considerada ENCERRADA para desenvolvimento — testes de dispositivo sao oportunistas.
+> Sessoes 2A-2D concluidas. Sessao 2E (navegacao por data) e pre-requisito para Fase 3.
 
 ### Sessao 2A — HomePage — CONCLUIDA (2026-03-07)
 
@@ -219,6 +218,36 @@ supabase/migrations/
 - [ ] HabitTracker real: AGUARDA Fase 4
 - [ ] TEST: celular real (375px, safe-area): oportunista — testar quando tiver dispositivo disponivel
 - [ ] TEST: persistencia multi-dispositivo: oportunista
+
+### Sessao 2E — Navegacao por data (PRE-REQUISITO Fase 3)
+
+> Deve ser concluida ANTES de iniciar a Sessao 3A.
+> Motivo: DiarioPage e TreinoPage precisam compartilhar a mesma data selecionada.
+> Quando Treino salvar kcal do dia, Diario daquele dia deve exibir o gasto corretamente.
+
+**Arquivos a criar:**
+- `src/hooks/useCurrentDate.ts` — estado global da data selecionada (hoje por default); funcs: goToPrev, goToNext, goToToday, isToday
+  - Usar Zustand ou Context — data compartilhada entre DiarioPage e TreinoPage
+
+**Arquivos a modificar:**
+- `src/components/DateNavBar.tsx` (novo) — barra reutilizavel: `‹ Seg, 03/03 ›` com botao "Hoje" quando nao for hoje; `day-edit-banner` quando editando dia passado/futuro
+- `src/pages/DiarioPage.tsx` — adicionar DateNavBar no topo; useDiary passa a receber `date` como parametro (nao mais hardcoded para hoje); day-edit-banner visivel ao navegar
+- `src/pages/HomePage.tsx` — EnergyCard e WeeklyChart ja usam data do hook (hoje por default — sem mudanca visual)
+
+**Comportamento fiel ao original (CSS L1636, JS openTab):**
+- Botoes `‹` e `›` navegam dia a dia (nao limita para o passado, limita futuro em hoje+1)
+- Banner roxo "Editando [data] · Voltar para hoje" aparece quando data != hoje
+- Clicar no banner volta para hoje
+- Ao trocar de aba (Nav), a data selecionada persiste (estado global)
+
+**Checklist:**
+- [ ] DiarioPage carrega corretamente dados de datas passadas do Supabase
+- [ ] Banner aparece ao navegar para dia diferente de hoje
+- [ ] Botao "Hoje" no banner volta para data atual
+- [ ] Adicionar alimento em dia passado persiste na data correta no Supabase
+- [ ] Build sem erros TypeScript
+
+**Referencia original:** date-nav-btn (CSS L1637), day-edit-banner (CSS L1651), datePick logica (JS openTab L4506)
 
 ---
 
