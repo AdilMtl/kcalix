@@ -2,6 +2,67 @@
 
 ---
 
+## [0.6.0] — 2026-03-08
+
+### Adicionado
+- [feat] HomePage — saudação dinâmica por hora: "Bom dia 👋" / "Boa tarde 👋" / "Boa noite 🌙" (fiel ao original linha 4446)
+- [feat] HomePage — Card "⚡ Energia Hoje" separado com KPI row de 4 colunas: kcal in / basal / treino / saldo; sem BMR exibe mensagem de configuração; `energy-meta-line` vertical no fim da barra
+- [feat] HomePage — HabitTracker placeholder no topo com estilo `.habit-card` fiel ao original (rgba(0,0,0,.35), border rgba(124,92,255,.22)); 5 hábitos (dieta/log/treino/cardio/medidas) desabilitados até Fase 4
+- [feat] HomePage — Grid de ações 2×2: Diário / Treino / Corpo / Mais; botão full-width "Meu Perfil Nutricional" placeholder (disabled, Fase 4)
+
+### Melhorado
+- [improve] HomePage — Card de progresso clicável → navega para /diario (fiel ao original `onclick="openTab('diario')"`)
+- [improve] HomePage — macros: labels uppercase com `letter-spacing:.06em`, barra 4px (era 6px), cores `--pColor/--cColor/--gColor` (era `--good/--warn/--bad`)
+- [improve] HomePage — título do gráfico "📅 Últimos 7 dias" + botão "📊 histórico" (placeholder disabled — modal na Fase futura)
+- [improve] HomePage — data formatada com primeira letra maiúscula (fiel ao `charAt(0).toUpperCase()` do original)
+- [improve] HomePage — padding-bottom com safe-area-inset-bottom para não sobrepor Nav
+
+### Notas técnicas
+- Port completo da viewHome (HTML linha 2114, CSS linha 1817, JS linha 4438 do referência.index.html)
+- Botão "📊 histórico" e "Meu Perfil Nutricional" ficam disabled — modais implementados nas fases futuras
+- EnergyCard exibe TDEE como nota de rodapé quando disponível (não estava no original, adição leve)
+
+### Pendências registradas
+- Modal "📊 histórico semanal" — implementar quando TreinoPage tiver dados de kcal de treino (Fase 3)
+- "Meu Perfil Nutricional" (wizard JP7) — Fase 4
+- HabitTracker real — Fase 4
+- TEST: celular real (375px, toque, teclado virtual, safe-area) — válido para toda Fase 2
+- TEST: persistência multi-dispositivo — válido para toda Fase 2
+
+---
+
+## [0.5.0] — 2026-03-08
+
+### Adicionado
+- [feat] CustomFoodModal — bottom sheet com form-grid cols-2: nome, porção, P/C/G/kcal; cálculo automático de kcal via (p×4)+(c×4)+(g×9) com override manual e link "↺ recalcular"
+- [feat] FoodDrawer — botão "➕ Criar alimento personalizado" (fd-custom-btn fiel ao original: dashed border roxo, bg rgba(124,92,255,.06))
+- [feat] FoodDrawer — aba "⭐ Meus" aparece dinamicamente quando há alimentos personalizados; após salvar, ativa automaticamente a aba
+- [feat] useDiary.getWeekKcal() — busca kcal de múltiplas datas em 1 query Supabase (`.in('date', dates)`)
+- [feat] WeeklyChart real na HomePage — 7 dias Seg→Dom com barras normalizadas, linha de meta dashed, hoje destacado com border accent2, dias sem dado com opacity .4, dias futuros sem barra, projeção kg/semana (≥2 dias)
+
+### Melhorado
+- [improve] FoodDrawer — drawer termina em `calc(56px + env(safe-area-inset-bottom))` acima da Nav, resolvendo sobreposição do botão pela barra de navegação
+- [improve] FoodDrawer — zIndex 60/59 (overlay+drawer acima da Nav z-50)
+- [improve] HomePage — removido guard EmptyState que bloqueava a página quando não havia settings; defaults para zero em todos os targets
+
+### Corrigido
+- [fix] FoodDrawer — alimentos personalizados não entravam em nenhuma categoria; corrigido com aba dedicada `__custom__` e inclusão em `allDbItems` (aba "Todos" e busca)
+
+### Descartado
+- fd-peek (lista "Adicionados hoje" colapsável): desnecessário — Kcalix já mostra alimentos dentro do accordion de cada refeição, solução superior ao original
+
+### Notas técnicas
+- WeeklyChart: hoje usa `diary.totals.kcal` do estado local (sem lag), demais dias do Supabase
+- CustomFoodModal: estado efêmero em `customFoods[]` local no FoodDrawer — persistência real planejada para Fase 5 (migração)
+- Projeção semanal: `kgPerWeek = (avgBalance × 7) / 7700`, só exibe com ≥2 dias com dado
+
+### Pendências registradas
+- DiarioPage: barras P/C/G no KpiCard não pintam sem meta configurada (target===0) — aguarda wizard Fase 4 ou fallback visual
+- TEST: persistência multi-dispositivo (mesmo dado em dois navegadores)
+- TEST: celular real (375px, toque, teclado virtual, safe-area)
+
+---
+
 ## [0.4.0] — 2026-03-07
 
 ### Melhorado

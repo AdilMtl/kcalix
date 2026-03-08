@@ -1,490 +1,648 @@
-# Kcalix — Contexto Técnico do Port
-**Referência:** `Desktop/Development/blocos-tracker/index.html` (9.147 linhas, v2.11.0)
-**Objetivo deste arquivo:** Dar contexto suficiente para qualquer sessão nova portar features sem precisar ler o app original do zero.
+# Kcalix — Contexto Tecnico do Port
+**Referencia:** `memory/ref.aplicativo_antigo/referencia.index.html` (~6200 linhas, app original completo)
+**Objetivo:** Dar contexto suficiente para qualquer sessao nova portar features sem ler o app original do zero.
+**Regra de ouro:** Copie a logica, adapte o involucro.
 
 ---
 
 ## Como usar este arquivo
 
-Antes de implementar qualquer fase (2, 3, 4, 5), leia a seção correspondente aqui. Ela explica:
-- O que existe no app original e onde
-- Quais dados são salvos e em que formato
-- Quais funções/constantes copiar/adaptar
+Antes de implementar qualquer fase (2, 3, 4, 5), leia a secao correspondente aqui. Ela explica:
+- O que existe no app original e onde (numero de linha exato)
+- Quais dados sao salvos e em que formato
+- Quais funcoes/constantes copiar/adaptar
 - Como mapear para React + Supabase
 
-A lógica do app original é **boa e está testada** — o objetivo do port é preservá-la, não reescrevê-la. Mudança de estrutura (single-file → componentes), não de lógica.
+---
+
+## Mapa do arquivo original (referencia.index.html)
+
+```
+Linhas 1-2091     CSS global
+Linhas 2092-3141  HTML (estrutura das views e modais)
+Linhas 3142-6200  JavaScript (IIFE unica)
+```
+
+### Secoes do CSS (comentarios ════ no arquivo)
+| Secao CSS              | Linha aprox. | Componente React alvo        |
+|------------------------|--------------|------------------------------|
+| TOKENS                 | 24           | src/index.css (vars CSS)     |
+| BOTTOM NAV             | 192          | Nav.tsx                      |
+| CARDS                  | 346          | ui/Card.tsx                  |
+| ACCORDION              | 367          | ui/Accordion.tsx             |
+| KPI / PROGRESS         | 407          | DiarioPage (cards de macro)  |
+| PRESETS                | 502          | DiarioPage (presets)         |
+| MEALS                  | 563          | DiarioPage (meal list)       |
+| FOOD PANEL             | 816          | FoodDrawer.tsx               |
+| FOOD DRAWER            | 933          | FoodDrawer.tsx               |
+| HOME DASHBOARD         | 1407         | HomePage.tsx                 |
+| HABIT TRACKER          | 1731         | HabitTracker (Fase 4)        |
+
+### Secoes do HTML (views e modais)
+| View/Modal             | ID HTML           | Linha aprox. | Pagina React         |
+|------------------------|-------------------|--------------|----------------------|
+| View Home              | viewHome          | 2113         | HomePage.tsx         |
+| View Diario            | viewDiario        | 2198         | DiarioPage.tsx       |
+| View Mais              | viewMais          | 2313         | MaisPage.tsx         |
+| View Corpo             | viewCorpo         | 2526         | CorpoPage.tsx        |
+| View Treino            | viewTreino        | 2604         | TreinoPage.tsx       |
+| Food Drawer            | foodDrawer        | 2852         | FoodDrawer.tsx       |
+| Food Modal (porcao)    | foodModal         | 3008         | FoodPortionModal.tsx |
+| Bottom Nav             | .bottom-nav       | 3116         | Nav.tsx              |
+| Calc Wizard            | calcWizard        | 3145         | (Fase 4 — MaisPage)  |
+| Profile Check-in       | profileCheckinModal| 2897        | (Fase 4)             |
+
+### Secoes do JavaScript
+| Secao JS               | Linha aprox. | Equivalente React              |
+|------------------------|--------------|-------------------------------|
+| CONSTANTS/KEYS         | 3331         | (storage keys do app antigo)  |
+| EXERCISE_DB            | 3345         | src/data/exerciseDb.ts        |
+| CARDIO_TYPES           | 3483         | src/data/exerciseDb.ts        |
+| DEFAULT_TEMPLATES      | 3492         | src/data/exerciseDb.ts        |
+| FOOD_DB                | 3499         | src/data/foodDb.ts            |
+| DEFAULT_SETTINGS       | 3651         | src/store/settingsStore.ts    |
+| DEFAULT_CALC           | 3657         | src/lib/calculators.ts        |
+| MEALS (array)          | 3665         | src/data/meals.ts             |
+| DEFAULT_PRESETS        | 3674         | src/data/presets.ts           |
+| UTILS (round1, fmt)    | 3699         | src/lib/utils.ts              |
+| MEALS BUILD            | 3797         | DiarioPage.tsx                |
+| updateUI               | 3932         | DiarioPage.tsx (estado local) |
+| PRESETS logic          | 3994         | DiarioPage.tsx                |
+| ENERGY ANALYTICS       | 4156         | HomePage.tsx                  |
+| renderEnergyCard       | 4203         | HomePage.tsx                  |
+| renderWeekEnergyChart  | 4266         | HomePage.tsx                  |
+| CALC (JP7 + Siri)      | 5123         | src/lib/calculators.ts        |
+| FOOD PANEL             | 5761         | FoodDrawer.tsx                |
+| foodToBlocks           | 5789         | FoodDrawer.tsx                |
+| getRecentFoods         | 5805         | useDiary.ts                   |
+| renderCatTabs          | 5825         | FoodDrawer.tsx                |
+| renderFoodGrid         | 5860         | FoodDrawer.tsx                |
+| openFoodDrawer         | 5964         | FoodDrawer.tsx                |
+| openFoodModal          | 5996         | FoodPortionModal.tsx          |
+| addFoodToMeal          | 6041         | FoodPortionModal.tsx          |
+| HABIT TRACKER          | ~4760        | (Fase 4)                      |
 
 ---
 
-## Estratégia geral de port
-
-```
-App original (referência.index.html)          Kcalix (React) dentro e development\kcalix\memory
-─────────────────────────          ──────────────
-Constante JS (FOOD_DB, etc.)  →    src/data/*.ts (arquivo de dados TypeScript)
-Função de cálculo (calcAll)   →    src/lib/calculators.ts (função pura)
-localStorage (saveJSON/load)  →    Supabase via hook useSync.ts
-HTML de uma aba               →    src/pages/NomePage.tsx
-Modal inline                  →    src/components/NomeModal.tsx
-CSS global                    →    Tailwind classes + tokens CSS em index.css
-```
-
-**Regra de ouro:** Copie a lógica, adapte o invólucro.
-
----
-
-## Storage Keys do app original
-
-Essas são as chaves exatas do localStorage. O exportador (Fase 5) vai ler todas elas.
+## Storage Keys do app original (para migracao Fase 5)
 
 ```typescript
-// Diário e configurações
-STORAGE_KEY       = "blocos_tracker_v6"          // treinos do dia (legado)
+STORAGE_KEY       = "blocos_tracker_v6"          // dados do diario (meals por dia)
 AUTO_KEY          = "blocos_tracker_autosave_v6"
-SETTINGS_KEY      = "blocos_tracker_settings_v6" // metas, prefs gerais
-CALC_KEY          = "blocos_tracker_calc_v6"      // perfil nutricional (calc JP7)
-MEASURE_KEY       = "blocos_tracker_measure_v6"   // medições corporais
+SETTINGS_KEY      = "blocos_tracker_settings_v6" // metas, bloco config
+CALC_KEY          = "blocos_tracker_calc_v6"      // perfil nutricional (JP7)
+MEASURE_KEY       = "blocos_tracker_measure_v6"   // medicoes corporais
 CUSTOM_FOODS_KEY  = "blocos_tracker_custom_foods_v1"
-FOOD_LOG_KEY      = "blocos_tracker_food_log_v1"  // diário de alimentos por dia
-
-// Treino
-TREINO_KEY        = "blocos_tracker_treino_v1"    // sessões de treino
+FOOD_LOG_KEY      = "blocos_tracker_food_log_v1"  // log de alimentos por dia
+TREINO_KEY        = "blocos_tracker_treino_v1"
 TREINO_TMPL_KEY   = "blocos_tracker_treino_templates_v1"
 CUSTOM_EX_KEY     = "blocos_tracker_custom_exercises_v1"
-TIMER_PRESETS_KEY = "blocos_tracker_timer_presets_v1"
-
-// Hábitos e check-ins
-HABITS_KEY        = "blocos_tracker_habits_v1"
+PRESETS_KEY       = "blocos_tracker_presets_v1"
 CHECKINS_KEY      = "blocos_tracker_checkins_v1"
 ```
 
-**Mapeamento para Supabase (tabelas criadas na Fase 1):**
-| localStorage | Tabela Supabase |
-|---|---|
-| `SETTINGS_KEY` + `CALC_KEY` | `user_settings` (campo `data` JSONB) |
-| `FOOD_LOG_KEY` | `diary_entries` (1 linha por dia) |
-| `TREINO_KEY` | `workouts` |
-| `TREINO_TMPL_KEY` | `workout_templates` |
-| `MEASURE_KEY` | `body_measurements` |
-| `HABITS_KEY` | `habits` |
-| `CHECKINS_KEY` | `checkins` |
-| `CUSTOM_EX_KEY` | `custom_exercises` |
-
 ---
 
-## FASE 2 — Home e Diário
+## Estrategia geral de port
 
-### 2A — Estrutura da Home (dashboard de energia)
-
-**O que mostra:**
-- Kcal consumidas no dia vs meta (`kcalTarget`)
-- Balanço: `consumido - (BMR + kcalTreino)` → positivo = superávit, negativo = déficit
-- Barra de progresso macro (proteína, carbo, gordura)
-- Card de hábitos do dia (checkboxes)
-- Gráfico semanal de energia (últimos 7 dias)
-
-**Fonte dos dados:**
-- Meta calórica: `CALC_KEY` → `calc.kcalTarget` (calculado por `calcAll()`)
-- Consumo do dia: `FOOD_LOG_KEY` → `log[dataHoje].meals` → soma de kcal
-- Hábitos: `HABITS_KEY` → `habits.days[dataHoje]`
-
-**Para o port:**
-1. Criar `src/hooks/useDiary.ts` — lê `diary_entries` do Supabase para o dia atual
-2. Criar `src/hooks/useSettings.ts` — lê `user_settings` (metas, calc)
-3. `HomePage.tsx` consome esses dois hooks e renderiza os cards
-
-**Função chave a portar (`src/lib/calculators.ts`):**
-```typescript
-// Cálculo de BMR — duas fórmulas dependendo de ter ou não dobras cutâneas
-export function bmrMifflin(sex: string, weightKg: number, heightCm: number, age: number) {
-  const base = 10 * weightKg + 6.25 * heightCm - 5 * age
-  return sex === 'female' ? base - 161 : base + 5
-}
-export function bmrKatch(leanKg: number) {
-  return 370 + 21.6 * leanKg
-}
-export function bodyDensityJP7(sex: string, age: number, sum7: number) {
-  const s = sum7
-  if (sex === 'female') return 1.097 - 0.00046971*s + 0.00000056*s*s - 0.00012828*age
-  return 1.112 - 0.00043499*s + 0.00000055*s*s - 0.00028826*age
-}
-export function bfSiri(density: number) { return (495 / density) - 450 }
 ```
-
-**Presets de objetivo (copiar exato para `src/data/goalPresets.ts`):**
-```typescript
-export const GOAL_PRESETS = {
-  maintain: { def: 0,   pKg: 1.6, cKg: 3.0, minFatKg: 0.6, hint: "Sem déficit — manter o peso atual." },
-  cut:      { def: 22,  pKg: 2.2, cKg: 2.5, minFatKg: 0.6, hint: "Déficit ~22% com proteína elevada." },
-  recomp:   { def: 10,  pKg: 2.2, cKg: 3.0, minFatKg: 0.7, hint: "Déficit leve + proteína alta." },
-  bulk:     { def: -10, pKg: 1.6, cKg: 4.0, minFatKg: 0.8, hint: "Superávit +10% para síntese muscular." },
-} as const
-export type GoalType = keyof typeof GOAL_PRESETS
-
-export const WZ_ACTIVITY_LABELS: Record<string, string> = {
-  "1.2":   "Sedentário",
-  "1.375": "Levemente ativo",
-  "1.55":  "Moderadamente ativo",
-  "1.725": "Bastante ativo",
-  "1.9":   "Muito ativo",
-}
+App original (JS)                  Kcalix (React + TypeScript)
+────────────────                   ──────────────────────────
+Constante (FOOD_DB, EXERCISE_DB) → src/data/*.ts
+Funcao de calculo (calcAll, etc) → src/lib/calculators.ts
+localStorage (saveJSON/loadJSON) → Supabase via hooks (useSettings, useDiary, etc.)
+HTML de uma view                 → src/pages/NomePage.tsx
+Modal inline                     → src/components/NomeModal.tsx
+CSS global (tokens, classes)     → Tailwind + tokens CSS em src/index.css
 ```
 
 ---
 
-### 2B — Diário de Alimentos
+## FASE 2 — Home e Diario
 
-**Estrutura de dados do dia (FOOD_LOG_KEY):**
-```json
+### Modelo de dados original (localStorage blocos_tracker_v6)
+
+O app original armazena **blocos** (unidades de macro), NAO gramas diretas.
+Cada refeicao tem `{ p: number, c: number, g: number }` onde p/c/g sao quantidades de BLOCOS.
+
+```typescript
+// Dia no app original:
 {
   "2026-03-07": {
-    "meals": {
-      "cafe":   [{ "foodId": "pao_frances", "nome": "Pão francês", "qty": 1, "porcaoG": 50, "p": 4.0, "c": 29.0, "g": 1.5, "kcal": 146 }],
-      "almoco": [],
-      "jantar": [],
-      "snack":  []
-    },
-    "totals": { "p": 0, "c": 0, "g": 0, "kcal": 0 },
-    "kcalTreino": 0
+    preset: "seg" | null,
+    meals: {
+      cafe:    { p: 1.0, c: 1.0, g: 0.0 },  // blocos, nao gramas
+      lanche1: { p: 0.0, c: 0.0, g: 0.0 },
+      almoco:  { p: 2.0, c: 2.0, g: 0.5 },
+      lanche2: { p: 1.0, c: 1.0, g: 0.0 },
+      jantar:  { p: 2.0, c: 2.0, g: 0.5 },
+      ceia:    { p: 0.0, c: 0.0, g: 0.0 },
+    }
   }
 }
 ```
 
-**Para o Supabase:** cada linha em `diary_entries` tem `date` (DATE) e `data` (JSONB com a estrutura acima).
+O Kcalix v3 armazena gramas diretas no Supabase (campo `data` JSONB em `diary_entries`).
+A conversao acontece em `foodToBlocks()` ao adicionar um alimento via FoodDrawer.
 
-**FOOD_DB — banco de alimentos (9.500+ linhas no index.html, linha ~3500):**
-Extrair para `src/data/foodDb.ts`. A estrutura é:
+### FOOD_DB — array completo (linha 3499 do original)
+
+9 categorias, 109+ alimentos brasileiros. Cada item:
 ```typescript
-export interface FoodItem {
-  id: string
-  nome: string
-  porcao: string   // ex: "1 un (50g)"
-  porcaoG: number  // gramas da porção padrão
-  p: number        // proteína
-  c: number        // carboidrato
-  g: number        // gordura
-  kcal: number
+{
+  id: string,         // ex: "frango_grelhado"
+  nome: string,       // ex: "Frango grelhado (peito)"
+  porcao: string,     // ex: "100g" (label para display)
+  porcaoG: number,    // peso da porcao padrao em gramas
+  p: number,          // proteina em gramas por porcao
+  c: number,          // carboidrato em gramas por porcao
+  g: number,          // gordura em gramas por porcao
+  kcal: number        // kcal por porcao
 }
-export type FoodDB = Record<string, FoodItem[]> // chave = categoria com emoji
 ```
 
-**Categorias do FOOD_DB:**
-- "🍞 Pães, Cereais & Raízes"
-- "🥩 Carnes & Ovos"
-- "🥛 Laticínios"
-- "🥦 Vegetais & Legumes"
-- "🍎 Frutas"
-- "🫘 Leguminosas"
-- "🫙 Gorduras & Azeites"
-- "🍫 Lanches & Industrializados"
-- "🥤 Bebidas"
-- "💪 Suplementos"
+Categorias (linha 3501):
+- "Paes, Cereais & Raizes" — 16 itens
+- "Carnes & Proteinas" — 17 itens
+- "Proteicos & Laticinios" — 18 itens
+- "Legumes & Vegetais" — 15 itens
+- "Oleaginosas" — 10 itens
+- "Doces & Snacks" — 19 itens
+- "Fast-food" — 16 itens
+- "Bebidas" — 8 itens
+- "Frutas" — 11 itens
 
-**Componentes a criar:**
-- `src/components/FoodDrawer.tsx` — bottom sheet 88dvh, busca, abas por categoria, "Recentes"
-- `src/components/FoodPortionModal.tsx` — ajuste de quantidade com botões ±1/±5
+### MEALS — 6 refeicoes (linha 3665 do original)
 
-**Aba "Recentes":** últimos 10 alimentos únicos por foodId — implementar com `getRecentFoods()` que varre o histórico do `diary_entries` recente.
+```typescript
+const MEALS = [
+  { id: "cafe",    name: "☕ Cafe" },
+  { id: "lanche1", name: "🕘 Lanche 1" },
+  { id: "almoco",  name: "🍛 Almoco" },
+  { id: "lanche2", name: "🕓 Lanche 2" },
+  { id: "jantar",  name: "🍽️ Jantar" },
+  { id: "ceia",    name: "🌙 Ceia" },
+];
+```
+
+### Como o Diario funciona no original (CRITICO para port fiel)
+
+**Estrutura visual da DiarioPage original (HTML linha 2198):**
+1. Card de Presets (accordion "Presets por dia" + "Referencia de blocos")
+2. Preset suggestion bar (aparece ao clicar preset)
+3. Card de Progresso com:
+   - Banner de dia editado (ao navegar para dias passados)
+   - KPI grid 3 colunas: P / C / G com barra de progresso colorida e indicador no topo
+   - Status pills (spill): "P +1.2", "C -0.5" etc em pills com dot colorido
+   - Linha de kcal estimadas (gradiente roxo→verde, estilo especial)
+   - Botao "Adicionar alimentos" (abre FoodDrawer)
+   - meal-list: 6 refeicoes como accordion expandivel
+
+**Estrutura de cada meal (linha 3803):**
+```html
+<div class="meal"> <!-- accordion -->
+  <div class="meal-header"> <!-- clica para expandir -->
+    <span class="mh-name">☕ Cafe</span>
+    <span class="mh-summary">1.0P · 1.0C · 0.0G</span>  <!-- resumo em blocos -->
+  </div>
+  <div class="meal-body"> <!-- expandido -->
+    <div class="macro-row"> <!-- grid 3 colunas -->
+      <div class="macro-field pf"> <!-- campo P com label colorido -->
+        <label>P</label>
+        <input inputmode="decimal" placeholder="0" />
+        <span class="preset-hint"> <!-- hint do preset -->
+      </div>
+      <!-- idem C e G -->
+    </div>
+    <div class="quick-row"> <!-- botoes rapidos +.5P +1P +.5C etc -->
+    </div>
+  </div>
+</div>
+```
+
+**Logica de updateUI (linha 3932):**
+- Atualiza summary de cada meal ("1.0P · 1.0C · 0.0G")
+- Atualiza meta line ("Meta: P 152g · C 228g · G 31g (~1800 kcal)")
+- Atualiza KPI values e barras (pBar, cBar, gBar) com clamp 0-100%
+- Define --kpi-fill (indicador colorido no topo de cada KPI card)
+- Muda cor das barras se >105% (overeat)
+- Calcula kcal: p * kcalPerBlock.p + c * kcalPerBlock.c + g * kcalPerBlock.g
+- Renderiza status pills com makeStatusPill()
+
+**makeStatusPill (linha 3915):**
+```javascript
+// diff = valor - meta; "Falta" se diff < -0.6, "Passou" se diff > 0.6
+const pill = `<span class="spill"><span class="sdot ${cls}"></span>P ${diff>0?"+":""}${diff.toFixed(1)}</span>`
+```
+
+### Food Log — log separado dos blocos (IMPORTANTE)
+
+O app original tem DOIS stores:
+1. `blocos_tracker_v6` — blocos por refeicao (o que e exibido nos inputs P/C/G)
+2. `blocos_tracker_food_log_v1` — lista de alimentos adicionados por dia (para o "peek" e para remocao)
+
+**Entrada no food log (linha 6057):**
+```typescript
+{
+  foodId: string,       // id do alimento na FOOD_DB
+  nome: string,         // nome para display
+  qty: number,          // quantidade de porcoes
+  mealId: string,       // qual refeicao recebeu
+  pG: number,           // gramas de proteina adicionados
+  cG: number,           // gramas de carbo
+  gG: number,           // gramas de gordura
+  pBlocks: number,      // blocos P equivalentes (o que foi somado nos inputs)
+  cBlocks: number,
+  gBlocks: number,
+  kcal: number,
+  at: string            // ISO timestamp (para ordenar recentes)
+}
+```
+
+**foodToBlocks (linha 5789):**
+```javascript
+// Converte gramas do alimento para blocos
+const pG = round1(food.p * qty);       // gramas de P = p_por_porcao * qtd_porcoes
+const pBlocks = round1(pG / settings.blocks.pG);  // blocos = gramas / gramas_por_bloco
+```
+
+**getRecentFoods (linha 5805):**
+Ultimo 10 alimentos unicos adicionados, ordenados por `entry.at` desc.
+
+### Food Drawer — estrutura e comportamento (linha 5964)
+
+**HTML do drawer (linha 2852):**
+```
+.food-drawer (88dvh, bottom sheet, translateY animation)
+  .fd-handle
+  .fd-header  "Adicionar alimentos" + botao fechar
+  .fd-search-wrap  input com icone 🔍 e botao limpar
+  .fd-cat-tabs  abas: [Recentes] [Todos] [categoria1] [categoria2]...
+  .fd-grid  lista de alimentos (flex-direction:column, flex:1, overflow-y:auto)
+  .fd-custom-row  "Criar alimento personalizado"
+  .fd-peek  "Adicionados hoje · X itens" (expandivel)
+    .fd-log  lista de itens adicionados hoje com botao remover
+```
+
+**CSS critico do drawer (linha 933):**
+- `.food-drawer`: height 88dvh, background linear-gradient(#1a2035, #121828)
+- `.food-drawer.open`: transform translateY(0) — animacao .3s cubic-bezier(.32,.72,0,1)
+- `.fd-grid`: flex:1, overflow-y:auto (scroll interno, nao a pagina toda)
+- `.fd-cat-tabs`: overflow-x:auto, scrollbar-width:none (scroll horizontal sem scrollbar)
+
+**CSS dos itens da lista (.food-item, linha 886):**
+```css
+.food-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer; transition: all .12s;
+}
+.fi-info { flex: 1; min-width: 0; }
+.fi-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fi-portion { font-size: 10px; color: var(--text3); font-weight: 600; }
+.fi-macros { display: flex; gap: 8px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.fi-macros .fp { color: var(--pColor); }   /* #f87171 */
+.fi-macros .fc { color: var(--cColor); }   /* #fbbf24 */
+.fi-macros .fg { color: var(--gColor); }   /* #34d399 */
+.fi-macros .fk { color: var(--text3); }    /* kcal em cinza */
+```
+
+**Food Modal (porcao) — HTML linha 3008:**
+```html
+<div class="modal-sheet" id="foodModal" style="z-index:316;">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <b id="fmName">Frango grelhado</b>
+    <button class="modal-close">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="qty-label" id="fmPortion">100g × 1</div>
+    <div class="qty-row">
+      <button class="qty-btn qty-sm">−.5</button>
+      <button class="qty-btn qty-sm">−.1</button>
+      <input class="qty-input" type="number" min="0.1" step="0.1" value="1" />
+      <button class="qty-btn qty-sm">+.1</button>
+      <button class="qty-btn qty-sm">+.5</button>
+    </div>
+    <!-- .modal-macros: 4 caixas P/C/G/kcal -->
+    <div class="hint">Adicionar a refeicao:</div>
+    <div class="meal-select-row">  <!-- botoes de selecao de refeicao -->
+    </div>
+    <button class="btn primary" id="fmAdd">Adicionar</button>
+  </div>
+</div>
+```
+
+**Logica addFoodToMeal (linha 6041):**
+1. Chama `foodToBlocks(food, qty)` para calcular gramas e blocos
+2. Soma blocos na refeicao: `meal.p += calc.pBlocks`
+3. Adiciona entrada no food log com todos os detalhes
+4. Salva ambos os stores
+5. Chama fillInputsFromState() + updateUI()
+6. Fecha modal, mostra toast
+
+### Calculadoras (linha 5123)
+
+```javascript
+bodyDensityJP7(sex, age, sum7):
+  // male:   1.112 - 0.00043499*s + 0.00000055*s*s - 0.00028826*age
+  // female: 1.097 - 0.00046971*s + 0.00000056*s*s - 0.00012828*age
+
+bfSiri(density): (495 / density) - 450
+
+bmrMifflin(sex, weightKg, heightCm, age):
+  // base = 10*w + 6.25*h - 5*age
+  // male: base + 5  /  female: base - 161
+
+bmrKatch(leanKg): 370 + 21.6 * leanKg
+```
+
+### GOAL_PRESETS e WZ_ACTIVITY_LABELS
+
+```javascript
+// Em calcAll/wizard (linha ~4600)
+const GOAL_PRESETS = {
+  maintain: { def: 0,  pKg: 1.6, cKg: 3.0, minFatKg: 0.6, hint: "..." },
+  cut:      { def: 22, pKg: 2.2, cKg: 2.0, minFatKg: 0.6, hint: "..." },
+  recomp:   { def: 10, pKg: 2.0, cKg: 2.0, minFatKg: 0.6, hint: "..." },
+  bulk:     { def: -10, pKg: 1.6, cKg: 3.5, minFatKg: 0.8, hint: "..." },
+};
+
+const WZ_ACTIVITY_LABELS = {
+  "1.2":   "Sedentario — trabalho sentado",
+  "1.375": "Levemente ativo — caminhadas",
+  "1.55":  "Moderadamente ativo",
+  "1.725": "Bastante ativo",
+  "1.9":   "Muito ativo — trabalho fisico",
+};
+```
+
+### Energy Analytics — Home (linha 4156)
+
+`getEnergyForDate(date)` retorna:
+```typescript
+{
+  consumed: number,   // soma de todos os blocos × kcalPerBlock
+  bmr: number|null,   // BMR calculado (null se perfil nao configurado)
+  tdee: number|null,  // bmr × activity
+  exercise: number,   // kcal do treino daquele dia
+  total: number|null, // bmr + exercise (base para o balance)
+  balance: number|null // consumed - total (negativo = deficit, positivo = superavit)
+}
+```
+
+`renderEnergyCard()` (linha 4203):
+- Sem BMR: mostra so "kcal in" + mensagem para configurar JP7
+- Com BMR: 4 KPIs — kcal in / basal / treino / saldo (saldo em verde se negativo = deficit)
+- Barra consumido vs meta kcal
+
+`renderWeekEnergyChart()` (linha 4266):
+- Calcula Seg da semana atual
+- Itera 7 dias (Seg→Dom)
+- Para cada dia: `getEnergyForDate(iso)` para consumed e total (BMR+treino)
+- Normaliza altura das barras pelo max valor
+- Renderiza barras SVG-like com label P/C/G e linha de meta
 
 ---
 
 ## FASE 3 — Treino
 
-### Estrutura de dados de treino (TREINO_KEY)
+### EXERCISE_DB (linha 3345)
 
-```json
+9 grupos musculares, 70+ exercicios. Estrutura:
+```typescript
 {
-  "workouts": [
-    {
-      "id": "uuid",
-      "date": "2026-03-07",
-      "templateId": "treino_a",
-      "exercises": [
+  "Peito": [
+    { id: "supino_reto", nome: "Supino reto (barra)" },
+    ...
+  ],
+  ...
+}
+```
+
+Grupos: Peito, Costas, Quad, Posterior, Gluteos, Ombros, Biceps, Triceps, Core
+
+### EX_SECONDARY (linha 3401)
+Mapa de exercicio → grupos secundarios (para analytics de volume muscular)
+
+### MUSCLE_LANDMARKS (linha 3460)
+```javascript
+{
+  "Peito":     { mev:10, mav:15, mrv:25 },
+  "Costas":    { mev:10, mav:15, mrv:25 },
+  "Quad":      { mev: 8, mav:15, mrv:25 },
+  "Posterior": { mev: 6, mav:12, mrv:20 },
+  "Gluteos":   { mev:15, mav:20, mrv:30 },
+  "Ombros":    { mev: 6, mav:12, mrv:20 },
+  "Biceps":    { mev: 6, mav:12, mrv:20 },
+  "Triceps":   { mev: 6, mav:12, mrv:20 },
+  "Core":      { mev: 4, mav:10, mrv:16 },
+}
+```
+
+### CARDIO_TYPES (linha 3483)
+```javascript
+[
+  { id:"bicicleta", nome:"Bicicleta", kcalMin:7 },
+  { id:"bicicleta_intensa", nome:"Bicicleta (intensa)", kcalMin:10 },
+  { id:"esteira_caminhada", nome:"Caminhada (esteira)", kcalMin:4.5 },
+  { id:"esteira_corrida", nome:"Corrida (esteira)", kcalMin:10 },
+  { id:"caminhada_rua", nome:"Caminhada ar livre", kcalMin:4 },
+  { id:"corrida_rua", nome:"Corrida ar livre", kcalMin:11 },
+  { id:"eliptico", nome:"Eliptico / Transport", kcalMin:8 },
+  { id:"escada", nome:"Escada", kcalMin:9 },
+  { id:"pular_corda", nome:"Pular corda", kcalMin:12 },
+  { id:"remo", nome:"Remo", kcalMin:8.5 },
+  { id:"outro_cardio", nome:"Outro", kcalMin:6 },
+]
+```
+
+### DEFAULT_TEMPLATES (linha 3492)
+4 treinos padrao: A (Peito+Biceps+Abdomen), B (Costas+Triceps+Abdomen), C (Pernas+Ombros+Abdomen), Alt (Peito+Costas+Bracos).
+
+### Modelo de dados do treino (localStorage blocos_tracker_treino_v1)
+```typescript
+{
+  days: {
+    "2026-03-07": {
+      templateId: "treino_a",
+      exercicios: [
         {
-          "exId": "supino_reto",
-          "nome": "Supino reto (barra)",
-          "grupo": "🏋️ Peito",
-          "secundarios": ["💪 Tríceps", "💪 Ombros"],
-          "series": [
-            { "reps": 12, "carga": 60, "obs": "" },
-            { "reps": 10, "carga": 65, "obs": "" }
-          ]
+          exercicioId: "supino_reto",
+          series: [{ reps: "10", carga: "65" }]
         }
       ],
-      "cardio": { "tipo": "bicicleta", "min": 15, "kcal": 105 },
-      "obs": ""
+      cardio: [{ tipo: "bicicleta", minutos: 20, kcalPerMin: 7 }],
+      nota: "Bom treino",
+      kcal: 187,
+      savedAt: "2026-03-07T18:30:00Z"
     }
-  ]
+  }
 }
-```
-
-### EXERCISE_DB — banco de exercícios
-
-Extrair para `src/data/exerciseDb.ts`. Estrutura:
-```typescript
-export interface Exercise {
-  id: string
-  nome: string
-}
-export type ExerciseDB = Record<string, Exercise[]> // chave = grupo muscular com emoji
-```
-
-**Grupos musculares (ordem fixa — MUSCLE_ORDER):**
-```typescript
-export const MUSCLE_ORDER = [
-  "🏋️ Peito", "🦅 Costas", "🦵 Quad", "🦵 Posterior",
-  "🍑 Glúteos", "💪 Ombros", "💪 Bíceps", "💪 Tríceps", "🧱 Core"
-]
-```
-
-**EX_SECONDARY — músculos secundários por exercício:**
-Extrair junto com EXERCISE_DB para `src/data/exerciseDb.ts`. É um `Record<string, string[]>` mapeando `exerciseId → grupos secundários`.
-
-### MUSCLE_LANDMARKS — limites de volume (MEV/MAV/MRV)
-
-```typescript
-// Copiar exato para src/data/muscleLandmarks.ts
-export const MUSCLE_LANDMARKS: Record<string, { mev: number; mav: number; mrv: number }> = {
-  "🏋️ Peito":     { mev: 10, mav: 15, mrv: 25 },
-  "🦅 Costas":    { mev: 10, mav: 15, mrv: 25 },
-  "🦵 Quad":      { mev:  8, mav: 15, mrv: 25 },
-  "🦵 Posterior": { mev:  6, mav: 12, mrv: 20 },
-  "🍑 Glúteos":   { mev: 15, mav: 20, mrv: 30 },
-  "💪 Ombros":    { mev:  6, mav: 12, mrv: 20 },
-  "💪 Bíceps":    { mev:  6, mav: 12, mrv: 20 },
-  "💪 Tríceps":   { mev:  6, mav: 12, mrv: 20 },
-  "🧱 Core":      { mev:  4, mav: 10, mrv: 16 },
-}
-```
-
-**MEV relativo:** `~20%` do volume usado para ganho (ponto de partida sem histórico).
-**Progressão saudável:** +20% de volume por ciclo.
-
-### Templates de treino padrão (DEFAULT_TEMPLATES)
-
-```typescript
-// Copiar para src/data/defaultTemplates.ts
-export const DEFAULT_TEMPLATES = [
-  { id: "treino_a", nome: "Treino A — Peito + Bíceps + Abdômen", cor: "#f87171",
-    exercicios: ["supino_reto","supino_inclinado","crossover","rosca_direta","rosca_martelo","abdominal_crunch"],
-    cardio: { tipo: "bicicleta", min: 15 } },
-  { id: "treino_b", nome: "Treino B — Costas + Tríceps + Abdômen", cor: "#60a5fa",
-    exercicios: ["puxada_frontal","remada_curvada","remada_baixa","triceps_pulley","triceps_testa","prancha"],
-    cardio: { tipo: "bicicleta", min: 15 } },
-  { id: "treino_c", nome: "Treino C — Pernas + Ombros + Abdômen", cor: "#34d399",
-    exercicios: ["agachamento_livre","leg_press","cadeira_extensora","cadeira_flexora","desenv_halter","elevacao_lateral","abdominal_crunch"],
-    cardio: { tipo: "esteira_caminhada", min: 10 } },
-  { id: "treino_alt", nome: "Treino Alt — Peito + Costas + Braços", cor: "#fbbf24",
-    exercicios: ["supino_reto","supino_inclinado","puxada_frontal","remada_curvada","triceps_pulley","rosca_direta"],
-    cardio: { tipo: "bicicleta", min: 15 } },
-]
-```
-
-### Cardio types
-
-```typescript
-export const CARDIO_TYPES = [
-  { id: "bicicleta",          nome: "🚴 Bicicleta",              kcalMin: 7   },
-  { id: "bicicleta_intensa",  nome: "🚴 Bicicleta (intensa)",    kcalMin: 10  },
-  { id: "esteira_caminhada",  nome: "🚶 Caminhada (esteira)",    kcalMin: 4.5 },
-  { id: "esteira_corrida",    nome: "🏃 Corrida (esteira)",      kcalMin: 10  },
-  { id: "caminhada_rua",      nome: "🚶 Caminhada ar livre",     kcalMin: 4   },
-  { id: "corrida_rua",        nome: "🏃 Corrida ar livre",       kcalMin: 11  },
-  { id: "eliptico",           nome: "🏋️ Elíptico / Transport",  kcalMin: 8   },
-  { id: "escada",             nome: "🪜 Escada",                 kcalMin: 9   },
-  { id: "pular_corda",        nome: "⏭️ Pular corda",           kcalMin: 12  },
-  { id: "remo",               nome: "🚣 Remo",                   kcalMin: 8.5 },
-  { id: "outro_cardio",       nome: "❤️ Outro",                 kcalMin: 6   },
-]
-```
-
-### Componentes a criar para a Fase 3
-
-- `src/components/ExerciseSelector.tsx` — modal full-screen, abas por grupo, busca, aba "⭐ Meus" para custom
-- `src/components/WorkoutCard.tsx` — card de exercício com séries (reps + carga + obs)
-- `src/components/CoachModal.tsx` — modal com 5 páginas educativas (conteúdo: `COACH_PAGES` no index.html linha ~8415)
-- `src/components/WorkoutHistoryModal.tsx` — 3 abas: por treino, por equipamento, volume muscular
-- `src/components/PauseTimer.tsx` — timer de pausa com presets e notificação nativa
-
-### Hook: useMuscleVolume
-
-```typescript
-// src/hooks/useMuscleVolume.ts
-// Calcula séries semanais por grupo muscular a partir do histórico de workouts
-// Lê workouts dos últimos 7 dias do Supabase
-// Retorna: { grupo: string, series: number, status: 'below' | 'mev' | 'mav' | 'mrv' }[]
-// Lógica: soma series[].length de todos exercícios do grupo + secundários (com peso 0.5)
 ```
 
 ---
 
-## FASE 4 — Corpo, Hábitos e Mais
+## FASE 4 — Corpo, Habitos, Mais
 
-### Estrutura de medições corporais (MEASURE_KEY)
-
-```json
+### Modelo de dados de medidas (localStorage blocos_tracker_measure_v6)
+```typescript
 {
-  "days": {
+  days: {
     "2026-03-07": {
-      "weightKg": 80.5,
-      "waistCm": 88,
-      "bfPct": 18.5,
-      "note": "em jejum",
-      "skinfolds": { "chest": 12, "ax": 10, "tri": 14, "sub": 16, "ab": 20, "sup": 18, "th": 22 }
+      weightKg: 76.0,
+      waistCm: 85.0,
+      bfPct: 18.9,     // opcional
+      note: "...",
+      skinfolds: {      // opcional
+        chest, ax, tri, sub, ab, sup, th  // mm
+      }
     }
   }
 }
 ```
 
-Para Supabase: uma linha em `body_measurements` por data, `data` = o objeto do dia.
-
-### Estrutura de hábitos (HABITS_KEY)
-
-```json
+### Habitos (linha ~4760, localStorage blocos_tracker_habits_v1)
+5 habitos fixos: dieta, log, treino, cardio, medidas
+```typescript
 {
-  "list": [
-    { "id": "agua", "nome": "💧 Água (2L)", "emoji": "💧" },
-    { "id": "dieta", "nome": "🥗 Dieta", "emoji": "🥗" },
-    { "id": "treino", "nome": "🏋️ Treino", "emoji": "🏋️" },
-    { "id": "sono", "nome": "😴 Sono 7h+", "emoji": "😴" }
-  ],
-  "days": {
-    "2026-03-07": { "agua": true, "dieta": false, "treino": true, "sono": true }
+  "2026-03-07": {
+    dieta: true,
+    log: true,
+    treino: false,
+    cardio: false,
+    medidas: false
   }
 }
 ```
 
-**Regra especial dieta:** "jantar" precisa estar registrado no diário antes de poder marcar o hábito "dieta".
-
-### Estrutura de check-ins (CHECKINS_KEY)
-
-```json
-{
-  "checkins": [
-    {
-      "date": "2026-03-07",
-      "peso": 80.5,
-      "bf": 18.5,
-      "energia": 7,
-      "humor": 8,
-      "sono": 7,
-      "obs": "sentindo bem"
-    }
-  ]
-}
-```
-
-### Calculadora JP7 — fluxo do wizard
-
-O wizard tem 5 steps:
-1. **Welcome** — só no primeiro acesso (sem perfil salvo)
-2. **Step 0** — revisão de dados existentes
-3. **Step 1** — dados pessoais (sexo, idade, peso, altura)
-4. **Step 2** — dobras cutâneas JP7 (7 pontos: peito, axilar, tríceps, subescapular, abdominal, suprailíaco, coxa)
-5. **Step 3** — objetivo (maintain/cut/recomp/bulk)
-6. **Step 4** — nível de atividade (5 opções via `WZ_ACTIVITY_LABELS`)
-
-Ao finalizar: `calcAll()` roda com os dados preenchidos, resultado salvo em `CALC_KEY`.
+### Calc Wizard (HTML linha 3145, JS linha 4600)
+4 passos: dados basicos → dobras JP7 → objetivo → atividade
+Outputs: BMR, TDEE, kcal alvo, P/C/G em gramas
 
 ---
 
-## Tokens de design (preservar exatos)
+## Tokens CSS do app original (replicar em src/index.css)
 
 ```css
-/* Copiar para src/index.css — já existe no projeto, verificar se está atualizado */
---bg:       #0a0e18;
---surface:  rgba(255,255,255,.04);
---surface2: rgba(255,255,255,.07);
---surface3: rgba(255,255,255,.10);
---text:     #f0f4ff;
---text2:    #a0b4d8;
---text3:    #6b82a8;
---accent:   #7c5cff;
---accent2:  #a78bfa;
---good:     #34d399;
---warn:     #fbbf24;
---bad:      #f87171;
---line:     rgba(255,255,255,.06);
---radius:   16px;
---radius-sm:12px;
---radius-xs:8px;
---shadow:   0 8px 32px rgba(0,0,0,.4);
---font:     'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+:root {
+  --bg: #0a0e18;
+  --surface: rgba(255,255,255,.04);
+  --surface2: rgba(255,255,255,.07);
+  --surface3: rgba(255,255,255,.10);
+  --text: #f0f4ff;
+  --text2: #a0b4d8;
+  --text3: #6b82a8;
+  --accent: #7c5cff;
+  --accent2: #a78bfa;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --pColor: #f87171;   /* proteina = vermelho */
+  --cColor: #fbbf24;   /* carbo = amarelo */
+  --gColor: #34d399;   /* gordura = verde */
+  --line: rgba(255,255,255,.06);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --shadow: 0 8px 32px rgba(0,0,0,.4);
+  --font: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 ```
 
-**Font:** DM Sans — importar do Google Fonts no `index.html` ou via `@import` no CSS.
+**Background ambient glow (linha 62):**
+```css
+body::before { /* glow roxo no canto superior esquerdo */
+  position: fixed; top: -200px; left: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(124,92,255,.15) 0%, transparent 70%);
+}
+body::after { /* glow verde no canto superior direito */
+  position: fixed; top: -100px; right: -150px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(52,211,153,.08) 0%, transparent 70%);
+}
+```
 
 ---
 
-## Estrutura de abas (Nav)
+## Problemas conhecidos na implementacao atual (Kcalix v0.3.0)
 
-O app tem 5 abas na barra inferior:
+### DiarioPage.tsx — o que esta errado vs original
 
-| Aba | Ícone | Página |
-|---|---|---|
-| Home | 🏠 | `HomePage.tsx` |
-| Diário | 📅 | `DiarioPage.tsx` |
-| Treino | 🏋️ | `TreinoPage.tsx` |
-| Corpo | 📊 | `CorpoPage.tsx` |
-| Mais | ⚙️ | `MaisPage.tsx` |
+1. **Estrutura visual incorreta:** O original tem os meals dentro do Card de Progresso (abaixo dos KPIs e status pills). No v0.3.0 estao em cards separados.
 
-**Nav.tsx:** barra fixa no bottom, z-index 100, `safe-area-inset-bottom` para iPhone X+.
-O `DashboardPage.tsx` atual (placeholder da Fase 1) será **substituído** pela estrutura de abas — `App.tsx` passará a renderizar `<Nav>` + a página ativa da aba selecionada.
+2. **KPI cards nao fieis:** O original usa `.kpi-grid` (3 colunas) com indicador colorido no TOPO de cada card (`--kpi-fill` via CSS custom property), barra de progresso dentro e valor "X.X / meta" em dois estilos de fonte diferentes. O v0.3.0 tem barras mas nao o mesmo visual.
+
+3. **Status pills ausentes:** O original tem `.status-pills` com `.spill` (pill com dot colorido e diff "P +1.2"), indicando desvio em relacao a meta. NAO implementado no v0.3.0.
+
+4. **Kcal estimadas sem estilo:** O original tem `.kcal-inline-row` com `.kcal-inline-num` em gradiente roxo→verde e `.kcal-inline-unit` separado. Simples texto no v0.3.0.
+
+5. **Meal summary em blocos:** O original mostra "1.0P · 1.0C · 0.0G" no header colapsado. O v0.3.0 mostra gramas de forma inconsistente.
+
+6. **Meals sao accordion:** No original apenas 1 meal abre por vez (`openMealId`). Clicar no mesmo fecha. O v0.3.0 pode ter comportamento diferente.
+
+7. **Quick buttons (+.5P +1P etc):** O original tem botoes rapidos dentro de cada meal expandido. NAO implementado no v0.3.0.
+
+8. **Adicao lenta (otimistic update ausente):** Original e sincrono (localStorage). No v0.3.0 o upsert Supabase bloqueia a UI. Precisa atualizar estado local imediatamente e persistir em background.
+
+9. **FoodPortionModal — quantidade incorreta:** O original aceita min 0.1, step 0.1. O v0.3.0 tem clamp de 0.5 que impede quantidades menores.
+
+10. **FoodDrawer — peek de itens adicionados:** O original tem `.fd-peek` (secao colapsavel no rodape do drawer mostrando itens adicionados hoje com botao remover). NAO implementado no v0.3.0.
+
+11. **FoodDrawer — botao Criar alimento personalizado:** Linha 2867 no original. NAO implementado no v0.3.0.
+
+### HomePage.tsx — o que esta errado vs original
+
+1. **Energy card sem grafico semanal real:** O original le todos os 7 dias da semana atual com `getEnergyForDate()`. O v0.3.0 so mostra o dia atual.
+
+2. **Background glow ausente:** Os pseudo-elementos `body::before` e `body::after` do original nao estao em index.css.
 
 ---
 
-## Protocolos Lucas Campos (preservar na lógica de coach)
+## Ordem de implementacao — Sessao 2C (polish DiarioPage + FoodDrawer)
 
-- **Volume cycling** (não "deload") — reduzir volume, manter carga
-- **Séries válidas** = perto da falha (reps > 0 como proxy)
-- **Regra da Prioridade** — nunca dizer "treine menos X", sempre "Y está abaixo do mínimo"
-- **MEV relativo** = ~20% do volume usado para ganho
-- **Progressão saudável** = +20% de volume por ciclo
-- **Faixa de reps hipertrofia** = 5-30 (proximidade à falha > número)
-- **Glúteos** = grupo mais subestimado, MEV base = 15 séries/semana
-- **MRV prático** = 20-23 séries/semana
-- **Nível do usuário** por histórico: <3m=iniciante, 3-12m=intermediário, 12m+=avançado
+Prioridade para fidelidade ao original:
+
+1. **FIX urgente: otimistic update no addFoodToMeal**
+   - Atualizar estado React imediatamente ao adicionar alimento
+   - Persistir no Supabase em background (sem await no render path)
+
+2. **FIX: FoodPortionModal — min 0.1, step 0.1**
+   - Input `min="0.1" step="0.1"` (igual ao original linha 3021)
+   - Botoes: −.5 / −.1 / +.1 / +.5 (igual ao original linha 3019)
+
+3. **IMPROVE: DiarioPage — KPI cards fieis ao original**
+   - `.kpi-grid` 3 colunas com `--kpi-fill` no topo (barra colorida superior)
+   - `.kpi-value`: num grande (font-size 20px font-weight 800) + den pequeno
+   - `.kpi-bar` interno com `.kpi-bar-fill` colorida por macro
+
+4. **IMPROVE: DiarioPage — status pills**
+   - `.status-pills` com `.spill` (pill com dot colorido + diff formatado)
+
+5. **IMPROVE: DiarioPage — kcal estimadas com estilo**
+   - `.kcal-inline-row` com gradient text no numero
+
+6. **IMPROVE: DiarioPage — meals como accordion fiel**
+   - Apenas 1 aberto por vez
+   - Summary em blocos no header colapsado
+   - Quick buttons dentro do expanded
+
+7. **IMPROVE: FoodDrawer — fd-peek (itens adicionados hoje)**
+   - Secao no rodape mostrando alimentos adicionados com botao remover
 
 ---
 
-## Ordem de implementação recomendada por sessão
+## Notas de implementacao importantes
 
-### Sessão 2A (Fase 2 — início)
-1. Criar `src/data/goalPresets.ts` (copiar constantes)
-2. Criar `src/lib/calculators.ts` (copiar fórmulas)
-3. Criar `src/hooks/useSettings.ts` (lê/salva `user_settings` no Supabase)
-4. Criar `src/hooks/useDiary.ts` (lê/salva `diary_entries` do dia)
-5. Substituir `DashboardPage.tsx` pela estrutura de abas em `App.tsx`
-6. Implementar `Nav.tsx` (barra inferior)
-7. Implementar `HomePage.tsx` com cards de energia
-
-### Sessão 2B (Fase 2 — diário)
-1. Criar `src/data/foodDb.ts` (extrair FOOD_DB do index.html linha ~3500)
-2. Implementar `DiarioPage.tsx` com estrutura de refeições
-3. Implementar `FoodDrawer.tsx`
-4. Implementar `FoodPortionModal.tsx`
-5. Testar persistência multi-dispositivo
-
-### Sessão 3A (Fase 3 — treino base)
-1. Criar `src/data/exerciseDb.ts` (extrair EXERCISE_DB + EX_SECONDARY)
-2. Criar `src/data/defaultTemplates.ts`
-3. Criar `src/data/muscleLandmarks.ts`
-4. Criar `src/data/cardioTypes.ts`
-5. Implementar `TreinoPage.tsx` base
-6. Implementar `ExerciseSelector.tsx`
-
-### Sessão 3B (Fase 3 — analytics)
-1. Implementar `src/hooks/useMuscleVolume.ts`
-2. Implementar `WorkoutHistoryModal.tsx`
-3. Implementar `CoachModal.tsx` (conteúdo do COACH_PAGES do index.html linha ~8415)
-4. Implementar `PauseTimer.tsx`
-
-### Sessão 4 (Fase 4)
-1. `CorpoPage.tsx` + hook de medições
-2. Hábitos (card na Home + histórico)
-3. Check-ins
-4. `MaisPage.tsx` + wizard JP7
-
-### Sessão 5 (Fase 5 — migração)
-1. Botão "Exportar para Kcalix" no `blocos-tracker/index.html` (modificação mínima)
-2. Importador em `src/pages/ImportPage.tsx` (rota temporária pós-login)
+- **font-size >= 16px nos inputs** — evita zoom automatico no iOS (regra critica do original)
+- **z-index: nav=100, modals >= 301** — modais nao ficam atras da bottom nav
+- **-webkit-tap-highlight-color: transparent** — em todos botoes/interativos
+- **88dvh** para bottom sheets fullscreen (drawer, modais grandes)
+- **safe-area-inset-bottom** na bottom nav
+- **transition: transform .3s cubic-bezier(.32,.72,0,1)** para drawers/modais
+- **overscroll-behavior: contain** no scroll interno de modais
+- **scrollbar-width: none** nas cat-tabs (scroll horizontal sem scrollbar visivel)

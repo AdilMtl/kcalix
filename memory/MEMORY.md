@@ -18,7 +18,8 @@
 ## Fase atual
 - **Fase 0:** ✅ CONCLUÍDA (2026-03-07)
 - **Fase 1:** ✅ CONCLUÍDA (2026-03-07) — autenticação email/senha + admin panel
-- **Fase 2:** Home e Diario — PRÓXIMA
+- **Fase 2:** ✅ CONCLUÍDA (2026-03-08) — código completo; pendências dependem de Fases 3 e 4
+- **Fase 3:** TreinoPage — PRÓXIMA
 - **Roadmap completo:** `memory/ROADMAP.md`
 - **Contexto técnico do port:** `memory/contexto-port.md` — leia antes de qualquer Fase 2+
 

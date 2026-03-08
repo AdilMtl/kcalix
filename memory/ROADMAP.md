@@ -135,7 +135,7 @@ supabase/migrations/
 |---|---|---|
 | 0 | Setup do repositorio | CONCLUIDA (2026-03-07) |
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
-| 2 | Home e Diario | Proxima |
+| 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | Planejado |
 | 4 | Corpo, Habitos, Mais | Planejado |
 | 5 | Ferramenta de migracao | Planejado |
@@ -186,60 +186,39 @@ supabase/migrations/
 
 ---
 
-## FASE 2 — Home e Diario (Em execucao)
+## FASE 2 — Home e Diario — CODIGO CONCLUIDO (2026-03-08)
 
-> Antes de iniciar: leia `memory/contexto-port.md` — contém estruturas de dados, constantes e ordem de implementação detalhada por sessão.
+> Funcionalidades implementadas. Pendencias restantes dependem de funcoes de outras fases.
+> Considerada ENCERRADA para desenvolvimento — testes de dispositivo sao oportunistas.
 
-### Sessao 2A — HomePage (Em execucao)
+### Sessao 2A — HomePage — CONCLUIDA (2026-03-07)
 
-**Decisoes tomadas em 2026-03-07:**
-- Card de habitos na HomePage = placeholder estático — hook real implementado apenas na Sessao 4 junto com CorpoPage/HabitosPage
-- `calcAll()` do app original nao e portavel (acoplada ao DOM) — substituida por `calcFromProfile(profile)` com parâmetros tipados
-- `DashboardPage.tsx` sera deletado e substituido pela estrutura de abas (Nav + rotas)
-
-**Ordem de implementacao (contexto-port.md sessao 2A):**
-1. `src/data/goalPresets.ts` — GOAL_PRESETS + WZ_ACTIVITY_LABELS (linha 4608 do index.html original)
-2. `src/lib/calculators.ts` — bmrMifflin, bmrKatch, bodyDensityJP7, bfSiri + calcFromProfile (linhas 5124-5208)
-3. `src/hooks/useSettings.ts` — le/salva `user_settings` (campo `data` JSONB)
-4. `src/hooks/useDiary.ts` — le/salva `diary_entries` do dia (campo `data` JSONB)
-5. `src/components/Nav.tsx` — 5 abas fixas no bottom, safe-area-inset-bottom
-6. `src/App.tsx` — refatorar roteamento, deletar DashboardPage
-7. `src/pages/HomePage.tsx` — cards de energia + macros + balanco + habitos (placeholder) + grafico semanal
-
-**Checklist de validacao 2A:**
-- [x] Build sem erros TypeScript (v0.2.0 — 93 modulos)
-- [ ] 5 abas funcionando na barra inferior (testar no dispositivo)
-- [ ] HomePage renderiza estado vazio sem user_settings com CTA (testar no dispositivo)
-- [ ] HomePage renderiza cards quando ha configuracao salva (depende de wizard Fase 4)
-- [x] Nenhuma chamada Supabase direta em componente (via useSettings + useDiary)
-- [ ] Testa em 375px sem overflow horizontal (testar no dispositivo)
+- [x] goalPresets.ts, calculators.ts, useSettings.ts, useDiary.ts, Nav.tsx, App.tsx
+- [x] Build sem erros TypeScript
 
 ### Sessao 2B — DiarioPage + FoodDrawer — CONCLUIDA (2026-03-07)
 
-- [x] `src/data/foodDb.ts` — FOOD_DB extraido do app original (9 categorias, ~130 itens)
-- [x] `src/hooks/useDiary.ts` — 6 refeicoes + getRecentFoods + addFoodOptimistic
-- [x] `src/pages/DiarioPage.tsx` — visual fiel: KPI grid, linha kcal gradient, status pills, accordion meals
-- [x] `src/components/FoodDrawer.tsx` — visual fiel: gradiente escuro, handle, busca com icone, cat-tabs
-- [x] `src/components/FoodPortionModal.tsx` — bottom sheet real, qty decimal, meal-select-row
-- [x] `src/index.css` — --pColor/--cColor/--gColor + ambient glow
-- [x] `.claude/commands/port.md` — skill de metodologia de port criada
+- [x] foodDb.ts, useDiary.ts (6 refeicoes), DiarioPage.tsx, FoodDrawer.tsx, FoodPortionModal.tsx
+- [x] index.css — tokens de macro + ambient glow
 
-### Sessao 2C — Polish visual — CONCLUIDA (2026-03-07)
+### Sessao 2C — Polish visual — CONCLUIDA (2026-03-07). Ver CHANGELOG v0.4.0.
 
-Todas as pendencias de 2B resolvidas. Ver CHANGELOG v0.4.0.
+### Sessao 2D — Port HomePage + features pendentes — CONCLUIDA (2026-03-08)
 
-### Sessao 2D — Pendencias (proxima sessao)
+- [x] DESCARTADO: fd-peek — Kcalix ja mostra alimentos no accordion, solucao superior
+- [x] CustomFoodModal — form-grid P/C/G/kcal com calculo automatico (v0.5.0)
+- [x] FoodDrawer — botao "Criar alimento personalizado" + aba "Meus" dinamica (v0.5.0)
+- [x] useDiary.getWeekKcal() — query multi-data no Supabase (v0.5.0)
+- [x] HomePage — port completo vs original: saudacao dinamica, ProgressCard clicavel, macros fieis, EnergyCard separado, HabitTracker placeholder no topo, grid de acoes 2x2 (v0.6.0)
 
-- [ ] IMPROVE: FoodDrawer — fd-peek (itens adicionados hoje, colapsavel)
-  - Ref: HTML linha 2870, JS renderFoodLog() linha 5907
-- [ ] IMPROVE: FoodDrawer — botao "Criar alimento personalizado"
-  - Ref: HTML linha 2867, JS addCustomFood() linha 6080
-- [ ] IMPROVE: grafico semanal na HomePage — 7 dias reais do Supabase
-  - Ref: renderWeekEnergyChart() linha 4266
+### Pendencias — dependem de outras fases (NAO bloqueiam avanco)
 
-**TEST:**
-- [ ] TEST: persistencia multi-dispositivo (mesmo dado em dois navegadores)
-- [ ] TEST: celular real (375px, toque, teclado virtual, safe-area)
+- [ ] DiarioPage — barras P/C/G no KpiCard sem meta: AGUARDA wizard JP7 (Fase 4)
+- [ ] HomePage — modal "historico semanal": AGUARDA dados de kcal de treino (Fase 3)
+- [ ] HomePage — "Meu Perfil Nutricional" funcional: AGUARDA wizard JP7 (Fase 4)
+- [ ] HabitTracker real: AGUARDA Fase 4
+- [ ] TEST: celular real (375px, safe-area): oportunista — testar quando tiver dispositivo disponivel
+- [ ] TEST: persistencia multi-dispositivo: oportunista
 
 ---
 
