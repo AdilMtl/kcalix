@@ -224,10 +224,61 @@ supabase/migrations/
 
 ## FASE 3 — Treino (Planejado)
 
-- TreinoPage com lista, templates, ExerciseSelector
-- Historico, analytics de volume muscular
-- Coach Modal (5 paginas educativas)
-- Timer de pausa
+> Antes de iniciar: leia `memory/contexto-port.md` secao Fase 3 + referencia.index.html linhas mapeadas abaixo.
+
+### Sessao 3A — Dados + Hook + TreinoPage base (proxima sessao)
+
+**Arquivos a criar:**
+1. `src/data/exerciseDb.ts` — EXERCISE_DB (L3345), EX_SECONDARY (L3401), MUSCLE_LANDMARKS (L3460), CARDIO_TYPES (L3483), DEFAULT_TEMPLATES (L3492)
+2. `src/hooks/useWorkout.ts` — le/salva `workouts` + `workout_templates` no Supabase (otimistic update)
+3. `src/pages/TreinoPage.tsx` — estrutura base: header com botoes (📊 / 📖 / Salvar), rotinas grid colapsavel, lista de exercicios vazia, workout summary bar (series/volume/cardio/kcal)
+
+**Checklist:**
+- [ ] Build sem erros TypeScript
+- [ ] TreinoPage renderiza estado vazio sem crash
+- [ ] useWorkout nao faz chamadas Supabase diretas em componente
+
+### Sessao 3B — ExerciseSelector + Exercicios + Series
+
+**Arquivos a criar:**
+- `src/components/ExerciseSelector.tsx` — bottom sheet por grupo muscular, busca, exercicios customizados (placeholder)
+
+**Arquivos a modificar:**
+- `src/pages/TreinoPage.tsx` — lista de exercicios com tabela series/reps/carga (inputs 16px), referencia de progressao anterior (prev-ref), botoes swap/delete, botao "+ Adicionar exercicio"
+
+**Referencia original:** renderExList (L~6300), set-table (CSS L1423), prev-ref (CSS L1447)
+
+### Sessao 3C — Cardio + Timer + Nota + Salvar
+
+**Modificar TreinoPage.tsx:**
+- Secao cardio: accordion com CARDIO_TYPES, campo minutos, calculo kcal estimada
+- Timer de pausa: countdown com presets (1:00/1:30/2:00/3:00) + cronometro
+- Campo de nota do treino
+- Botao "Salvar" — persiste workouts no Supabase + atualiza kcalTreino no diary do dia
+
+**Referencia original:** renderCardioList (L~6400), timer (HTML L2646, CSS L1876)
+
+### Sessao 3D — Editor de Templates
+
+**Arquivos a criar:**
+- `src/components/TemplateEditorModal.tsx` — bottom sheet: nome, cor (8 opcoes), lista de exercicios do template, cardio padrao
+
+**Modificar:**
+- `src/pages/TreinoPage.tsx` — tmpl-grid: chips clicaveis que aplicam template ao dia; botao "+ Nova rotina"
+
+**Referencia original:** openTmplEditor (L7761), renderTmplEditor (L7789), TMPL_COLORS
+
+### Sessao 3E — Analytics + Modais
+
+**Arquivos a criar:**
+- `src/hooks/useMuscleVolume.ts` — calcula sets por grupo (primario + secundario) vs MEV/MAV/MRV
+- `src/components/CoachGuideModal.tsx` — 5 abas educativas (conceitos de volume, Lucas Campos)
+- `src/components/ExerciseProgressionModal.tsx` — grafico carga/volume + tabela historico + badge PR
+- `src/components/TemplateHistoryModal.tsx` — historico de uso de cada template com comparativo
+
+**Referencia original:** mg-card (CSS L1580), coach-tabs (CSS L1605), pr-badge (CSS L1507)
+
+**Apos Sessao 3E:** HomePage — modal "historico semanal" pode ser implementado (dados de kcal treino disponiveis)
 
 ---
 
