@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { FOOD_DB } from '../data/foodDb'
 import { useDiary } from '../hooks/useDiary'
 import FoodPortionModal from './FoodPortionModal'
+import CustomFoodModal from './CustomFoodModal'
 import type { FoodItem } from '../data/foodDb'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
@@ -18,6 +19,8 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
   const [recentFoods, setRecentFoods] = useState<FoodItem[]>([])
+  const [customFoods, setCustomFoods] = useState<FoodItem[]>([])
+  const [showCustomModal, setShowCustomModal] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -28,36 +31,39 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
   const term = search.toLowerCase().trim()
   let items: FoodItem[] = []
 
+  const allDbItems: FoodItem[] = [...customFoods]
+  for (const list of Object.values(FOOD_DB)) {
+    for (const f of list) allDbItems.push(f)
+  }
+
   if (term) {
-    for (const list of Object.values(FOOD_DB)) {
-      for (const f of list) {
-        if (f.nome.toLowerCase().includes(term) || f.id.includes(term)) items.push(f)
-      }
+    for (const f of allDbItems) {
+      if (f.nome.toLowerCase().includes(term) || f.id.includes(term)) items.push(f)
     }
   } else if (activeTab === '__recentes__') {
     items = recentFoods
+  } else if (activeTab === '__custom__') {
+    items = customFoods
   } else if (activeTab && FOOD_DB[activeTab]) {
     items = FOOD_DB[activeTab]
   } else {
-    for (const list of Object.values(FOOD_DB)) {
-      for (const f of list) items.push(f)
-    }
+    items = allDbItems
   }
 
   return (
     <>
       {/* Overlay */}
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,.6)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50,
+          position: 'fixed', left: 0, right: 0, bottom: 'calc(56px + env(safe-area-inset-bottom))', zIndex: 60,
           maxWidth: '600px', margin: '0 auto',
-          height: '88dvh',
+          maxHeight: '85dvh',
           background: 'linear-gradient(180deg, #1a2035, #121828)',
           border: '1px solid var(--line)', borderBottom: 'none',
           borderRadius: '20px 20px 0 0',
@@ -96,6 +102,7 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
         {/* Cat tabs */}
         {!term && (
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '0 12px 10px', flexShrink: 0, scrollbarWidth: 'none' as React.CSSProperties['scrollbarWidth'] }}>
+            {customFoods.length > 0 && <CatTab label="⭐ Meus" active={activeTab === '__custom__'} onClick={() => setActiveTab('__custom__')} />}
             {recentFoods.length > 0 && <CatTab label="Recentes" active={activeTab === '__recentes__'} onClick={() => setActiveTab('__recentes__')} />}
             <CatTab label="Todos" active={activeTab === null} onClick={() => setActiveTab(null)} />
             {CATEGORIES.map(cat => <CatTab key={cat} label={cat} active={activeTab === cat} onClick={() => setActiveTab(cat)} />)}
@@ -125,6 +132,22 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
             </button>
           ))}
         </div>
+
+        {/* Botão criar alimento personalizado */}
+        <div style={{ flexShrink: 0, padding: '10px 12px', borderTop: '1px solid var(--line)' }}>
+          <button
+            onClick={() => setShowCustomModal(true)}
+            style={{
+              width: '100%', padding: '11px 14px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px dashed rgba(124,92,255,.4)',
+              background: 'rgba(124,92,255,.06)',
+              color: 'var(--text2)', fontFamily: 'var(--font)',
+              fontSize: '13px', fontWeight: 700,
+              cursor: 'pointer', textAlign: 'center',
+            }}
+          >➕ Criar alimento personalizado</button>
+        </div>
       </div>
 
       {/* FoodPortionModal — recebe onAddFood do pai */}
@@ -134,6 +157,18 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
           onAddFood={onAddFood}
           onClose={() => { setSelectedFood(null); onClose() }}
           onCancel={() => setSelectedFood(null)}
+        />
+      )}
+
+      {/* CustomFoodModal */}
+      {showCustomModal && (
+        <CustomFoodModal
+          onSave={food => {
+            setCustomFoods(prev => [food, ...prev])
+            setActiveTab('__custom__')
+            setShowCustomModal(false)
+          }}
+          onClose={() => setShowCustomModal(false)}
         />
       )}
     </>

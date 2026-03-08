@@ -88,6 +88,7 @@ interface UseDiaryReturn {
   removeFood: (meal: MealKey, index: number) => Promise<void>
   setKcalTreino: (kcal: number) => Promise<void>
   getRecentFoods: () => Promise<FoodItem[]>
+  getWeekKcal: (dates: string[]) => Promise<Record<string, number>>
 }
 
 export function useDiary(): UseDiaryReturn {
@@ -199,5 +200,22 @@ export function useDiary(): UseDiaryReturn {
     return result
   }, [user?.id])
 
-  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, getRecentFoods }
+  // Busca kcal consumidas para um conjunto de datas em uma query só
+  const getWeekKcal = useCallback(async (dates: string[]): Promise<Record<string, number>> => {
+    if (!user || dates.length === 0) return {}
+    const { data, error } = await supabase
+      .from('diary_entries')
+      .select('date, data')
+      .eq('user_id', user.id)
+      .in('date', dates)
+    if (error || !data) return {}
+    const result: Record<string, number> = {}
+    for (const row of data) {
+      const d = row.data as DiaryData
+      result[row.date] = d?.totals?.kcal ?? 0
+    }
+    return result
+  }, [user?.id])
+
+  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, getRecentFoods, getWeekKcal }
 }
