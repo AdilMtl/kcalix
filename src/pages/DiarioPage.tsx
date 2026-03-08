@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDiary, MEAL_LABELS } from '../hooks/useDiary'
 import { useSettings } from '../hooks/useSettings'
+import { useDateStore } from '../store/dateStore'
 import FoodDrawer from '../components/FoodDrawer'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
@@ -263,7 +264,8 @@ function MealAccordion({ meal, label, entries, isOpen, onToggle, onRemove, onQui
 
 // ─── DiarioPage ───────────────────────────────────────────────────────────────
 export default function DiarioPage() {
-  const { diary, loading, removeFood, addFoodOptimistic } = useDiary()
+  const { selectedDate } = useDateStore()
+  const { diary, loading, removeFood, addFoodOptimistic } = useDiary(selectedDate)
   const { settings } = useSettings()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [openMealId, setOpenMealId] = useState<MealKey | null>(null)
@@ -325,9 +327,6 @@ export default function DiarioPage() {
 
       {/* ── Card de totais do dia ── */}
       <div style={{ background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))', border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
-        <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--line)' }}>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Hoje</p>
-        </div>
         <div style={{ padding: '14px 16px 16px' }}>
 
           {/* KPI grid — 3 cards */}

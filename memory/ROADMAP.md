@@ -135,7 +135,7 @@ supabase/migrations/
 |---|---|---|
 | 0 | Setup do repositorio | CONCLUIDA (2026-03-07) |
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
-| 2 | Home e Diario | Em execucao — Sessao 2E pendente |
+| 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | Planejado |
 | 4 | Corpo, Habitos, Mais | Planejado |
 | 5 | Ferramenta de migracao | Planejado |
@@ -186,9 +186,9 @@ supabase/migrations/
 
 ---
 
-## FASE 2 — Home e Diario — EM EXECUCAO (Sessao 2E pendente)
+## FASE 2 — Home e Diario — CONCLUIDA (2026-03-08)
 
-> Sessoes 2A-2D concluidas. Sessao 2E (navegacao por data) e pre-requisito para Fase 3.
+> Todas as sessoes 2A-2E concluidas. Pre-requisito para Fase 3 cumprido.
 
 ### Sessao 2A — HomePage — CONCLUIDA (2026-03-07)
 
@@ -219,9 +219,9 @@ supabase/migrations/
 - [ ] TEST: celular real (375px, safe-area): oportunista — testar quando tiver dispositivo disponivel
 - [ ] TEST: persistencia multi-dispositivo: oportunista
 
-### Sessao 2E — Navegacao por data (PRE-REQUISITO Fase 3)
+### Sessao 2E — Navegacao por data — CONCLUIDA (2026-03-08)
 
-> Deve ser concluida ANTES de iniciar a Sessao 3A.
+> Concluida. Pre-requisito para Fase 3 cumprido.
 > Motivo: DiarioPage e TreinoPage precisam compartilhar a mesma data selecionada.
 > Quando Treino salvar kcal do dia, Diario daquele dia deve exibir o gasto corretamente.
 

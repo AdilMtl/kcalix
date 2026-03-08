@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import Nav from './components/Nav'
+import DateNavBar from './components/DateNavBar'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
@@ -53,6 +54,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function AppLayout() {
   return (
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg)' }}>
+      <DateNavBar />
       {/* Conteúdo da página — padding-bottom para não ficar atrás do Nav */}
       <main className="flex-1 overflow-y-auto pb-20">
         <Outlet />

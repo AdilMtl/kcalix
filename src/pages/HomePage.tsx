@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
+import { useDateStore } from '../store/dateStore'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -441,8 +442,9 @@ function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { selectedDate } = useDateStore()
   const { settings, loading: loadingSettings } = useSettings()
-  const { diary, loading: loadingDiary, getWeekKcal } = useDiary()
+  const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
   const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
   const todayIso = new Date().toISOString().slice(0, 10)

@@ -91,11 +91,10 @@ interface UseDiaryReturn {
   getWeekKcal: (dates: string[]) => Promise<Record<string, number>>
 }
 
-export function useDiary(): UseDiaryReturn {
+export function useDiary(date: string = todayISO()): UseDiaryReturn {
   const { user } = useAuthStore()
   const [diary, setDiary] = useState<DiaryData>(EMPTY_DIARY)
   const [loading, setLoading] = useState(true)
-  const date = todayISO()
 
   useEffect(() => {
     if (!user) {

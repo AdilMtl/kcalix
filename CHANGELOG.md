@@ -2,6 +2,30 @@
 
 ---
 
+## [0.7.0] — 2026-03-08
+
+### Adicionado
+- [feat] Navegação por data global — `dateStore` (Zustand): selectedDate, goToPrev, goToNext, goToToday, isToday
+- [feat] `DateNavBar` — header global em todas as abas: nome da página (esq) + btn "hoje" + date-pill `‹ Dom, 08/03 ›` (dir)
+- [feat] Banner roxo "📅 Editando: [data] → Hoje" aparece em todas as abas ao navegar para dia diferente de hoje
+- [feat] Zustand instalado como dependência
+
+### Melhorado
+- [improve] `useDiary(date?)` — aceita `date` como parâmetro (default = hoje); recarrega dados do Supabase ao mudar data
+- [improve] `DiarioPage` e `HomePage` — usam `selectedDate` do dateStore; dados carregados dinamicamente por data
+- [improve] `DiarioPage` — header redundante "Diário" removido do card de totais (título já no DateNavBar)
+
+### Notas técnicas
+- DateNavBar integrado no `AppLayout` (fora do `<main>`) — persiste ao trocar de aba sem re-render
+- btn "hoje" invisível quando é hoje (opacity: 0, pointerEvents: none) — idêntico ao `.btn-hoje.visible` do original
+- `›` desabilitado visualmente quando selectedDate === hoje (não avança além de hoje)
+- Fiel ao original: CSS `.date-pill` (L111), `.date-nav-btn` (L1637), `.btn-hoje` (L2072), `updateDayBanner` (L8088)
+
+### Sessão 2E concluída — Fase 2 CONCLUÍDA
+- Pré-requisito para Fase 3 (TreinoPage) cumprido
+
+---
+
 ## [0.6.0] — 2026-03-08
 
 ### Adicionado
