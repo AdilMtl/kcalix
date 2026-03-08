@@ -1,148 +1,131 @@
 import { useState } from 'react'
-import { useDiary } from '../hooks/useDiary'
+import { MEAL_LABELS } from '../hooks/useDiary'
 import type { FoodItem } from '../data/foodDb'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
 interface FoodPortionModalProps {
   food: FoodItem
-  meal: MealKey
+  onAddFood: (meal: MealKey, entry: FoodEntry) => void
   onClose: () => void   // confirma e fecha tudo
   onCancel: () => void  // volta para o drawer
 }
 
 function round1(n: number) { return Math.round(n * 10) / 10 }
 
-export default function FoodPortionModal({ food, meal, onClose, onCancel }: FoodPortionModalProps) {
-  const { addFood } = useDiary()
-  const [qty, setQty] = useState(1)
-  const [saving, setSaving] = useState(false)
+const MEAL_ORDER: MealKey[] = ['cafe', 'lanche1', 'almoco', 'lanche2', 'jantar', 'ceia']
 
-  function clamp(v: number) { return Math.max(1, Math.round(v)) }
+export default function FoodPortionModal({ food, onAddFood, onClose, onCancel }: FoodPortionModalProps) {
+  const [qty, setQty] = useState(1)
+  const [selectedMeal, setSelectedMeal] = useState<MealKey>('almoco')
+
+  function clamp(v: number) { return Math.max(0.1, round1(v)) }
 
   const p    = round1(food.p    * qty)
   const c    = round1(food.c    * qty)
   const g    = round1(food.g    * qty)
   const kcal = Math.round(food.kcal * qty)
 
-  async function handleAdd() {
-    setSaving(true)
+  function handleAdd() {
     const entry: FoodEntry = {
       foodId: food.id,
       nome: food.nome,
       qty,
       porcaoG: food.porcaoG * qty,
-      p,
-      c,
-      g,
-      kcal,
+      p, c, g, kcal,
       at: new Date().toISOString(),
     }
-    try {
-      await addFood(meal, entry)
-      onClose()
-    } catch (err) {
-      console.error('addFood:', err)
-      setSaving(false)
-    }
+    onAddFood(selectedMeal, entry)
+    onClose()
   }
 
   return (
     <>
-      {/* Backdrop sobre o drawer */}
+      {/* Backdrop — sobre o drawer */}
       <div
-        className="fixed inset-0 z-60 flex items-end justify-center"
-        style={{ background: 'rgba(0,0,0,0.5)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 62, background: 'rgba(0,0,0,0.6)' }}
         onClick={onCancel}
       />
 
-      {/* Modal centralizado */}
+      {/* Bottom sheet */}
       <div
-        className="fixed left-4 right-4 z-60 flex flex-col gap-4 rounded-2xl p-5"
         style={{
-          bottom: 'calc(env(safe-area-inset-bottom) + 16px)',
-          background: 'var(--bg)',
-          border: '1px solid var(--line)',
-          boxShadow: 'var(--shadow)',
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 63,
+          maxWidth: '600px', margin: '0 auto',
+          background: 'linear-gradient(180deg, #1a2035, #121828)',
+          border: '1px solid var(--line)', borderBottom: 'none',
+          borderRadius: '20px 20px 0 0',
+          maxHeight: '85vh', overflowY: 'auto',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Nome e porção base */}
-        <div>
-          <p className="font-semibold" style={{ color: 'var(--text)' }}>{food.nome}</p>
-          <p className="text-xs" style={{ color: 'var(--text3)' }}>
-            Porção base: {food.porcao} — {food.kcal} kcal
-          </p>
+        {/* Handle */}
+        <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,.15)', borderRadius: '999px', margin: '10px auto 6px' }} />
+
+        {/* Header */}
+        <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line)' }}>
+          <b style={{ fontSize: '15px', color: 'var(--text)' }}>{food.nome}</b>
+          <button onClick={onCancel} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface2)', color: 'var(--text2)', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
-        {/* Controle de quantidade */}
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm" style={{ color: 'var(--text2)' }}>Quantidade</p>
-          <div className="flex items-center gap-2">
-            {[{ label: '−5', delta: -5 }, { label: '−1', delta: -1 }].map(({ label, delta }) => (
-              <button
-                key={label}
-                onClick={() => setQty(q => clamp(q + delta))}
-                className="flex h-8 w-10 items-center justify-center rounded-lg text-xs font-semibold transition-opacity active:opacity-60"
-                style={{ background: 'var(--surface2)', color: 'var(--text2)' }}
-              >
-                {label}
-              </button>
+        {/* Body */}
+        <div style={{ padding: '14px 16px 24px' }}>
+
+          {/* Porção label */}
+          <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text3)', fontWeight: 600, marginBottom: '8px' }}>
+            {food.porcao} × {qty}
+          </div>
+
+          {/* Qty row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0' }}>
+            {([{ label: '−.5', delta: -0.5 }, { label: '−.1', delta: -0.1 }] as { label: string; delta: number }[]).map(({ label, delta }) => (
+              <button key={label} onClick={() => setQty(q => clamp(q + delta))} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--font)', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>{label}</button>
             ))}
+            <input
+              type="number" min="0.1" step="0.1" inputMode="decimal" value={qty}
+              onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v > 0) setQty(clamp(v)) }}
+              style={{ flex: 1, textAlign: 'center', fontSize: '26px', fontWeight: 800, fontVariantNumeric: 'tabular-nums', background: 'var(--surface2)', border: '1px solid var(--line)', borderRadius: '10px', color: 'var(--text)', padding: '4px 6px', fontFamily: 'var(--font)', minWidth: 0, outline: 'none' }}
+            />
+            {([{ label: '+.1', delta: 0.1 }, { label: '+.5', delta: 0.5 }] as { label: string; delta: number }[]).map(({ label, delta }) => (
+              <button key={label} onClick={() => setQty(q => clamp(q + delta))} style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--font)', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>{label}</button>
+            ))}
+          </div>
 
-            <span
-              className="w-10 text-center text-lg font-bold tabular-nums"
-              style={{ color: 'var(--text)' }}
-            >
-              {qty}
-            </span>
+          {/* Macro boxes */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', margin: '12px 0' }}>
+            {([
+              { label: 'Prot',  value: `${p}g`,      color: 'var(--pColor)' },
+              { label: 'Carbo', value: `${c}g`,      color: 'var(--cColor)' },
+              { label: 'Gord',  value: `${g}g`,      color: 'var(--gColor)' },
+              { label: 'kcal',  value: String(kcal), color: 'var(--accent2)' },
+            ]).map(({ label, value, color }) => (
+              <div key={label} style={{ textAlign: 'center', padding: '8px 4px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-xs)' }}>
+                <div style={{ fontSize: '16px', fontWeight: 800, color }}>{value}</div>
+                <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text3)', marginTop: '2px' }}>{label}</div>
+              </div>
+            ))}
+          </div>
 
-            {[{ label: '+1', delta: 1 }, { label: '+5', delta: 5 }].map(({ label, delta }) => (
+          {/* Seleção de refeição */}
+          <p style={{ fontSize: '11px', color: 'var(--text3)', lineHeight: 1.4, marginBottom: '6px' }}>Adicionar à refeição:</p>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', margin: '10px 0' }}>
+            {MEAL_ORDER.map(meal => (
               <button
-                key={label}
-                onClick={() => setQty(q => clamp(q + delta))}
-                className="flex h-8 w-10 items-center justify-center rounded-lg text-xs font-semibold transition-opacity active:opacity-60"
-                style={{ background: 'var(--surface2)', color: 'var(--text2)' }}
+                key={meal}
+                onClick={() => setSelectedMeal(meal)}
+                style={{ padding: '8px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid', borderColor: selectedMeal === meal ? 'rgba(124,92,255,.3)' : 'var(--line)', background: selectedMeal === meal ? 'linear-gradient(135deg, rgba(124,92,255,.4), rgba(124,92,255,.15))' : 'var(--surface)', color: selectedMeal === meal ? 'var(--text)' : 'var(--text2)', fontFamily: 'var(--font)', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
               >
-                {label}
+                {MEAL_LABELS[meal]}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Preview de macros */}
-        <div
-          className="flex justify-between rounded-xl px-4 py-3"
-          style={{ background: 'var(--surface2)' }}
-        >
-          {[
-            { label: 'Kcal', value: String(kcal), color: 'var(--text)' },
-            { label: 'P', value: `${p}g`, color: 'var(--good)' },
-            { label: 'C', value: `${c}g`, color: 'var(--warn)' },
-            { label: 'G', value: `${g}g`, color: 'var(--bad)' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="flex flex-col items-center gap-0.5">
-              <p className="text-sm font-bold tabular-nums" style={{ color }}>{value}</p>
-              <p className="text-[10px]" style={{ color: 'var(--text3)' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Botões */}
-        <div className="flex gap-2">
-          <button
-            onClick={onCancel}
-            className="flex-1 rounded-xl py-3 text-sm font-medium transition-opacity active:opacity-60"
-            style={{ background: 'var(--surface2)', color: 'var(--text2)' }}
-          >
-            Voltar
-          </button>
+          {/* Botão Adicionar */}
+          <div style={{ height: '12px' }} />
           <button
             onClick={handleAdd}
-            disabled={saving}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold transition-opacity active:opacity-60 disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'linear-gradient(135deg, var(--accent), rgba(124,92,255,.6))', border: '1px solid rgba(124,92,255,.3)', color: '#fff', fontFamily: 'var(--font)', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}
           >
-            {saving ? 'Salvando...' : 'Adicionar'}
+            Adicionar
           </button>
         </div>
       </div>

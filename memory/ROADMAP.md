@@ -214,22 +214,30 @@ supabase/migrations/
 - [x] Nenhuma chamada Supabase direta em componente (via useSettings + useDiary)
 - [ ] Testa em 375px sem overflow horizontal (testar no dispositivo)
 
-### Sessao 2B — DiarioPage + FoodDrawer (Implementado — pendente polish)
+### Sessao 2B — DiarioPage + FoodDrawer — CONCLUIDA (2026-03-07)
 
-**Implementado em 2026-03-07:**
 - [x] `src/data/foodDb.ts` — FOOD_DB extraido do app original (9 categorias, ~130 itens)
-- [x] `src/hooks/useDiary.ts` — corrigido para 6 refeicoes (cafe, lanche1, almoco, lanche2, jantar, ceia) + getRecentFoods
-- [x] `src/pages/DiarioPage.tsx` — 6 secoes de refeicao, totais do dia, barras de macro
-- [x] `src/components/FoodDrawer.tsx` — bottom sheet 88dvh, busca, abas Recentes/Todos/categorias
-- [x] `src/components/FoodPortionModal.tsx` — ajuste de quantidade, preview de macros, salva no Supabase
+- [x] `src/hooks/useDiary.ts` — 6 refeicoes + getRecentFoods + addFoodOptimistic
+- [x] `src/pages/DiarioPage.tsx` — visual fiel: KPI grid, linha kcal gradient, status pills, accordion meals
+- [x] `src/components/FoodDrawer.tsx` — visual fiel: gradiente escuro, handle, busca com icone, cat-tabs
+- [x] `src/components/FoodPortionModal.tsx` — bottom sheet real, qty decimal, meal-select-row
+- [x] `src/index.css` — --pColor/--cColor/--gColor + ambient glow
+- [x] `.claude/commands/port.md` — skill de metodologia de port criada
 
-**Bugs e melhorias pendentes para Sessao 2C (polish):**
-- [ ] FIX: adicao de alimentos lenta — upsert do Supabase bloqueia UI, precisa de otimistic update (atualiza estado local imediatamente, persiste em background)
-- [ ] FIX: quantidade minima de 0.5 no FoodPortionModal impede adicionar alguns alimentos — revisar logica do clamp(), permitir qty inteiros simples (min 1, steps de 1)
-- [ ] FIX: alguns alimentos nao adicionam — investigar se e erro de persistencia ou de validacao de qty
-- [ ] IMPROVE: layout geral da DiarioPage e FoodDrawer esta funcional mas precisa de polish visual (espacamentos, tipografia, cores dos cards de refeicao)
-- [ ] IMPROVE: FoodPortionModal — campo de quantidade deve aceitar input numerico direto alem dos botoes +-
-- [ ] IMPROVE: gráfico semanal na HomePage — atualmente so mostra dia atual, implementar leitura dos ultimos 7 dias do Supabase
+### Sessao 2C — Polish visual — CONCLUIDA (2026-03-07)
+
+Todas as pendencias de 2B resolvidas. Ver CHANGELOG v0.4.0.
+
+### Sessao 2D — Pendencias (proxima sessao)
+
+- [ ] IMPROVE: FoodDrawer — fd-peek (itens adicionados hoje, colapsavel)
+  - Ref: HTML linha 2870, JS renderFoodLog() linha 5907
+- [ ] IMPROVE: FoodDrawer — botao "Criar alimento personalizado"
+  - Ref: HTML linha 2867, JS addCustomFood() linha 6080
+- [ ] IMPROVE: grafico semanal na HomePage — 7 dias reais do Supabase
+  - Ref: renderWeekEnergyChart() linha 4266
+
+**TEST:**
 - [ ] TEST: persistencia multi-dispositivo (mesmo dado em dois navegadores)
 - [ ] TEST: celular real (375px, toque, teclado virtual, safe-area)
 

@@ -84,6 +84,7 @@ interface UseDiaryReturn {
   diary: DiaryData
   loading: boolean
   addFood: (meal: MealKey, entry: FoodEntry) => Promise<void>
+  addFoodOptimistic: (meal: MealKey, entry: FoodEntry) => void
   removeFood: (meal: MealKey, index: number) => Promise<void>
   setKcalTreino: (kcal: number) => Promise<void>
   getRecentFoods: () => Promise<FoodItem[]>
@@ -136,6 +137,22 @@ export function useDiary(): UseDiaryReturn {
     await persist({ ...diary, meals: nextMeals, totals: recalcTotals(nextMeals) }, diary)
   }, [diary, persist])
 
+  // Atualiza estado imediatamente e persiste em background sem bloquear UI
+  const addFoodOptimistic = useCallback((meal: MealKey, entry: FoodEntry) => {
+    const nextMeals: DiaryMeals = {
+      ...diary.meals,
+      [meal]: [...diary.meals[meal], entry],
+    }
+    const next: DiaryData = { ...diary, meals: nextMeals, totals: recalcTotals(nextMeals) }
+    setDiary(next)
+    if (user) {
+      supabase
+        .from('diary_entries')
+        .upsert({ user_id: user.id, date, data: next }, { onConflict: 'user_id,date' })
+        .then(({ error }) => { if (error) console.error('addFoodOptimistic persist:', error) })
+    }
+  }, [diary, user?.id, date])
+
   const removeFood = useCallback(async (meal: MealKey, index: number) => {
     const nextMeals: DiaryMeals = {
       ...diary.meals,
@@ -182,5 +199,5 @@ export function useDiary(): UseDiaryReturn {
     return result
   }, [user?.id])
 
-  return { diary, loading, addFood, removeFood, setKcalTreino, getRecentFoods }
+  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, getRecentFoods }
 }

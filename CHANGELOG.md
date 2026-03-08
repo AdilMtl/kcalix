@@ -2,6 +2,35 @@
 
 ---
 
+## [0.4.0] — 2026-03-07
+
+### Melhorado
+- [improve] DiarioPage — visual fiel ao original: KPI grid com barra colorida no topo, linha kcal gradient text (roxo→verde), status pills com dot colorido e diff por macro, accordion de meals (1 aberto por vez), summary "P·C·G" no header colapsado, quick buttons +.5P/+1P/+.5C/+1C/+.5G/+1G
+- [improve] FoodDrawer — visual fiel ao original: gradiente escuro (#1a2035→#121828), handle, busca com ícone 🔍 e botão ✕ de limpar, cat-tabs com gradiente roxo ativo, food-items como cards bordados
+- [improve] FoodPortionModal — bottom sheet real (sobe da base), qty decimal (−.5/−.1/+.1/+.5), input direto, macro boxes 4 colunas coloridas, meal-select-row fiel ao original
+- [improve] index.css — variáveis --pColor/--cColor/--gColor; ambient glow body::before/::after
+
+### Corrigido
+- [fix] Bug arquitetural: FoodPortionModal instanciava useDiary() próprio, não sincronizando com DiarioPage — corrigido passando addFoodOptimistic via props (DiarioPage → FoodDrawer → FoodPortionModal)
+- [fix] Fluxo de adição idêntico ao original: botão único "🍽️ Adicionar alimentos" no card de totais, refeição selecionada dentro do modal
+- [fix] Quantidade decimal no FoodPortionModal: min=0.1, step=0.1 (era inteiro com clamp mínimo 1)
+
+### Adicionado
+- [feat] addFoodOptimistic() em useDiary — atualiza estado React imediatamente, persiste Supabase em background sem bloquear UI
+- [feat] Skill /port — metodologia de port destilada da sessão 2C, com mapa de linhas do original, regras de fidelidade CSS/React/TS e checklist
+
+### Notas técnicas
+- Estado único: useDiary() instanciado só no DiarioPage; callbacks descem via props
+- Optimistic UI: setDiary(next) → upsert background sem await bloqueante
+- Bottom sheets: background linear-gradient(180deg, #1a2035, #121828) fiel ao .modal-sheet original
+
+### Pendências (Sessão 2D)
+- Gráfico semanal real na HomePage — ler 7 dias do Supabase
+- Testar no celular real (375px, toque, teclado virtual, safe-area)
+- FoodDrawer: fd-peek (adicionados hoje) + botão "Criar alimento personalizado"
+
+---
+
 ## [0.3.0] — 2026-03-07
 
 ### Adicionado
