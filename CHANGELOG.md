@@ -2,6 +2,20 @@
 
 ---
 
+## [0.18.0] — 2026-03-09
+
+### Adicionado
+- [feat] `src/components/WeeklyKcalModal.tsx` — modal bottom sheet histórico semanal de kcal; navegação ‹ › por semana; gráfico de barras (cinza = basal+treino, roxo = ingerido); linha tracejada da meta; projeção kg/sem 📉/📈; legenda; spinner lazy; z-index 312/313; fiel ao original L4342–4436
+- [feat] `src/hooks/useWorkout.ts` — `fetchAllWorkoutRows(userId)` exportada como função standalone, sem instanciar hook completo
+
+### Melhorado
+- [improve] `src/pages/HomePage.tsx` — botão "📊 histórico" ativado (era disabled); carregamento lazy de kcal treino ao abrir modal (não no mount); wiring completo do WeeklyKcalModal
+
+### Notas
+- Fase 4 concluída (4A–4E). Próxima: Fase 5 — Ferramenta de Migração
+
+---
+
 ## [0.17.0] — 2026-03-09
 
 ### Adicionado

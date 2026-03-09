@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
+import { fetchAllWorkoutRows } from '../hooks/useWorkout'
+import { useAuthStore } from '../store/authStore'
 import { useDateStore } from '../store/dateStore'
 import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
 import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
+import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -405,12 +408,15 @@ function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { selectedDate } = useDateStore()
   const { settings, loading: loadingSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
   const { habits, toggleHabit, getAllHabits } = useHabits()
-  const [habitHistOpen, setHabitHistOpen] = useState(false)
-  const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
+  const [habitHistOpen, setHabitHistOpen]   = useState(false)
+  const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
+  const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
+  const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
   const todayIso = new Date().toISOString().slice(0, 10)
   const habitWeekDates = getHabitWeekDates(todayIso)
@@ -418,6 +424,19 @@ export default function HomePage() {
   useEffect(() => {
     getWeekKcal(weekDays.map(d => d.iso)).then(setWeekKcal)
   }, [])
+
+  // Carrega kcal de treino por data ao abrir o modal (lazy)
+  const handleOpenWeeklyModal = useMemo(() => async () => {
+    if (user && Object.keys(workoutKcalByDate).length === 0) {
+      const rows = await fetchAllWorkoutRows(user.id)
+      const map: Record<string, number> = {}
+      for (const r of rows) {
+        map[r.date] = (map[r.date] ?? 0) + (r.kcal ?? 0)
+      }
+      setWorkoutKcalByDate(map)
+    }
+    setWeeklyModalOpen(true)
+  }, [user, workoutKcalByDate])
 
   if (loadingSettings || loadingDiary) {
     return (
@@ -482,10 +501,9 @@ export default function HomePage() {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text2)' }}>📅 Últimos 7 dias</span>
-          {/* Botão histórico — placeholder até modal ser implementado */}
           <button
             type="button"
-            disabled
+            onClick={handleOpenWeeklyModal}
             style={{
               background: 'transparent',
               border: '1px solid var(--line)',
@@ -493,9 +511,8 @@ export default function HomePage() {
               padding: '4px 10px',
               fontSize: '11px',
               fontWeight: 600,
-              color: 'var(--text3)',
-              cursor: 'not-allowed',
-              opacity: .6,
+              color: 'var(--text2)',
+              cursor: 'pointer',
               fontFamily: 'var(--font)',
             }}
           >
@@ -512,6 +529,16 @@ export default function HomePage() {
 
       {/* Grid de ações */}
       <ActionGrid onNavigate={navigate} />
+
+      {/* Modal histórico semanal de kcal */}
+      <WeeklyKcalModal
+        open={weeklyModalOpen}
+        onClose={() => setWeeklyModalOpen(false)}
+        getWeekKcal={getWeekKcal}
+        workoutKcalByDate={workoutKcalByDate}
+        bmr={bmr}
+        kcalTarget={kcalTarget}
+      />
     </div>
   )
 }

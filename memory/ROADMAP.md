@@ -137,7 +137,7 @@ supabase/migrations/
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
-| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B+4C+4D concluidas — 2026-03-09) |
+| 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
@@ -430,7 +430,7 @@ supabase/migrations/
 - HabitTracker passa a renderizar HABITS_DEF dinamicos (fixos + customizados)
 - custom_habits JSONB ja preparado na tabela habits
 
-### Sessao 4E — Historico de Gasto Diario (WeeklyKcalModal) — PLANEJADA
+### Sessao 4E — Historico de Gasto Diario (WeeklyKcalModal) — CONCLUIDA (2026-03-09)
 
 **Objetivo:** Ao clicar no card "📅 Ultimos 7 dias" da HomePage, abrir um modal bottom sheet
 com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.

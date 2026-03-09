@@ -67,6 +67,19 @@ interface UseWorkoutReturn {
   getAllWorkoutRows: () => Promise<(WorkoutDayData & { date: string })[]>
 }
 
+// ── função standalone para leitura de histórico sem montar o hook completo ──
+
+export async function fetchAllWorkoutRows(userId: string): Promise<(WorkoutDayData & { date: string })[]> {
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('date, data')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(200)
+  if (error || !data) return []
+  return data.map(row => ({ date: row.date, ...(row.data as WorkoutDayData) }))
+}
+
 // ── hook ──────────────────────────────────────────────────────
 
 export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
