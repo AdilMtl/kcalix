@@ -51,7 +51,9 @@ interface UseWorkoutReturn {
   setNota:         (nota: string) => void
   addExercise:     (exercicioId: string) => void
   removeExercise:  (index: number) => void
+  swapExercise:    (index: number, newExercicioId: string) => void
   updateSeries:    (exIndex: number, sets: WorkoutExercise['series']) => void
+  applyTemplate:   (tmpl: WorkoutTemplate) => void
   addCardio:       (entry: CardioEntry) => void
   removeCardio:    (index: number) => void
   updateCardio:    (index: number, entry: CardioEntry) => void
@@ -143,6 +145,31 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
     setState(s => ({
       ...s,
       exercicios: s.exercicios.filter((_, i) => i !== index),
+    }))
+  }, [])
+
+  // Troca exercicioId in-place mantendo séries (original L6571–6576)
+  const swapExercise = useCallback((index: number, newExercicioId: string) => {
+    setState(s => ({
+      ...s,
+      exercicios: s.exercicios.map((ex, i) =>
+        i === index ? { ...ex, exercicioId: newExercicioId } : ex
+      ),
+    }))
+  }, [])
+
+  // Aplica template ao dia: carrega exercícios + cardio padrão (original applyTemplate)
+  const applyTemplate = useCallback((tmpl: WorkoutTemplate) => {
+    setState(s => ({
+      ...s,
+      templateId: tmpl.id,
+      exercicios: tmpl.exercicios.map(id => ({
+        exercicioId: id,
+        series: [{ reps: '', carga: '' }, { reps: '', carga: '' }, { reps: '', carga: '' }],
+      })),
+      cardio: tmpl.cardio
+        ? [{ tipo: tmpl.cardio.tipo, minutos: tmpl.cardio.min, kcalPerMin: 5 }]
+        : s.cardio,
     }))
   }, [])
 
@@ -244,7 +271,9 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
     setNota,
     addExercise,
     removeExercise,
+    swapExercise,
     updateSeries,
+    applyTemplate,
     addCardio,
     removeCardio,
     updateCardio,

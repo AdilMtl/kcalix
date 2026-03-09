@@ -11,7 +11,8 @@ import { exById, CARDIO_TYPES } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
 import ExerciseSelector from '../components/ExerciseSelector'
 import { CustomExerciseModal } from '../components/CustomExerciseModal'
-import type { WorkoutSet, CustomExercise } from '../types/workout'
+import { TemplateEditorModal } from '../components/TemplateEditorModal'
+import type { WorkoutSet, CustomExercise, WorkoutTemplate } from '../types/workout'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -39,10 +40,11 @@ export default function TreinoPage() {
   const { selectedDate } = useDateStore()
   const {
     state, templates, loading, saved,
-    addExercise, removeExercise, updateSeries,
+    addExercise, removeExercise, swapExercise, updateSeries,
+    applyTemplate,
     addCardio, removeCardio, updateCardio,
     setNota,
-    saveWorkout, getLastWorkoutForExercise,
+    saveWorkout, saveTemplates, getLastWorkoutForExercise,
   } = useWorkout(selectedDate)
   const {
     customExercises,
@@ -82,6 +84,45 @@ export default function TreinoPage() {
   const [customExOpen, setCustomExOpen] = useState(false)
   // Após criar, força ExerciseSelector na aba "⭐ Meus exercícios" (original L7983–7984)
   const [exSelForceGroup, setExSelForceGroup] = useState<string | null>(null)
+
+  // TemplateEditorModal state (original L7744–7747)
+  const [tmplEditorOpen, setTmplEditorOpen]   = useState(false)
+  const [tmplEditing, setTmplEditing]         = useState<WorkoutTemplate | null>(null)
+  const [tmplEditorIsNew, setTmplEditorIsNew] = useState(false)
+
+  const openTmplEditor = (tmpl: WorkoutTemplate, isNew = false) => {
+    setTmplEditing(tmpl)
+    setTmplEditorIsNew(isNew)
+    setTmplEditorOpen(true)
+  }
+
+  // Cria novo template em branco e abre o editor (original createNewTemplate L7752–7759)
+  const createNewTemplate = () => {
+    const novo: WorkoutTemplate = {
+      id: 'treino_' + Date.now(),
+      nome: 'Novo Treino',
+      cor: '#a78bfa',
+      exercicios: [],
+      cardio: { tipo: 'bicicleta', min: 15 },
+    }
+    openTmplEditor(novo, true)
+  }
+
+  const handleTmplSave = async (updated: WorkoutTemplate) => {
+    const next = tmplEditorIsNew
+      ? [...templates, updated]
+      : templates.map(t => t.id === updated.id ? updated : t)
+    await saveTemplates(next)
+    setTmplEditorOpen(false)
+    setTmplEditing(null)
+  }
+
+  const handleTmplDelete = async (tmplId: string) => {
+    const next = templates.filter(t => t.id !== tmplId)
+    await saveTemplates(next)
+    setTmplEditorOpen(false)
+    setTmplEditing(null)
+  }
 
   // Prev-ref cache: exercicioId → último treino
   const [prevData, setPrevData] = useState<Record<string, WorkoutSet[] | null>>({})
@@ -201,28 +242,8 @@ export default function TreinoPage() {
     if (exSelMode === 'add') {
       addExercise(exercicioId)
     } else if (exSelMode === 'swap' && exSelSwapIdx !== null) {
-      // Trocar exercicioId mantendo as séries existentes
-      const ex = state.exercicios[exSelSwapIdx]
-      updateSeries(exSelSwapIdx, ex.series)
-      // Precisamos também trocar o id — useWorkout não tem swapExercise,
-      // então removemos e re-adicionamos com as séries originais
-      // Fazemos via updateSeries + patch direto no estado
-      // Abordagem: remove + add na posição certa via removeExercise/addExercise
-      // porém addExercise sempre adiciona no fim. Vamos usar updateSeries de forma diferente:
-      // na verdade useWorkout tem removeExercise + addExercise; não há swap.
-      // Implementamos aqui com a sequência: remove idx, depois add (fica no fim).
-      // Para manter a posição exata precisaríamos de swapExercise no hook.
-      // Solução pragmática: usamos a mesma abordagem do original (troca o id, mantém séries)
-      // mas o hook expõe updateSeries(idx, sets) — vamos criar uma cópia local via
-      // removeExercise + setTimeout + addExercise não é viável.
-      // Melhor: adicionamos swapExercise inline com setState via updateSeries trick.
-      // Como updateSeries só altera as séries (não o id), precisamos expor swapExercise.
-      // Por ora: remove o antigo e adiciona o novo (séries são perdidas — trade-off aceitável
-      // já que é igual ao comportamento de "trocar exercício" em sessão nova).
-      // TODO Sessão 3D: adicionar swapExercise ao hook.
-      removeExercise(exSelSwapIdx)
-      // addExercise adiciona ao fim — aceitável para MVP
-      addExercise(exercicioId)
+      // Troca exercicioId in-place mantendo séries (original L6571–6576)
+      swapExercise(exSelSwapIdx, exercicioId)
     }
     setExSelOpen(false)
     setOpenExIdx(null)
@@ -274,6 +295,17 @@ export default function TreinoPage() {
         onDeleteCustom={deleteCustomExercise}
         onRenameCustom={renameCustomExercise}
         forceGroup={exSelForceGroup}
+      />
+
+      {/* TemplateEditorModal — z-index 320/321 (abaixo do ExerciseSelector) */}
+      <TemplateEditorModal
+        open={tmplEditorOpen}
+        template={tmplEditing}
+        isNew={tmplEditorIsNew}
+        customExercises={customExercises}
+        onSave={handleTmplSave}
+        onDelete={handleTmplDelete}
+        onClose={() => { setTmplEditorOpen(false); setTmplEditing(null) }}
       />
 
       {/* CustomExerciseModal — por cima do ExerciseSelector (z-index 331) */}
@@ -368,6 +400,15 @@ export default function TreinoPage() {
                   <button
                     key={tmpl.id}
                     type="button"
+                    onClick={() => {
+                      // Original L6260–6263: confirm se já há séries preenchidas
+                      const hasFilledSets = state.exercicios.some(ex =>
+                        ex.series.some(s => (Number(s.reps) || 0) > 0)
+                      )
+                      const label = tmpl.nome.includes('—') ? tmpl.nome.split('—')[0].trim() : tmpl.nome
+                      if (hasFilledSets && !window.confirm(`Trocar para "${label}"?\nOs dados do treino atual serão apagados.`)) return
+                      applyTemplate(tmpl)
+                    }}
                     style={{
                       position: 'relative',
                       display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -391,23 +432,30 @@ export default function TreinoPage() {
                         </span>
                       )}
                     </span>
-                    <span style={{
-                      position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
-                      width: 24, height: 24, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, color: 'var(--text3)', background: 'rgba(255,255,255,.06)',
-                    }}>✏️</span>
+                    {/* ✏️ abre o editor (original L6309) */}
+                    <span
+                      onClick={e => { e.stopPropagation(); openTmplEditor(tmpl) }}
+                      style={{
+                        position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+                        width: 24, height: 24, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, color: 'var(--text3)', background: 'rgba(255,255,255,.06)',
+                        cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                      }}
+                    >✏️</span>
                   </button>
                 )
               })}
               <button
                 type="button"
+                onClick={createNewTemplate}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '9px 14px', borderRadius: 'var(--radius-sm)',
                   border: '1px dashed var(--line)', background: 'transparent',
                   color: 'var(--text3)', fontFamily: 'var(--font)', fontSize: 12,
                   fontWeight: 700, cursor: 'pointer', minHeight: 40,
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >+ Nova rotina</button>
             </div>

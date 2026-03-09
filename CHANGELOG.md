@@ -2,6 +2,22 @@
 
 ---
 
+## [0.12.0] — 2026-03-08
+
+### Adicionado
+- [feat] `src/components/TemplateEditorModal.tsx` — editor de templates completo: nome, 8 cores, lista de exercícios (reordenar + remover), catálogo por grupo muscular + "⭐ Meus exercícios", cardio padrão (tipo + minutos), delete two-tap com auto-reset 3s; fiel ao original L7761–8066
+- [feat] `src/hooks/useWorkout.ts` — `swapExercise(index, newId)` troca exercicioId in-place mantendo séries (corrige TODO da Sessão 3B); `applyTemplate(tmpl)` carrega exercícios + cardio do template no estado do dia
+- [feat] `src/pages/TreinoPage.tsx` — botão ✏️ em cada chip de template abre TemplateEditorModal; botão "+ Nova rotina" cria template vazio; confirm() antes de applyTemplate quando há séries preenchidas (fiel ao original L6260–6263)
+
+### Melhorado
+- [improve] `src/pages/TreinoPage.tsx` — handleExSelect usa swapExercise in-place (antes: remove+add movia exercício para o final da lista)
+
+### Notas
+- TMPL_COLORS: `['#f87171','#60a5fa','#34d399','#fbbf24','#a78bfa','#fb923c','#f472b6','#22d3ee']` — fiel ao original L7748
+- Z-index stack: TemplateEditorModal (320/321) < ExerciseSelector (328/329) < CustomExerciseModal (330/331)
+
+---
+
 ## [0.11.0] — 2026-03-08
 
 ### Adicionado

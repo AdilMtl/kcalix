@@ -320,15 +320,21 @@ supabase/migrations/
 - [x] Nota persiste no saveWorkout
 - [x] /check-port — nenhum item crítico
 
-### Sessao 3D — Editor de Templates
+### Sessao 3D — Editor de Templates — CONCLUIDA (2026-03-08)
 
-**Arquivos a criar:**
-- `src/components/TemplateEditorModal.tsx` — bottom sheet: nome, cor (8 opcoes), lista de exercicios do template, cardio padrao
+**Arquivos criados:**
+- `src/components/TemplateEditorModal.tsx` — bottom sheet: nome, 8 cores, lista de exercícios, catálogo por grupo, cardio padrão, delete two-tap
 
-**Modificar:**
-- `src/pages/TreinoPage.tsx` — tmpl-grid: chips clicaveis que aplicam template ao dia; botao "+ Nova rotina"
+**Arquivos modificados:**
+- `src/pages/TreinoPage.tsx` — ✏️ em cada chip abre editor; "+ Nova rotina"; confirm() antes de applyTemplate
+- `src/hooks/useWorkout.ts` — swapExercise in-place + applyTemplate
 
-**Referencia original:** openTmplEditor (L7761), renderTmplEditor (L7789), TMPL_COLORS
+**Checklist:**
+- [x] Build sem erros TypeScript
+- [x] TemplateEditorModal abre via ✏️ e "+ Nova rotina"
+- [x] Cores, exercícios, cardio salvam corretamente
+- [x] Delete two-tap com auto-reset 3s
+- [x] /check-port executado — confirm() adicionado
 
 ### Sessao 3E — Analytics + Modais
 
