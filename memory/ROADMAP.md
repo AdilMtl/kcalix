@@ -251,21 +251,24 @@ supabase/migrations/
 
 ---
 
-## FASE 3 — Treino (Planejado)
+## FASE 3 — Treino (Em andamento)
 
 > Antes de iniciar: leia `memory/contexto-port.md` secao Fase 3 + referencia.index.html linhas mapeadas abaixo.
 
-### Sessao 3A — Dados + Hook + TreinoPage base (proxima sessao)
+### Sessao 3A — Dados + Hook + TreinoPage base — CONCLUIDA (2026-03-08)
 
-**Arquivos a criar:**
+**Arquivos criados:**
 1. `src/data/exerciseDb.ts` — EXERCISE_DB (L3345), EX_SECONDARY (L3401), MUSCLE_LANDMARKS (L3460), CARDIO_TYPES (L3483), DEFAULT_TEMPLATES (L3492)
-2. `src/hooks/useWorkout.ts` — le/salva `workouts` + `workout_templates` no Supabase (otimistic update)
-3. `src/pages/TreinoPage.tsx` — estrutura base: header com botoes (📊 / 📖 / Salvar), rotinas grid colapsavel, lista de exercicios vazia, workout summary bar (series/volume/cardio/kcal)
+2. `supabase/migrations/004_workout_tables.sql` — tabelas workouts + workout_templates com RLS (EXECUTADO)
+3. `src/types/workout.ts` — tipos TypeScript completos
+4. `src/hooks/useWorkout.ts` — le/salva workouts + templates no Supabase, kcalPerSet(), sync kcalTreino no diary
+5. `src/pages/TreinoPage.tsx` — estrutura base: header com botoes (📊 / 📖 / Salvar), rotinas grid colapsavel, lista de exercicios vazia, workout summary bar (series/volume/cardio/kcal)
 
 **Checklist:**
-- [ ] Build sem erros TypeScript
-- [ ] TreinoPage renderiza estado vazio sem crash
-- [ ] useWorkout nao faz chamadas Supabase diretas em componente
+- [x] Build sem erros TypeScript
+- [x] TreinoPage renderiza estado vazio sem crash
+- [x] useWorkout nao faz chamadas Supabase diretas em componente
+- [ ] Deploy pendente (proxima sessao)
 
 ### Sessao 3B — ExerciseSelector + Exercicios + Series
 

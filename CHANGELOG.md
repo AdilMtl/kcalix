@@ -2,6 +2,23 @@
 
 ---
 
+## [0.8.0] — 2026-03-08
+
+### Adicionado
+- [feat] `src/data/exerciseDb.ts` — EXERCISE_DB (9 grupos, 70+ exercícios), EX_SECONDARY, MUSCLE_LANDMARKS, MUSCLE_ORDER, CARDIO_TYPES, DEFAULT_TEMPLATES + tipos TypeScript + helper `exById()`
+- [feat] `supabase/migrations/004_workout_tables.sql` — tabelas `workouts` + `workout_templates` com RLS (4 policies cada), índices e trigger `updated_at` com `search_path` fixo (EXECUTADO no Supabase)
+- [feat] `src/types/workout.ts` — WorkoutSet, WorkoutExercise, CardioEntry, WorkoutDayData, WorkoutRow, WorkoutTemplate, WorkoutState
+- [feat] `src/hooks/useWorkout.ts` — carrega/salva treino por data, gerencia templates (Opção A: array JSONB), `kcalPerSet()`, sincroniza `kcalTreino` no `diary_entries` ao salvar, `getLastWorkoutForExercise()` para prev-ref (Sessão 3B)
+- [feat] `src/pages/TreinoPage.tsx` — estrutura base fiel ao original: card-header (📊/📖/Salvar), tmpl-section colapsável com grid de rotinas, ex-list, accordions Cardio+Timer, campo de nota, workout-summary (4 KPIs)
+
+### Notas
+- Sessão 3A concluída — Fase 3 em andamento
+- SQL executado no Supabase; função `update_updated_at_column` com `SECURITY DEFINER + SET search_path = ''` (elimina warning de segurança)
+- Funcionalidade de adicionar exercícios/cardio e botão Salvar: Sessões 3B e 3C
+- Deploy pendente para próxima sessão
+
+---
+
 ## [0.7.0] — 2026-03-08
 
 ### Adicionado
