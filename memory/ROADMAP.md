@@ -308,15 +308,17 @@ supabase/migrations/
 
 **Referencia original:** customExercises (L6486–6556), openCustomExModal (L2812–2835), CUSTOM_EX_GROUP = "⭐ Meus"
 
-### Sessao 3C — Cardio + Timer + Nota + Salvar
+### Sessao 3C — Cardio + Timer + Nota + Salvar — CONCLUIDA (2026-03-08)
 
-**Modificar TreinoPage.tsx:**
-- Secao cardio: accordion com CARDIO_TYPES, campo minutos, calculo kcal estimada
-- Timer de pausa: countdown com presets (1:00/1:30/2:00/3:00) + cronometro
-- Campo de nota do treino
-- Botao "Salvar" — persiste workouts no Supabase + atualiza kcalTreino no diary do dia
+**Arquivos modificados:**
+- `src/pages/TreinoPage.tsx` — cardio funcional, timer completo (tabs Timer/Cronômetro, 5 presets, countdown com cores, cronômetro), nota conectada ao setNota(), salvar de ponta a ponta
 
-**Referencia original:** renderCardioList (L~6400), timer (HTML L2646, CSS L1876)
+**Checklist:**
+- [x] Build sem erros TypeScript
+- [x] Cardio: select CARDIO_TYPES + minutos + delete + kcalPerMin automático
+- [x] Timer: display 56px, presets, Stop/Reset, Cronômetro
+- [x] Nota persiste no saveWorkout
+- [x] /check-port — nenhum item crítico
 
 ### Sessao 3D — Editor de Templates
 

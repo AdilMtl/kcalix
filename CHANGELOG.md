@@ -2,6 +2,21 @@
 
 ---
 
+## [0.11.0] — 2026-03-08
+
+### Adicionado
+- [feat] `src/pages/TreinoPage.tsx` — Cardio funcional: select CARDIO_TYPES + input minutos + botão remover + kcalPerMin automático ao trocar tipo; fiel ao original L6654–6680
+- [feat] `src/pages/TreinoPage.tsx` — Timer de Pausa completo: tabs Timer/Cronômetro, display 56px tabular-nums com cores dinâmicas (branco→roxo→lilás), 5 presets fixos (0:30/1:00/1:30/2:00/3:00), Stop/Reset, Cronômetro Iniciar/Pausar/Reset; fiel ao original L2646–2675 + L1876–1889 + L6715–6879
+- [feat] `src/pages/TreinoPage.tsx` — Nota do treino conectada: input controlado via `setNota()`, persiste no Supabase junto com o `saveWorkout()`
+
+### Notas
+- Sessão 3C concluída — Cardio + Timer + Nota + Salvar funcional de ponta a ponta
+- Toast pós-salvar não implementado (botão muda para "✓ Salvo" — equivalente visual); toast planejado para polish geral
+- Notificação de timer finalizado depende de service worker (PWA — Fase 6)
+- Presets editáveis por long-press (original) → planejado para Fase 6
+
+---
+
 ## [0.9.0] — 2026-03-08
 
 ### Adicionado

@@ -1,13 +1,13 @@
-// TreinoPage — Fase 3 — Sessão 3B: ExerciseSelector + Exercícios + Séries
+// TreinoPage — Fase 3 — Sessão 3C: Cardio + Timer + Nota + Salvar
 // Visual fiel ao original: referência.index.html L2604–2695
-// CSS fiel: L1356–1481 (tmpl-section, tmpl-grid, ex-list, set-table, prev-ref, workout-summary)
-// JS fiel: L6280–6438 (renderTmplGrid, renderExList, set inputs, add/remove serie)
+// CSS fiel: L1356–1481 + L1876–1889 (timer)
+// JS fiel: L6280–6879 (renderExList, cardio, saveTreino, timer, cronômetro)
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useWorkout } from '../hooks/useWorkout'
 import { useCustomExercises } from '../hooks/useCustomExercises'
 import { useDateStore } from '../store/dateStore'
-import { exById } from '../data/exerciseDb'
+import { exById, CARDIO_TYPES } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
 import ExerciseSelector from '../components/ExerciseSelector'
 import { CustomExerciseModal } from '../components/CustomExerciseModal'
@@ -40,6 +40,8 @@ export default function TreinoPage() {
   const {
     state, templates, loading, saved,
     addExercise, removeExercise, updateSeries,
+    addCardio, removeCardio, updateCardio,
+    setNota,
     saveWorkout, getLastWorkoutForExercise,
   } = useWorkout(selectedDate)
   const {
@@ -55,6 +57,21 @@ export default function TreinoPage() {
   const [accTimerOpen, setAccTimerOpen]   = useState(false)
   const [openExIdx, setOpenExIdx]         = useState<number | null>(null)
   const [saving, setSaving]               = useState(false)
+
+  // ── Timer state (original L6715–6734) ─────────────────────
+  // Presets: 30s, 1min, 1:30, 2min, 3min (fiel ao original DEFAULT_TIMER_PRESETS)
+  const TIMER_PRESETS = [30, 60, 90, 120, 180]
+  const [timerTab, setTimerTab]           = useState<'timer' | 'stopwatch'>('timer')
+  const [timerSecs, setTimerSecs]         = useState(90)       // preset selecionado
+  const [timerRemain, setTimerRemain]     = useState(90)       // contagem regressiva
+  const [timerRunning, setTimerRunning]   = useState(false)
+  const [timerFinished, setTimerFinished] = useState(false)
+  const [swElapsed, setSwElapsed]         = useState(0)
+  const [swRunning, setSwRunning]         = useState(false)
+  const timerIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timerStartedAtRef = useRef<number>(0)
+  const swIntervalRef     = useRef<ReturnType<typeof setInterval> | null>(null)
+  const swStartedAtRef    = useRef<number>(0)
 
   // ExerciseSelector state
   const [exSelOpen, setExSelOpen]       = useState(false)
@@ -83,6 +100,74 @@ export default function TreinoPage() {
       loadPrev(state.exercicios[next].exercicioId)
     }
   }
+
+  // ── Timer helpers (original L6736–6879) ───────────────────
+
+  const fmtSecs = (s: number) => {
+    const m = Math.floor(Math.abs(s) / 60)
+    const ss = Math.abs(s) % 60
+    return `${m}:${ss.toString().padStart(2, '0')}`
+  }
+
+  // Cleanup ao desmontar
+  useEffect(() => {
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
+      if (swIntervalRef.current)    clearInterval(swIntervalRef.current)
+    }
+  }, [])
+
+  const timerStop = useCallback(() => {
+    if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null }
+    setTimerRunning(false)
+    setTimerFinished(false)
+  }, [])
+
+  const timerReset = useCallback(() => {
+    timerStop()
+    setTimerRemain(timerSecs)
+  }, [timerStop, timerSecs])
+
+  const timerStart = useCallback((secs: number) => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
+    setTimerSecs(secs)
+    setTimerRemain(secs)
+    setTimerRunning(true)
+    setTimerFinished(false)
+    timerStartedAtRef.current = Date.now()
+    timerIntervalRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - timerStartedAtRef.current) / 1000)
+      const remain  = secs - elapsed
+      if (remain <= 0) {
+        setTimerRemain(0)
+        setTimerRunning(false)
+        setTimerFinished(true)
+        clearInterval(timerIntervalRef.current!)
+        timerIntervalRef.current = null
+      } else {
+        setTimerRemain(remain)
+      }
+    }, 250)
+  }, [])
+
+  const swStop = useCallback(() => {
+    if (swIntervalRef.current) { clearInterval(swIntervalRef.current); swIntervalRef.current = null }
+    setSwRunning(false)
+  }, [])
+
+  const swReset = useCallback(() => {
+    swStop()
+    setSwElapsed(0)
+  }, [swStop])
+
+  const swToggle = useCallback(() => {
+    if (swRunning) { swStop(); return }
+    setSwRunning(true)
+    swStartedAtRef.current = Date.now() - swElapsed * 1000
+    swIntervalRef.current = setInterval(() => {
+      setSwElapsed(Math.floor((Date.now() - swStartedAtRef.current) / 1000))
+    }, 250)
+  }, [swRunning, swElapsed, swStop])
 
   // ── Workout summary ───────────────────────────────────────
   const totalSeries    = state.exercicios.reduce((acc, ex) => acc + ex.series.length, 0)
@@ -563,7 +648,7 @@ export default function TreinoPage() {
             }}
           >＋ Exercício</button>
 
-          {/* ── Accordion Cardio ───────────────────────────────── */}
+          {/* ── Accordion Cardio (original L2632–2641, JS L6654–6680) ── */}
           <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: 8, background: 'var(--surface)' }}>
             <button
               type="button"
@@ -575,17 +660,60 @@ export default function TreinoPage() {
             </button>
             {accCardioOpen && (
               <div style={{ padding: '0 14px 14px' }}>
-                {state.cardio.length === 0 && (
-                  <div style={{ fontSize: 12, color: 'var(--text3)', padding: '4px 0 8px', fontWeight: 600 }}>
-                    Nenhum cardio adicionado
+                {state.cardio.map((c, ci) => (
+                  <div key={ci} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <select
+                      value={c.tipo}
+                      onChange={e => {
+                        const ct = CARDIO_TYPES.find(t => t.id === e.target.value)
+                        updateCardio(ci, { ...c, tipo: e.target.value, kcalPerMin: ct?.kcalMin ?? 6 })
+                      }}
+                      style={{
+                        flex: 1, border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
+                        color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 13,
+                        fontWeight: 700, padding: '8px 6px', borderRadius: 'var(--radius-xs)',
+                        outline: 'none', WebkitAppearance: 'none', appearance: 'none',
+                      }}
+                    >
+                      {CARDIO_TYPES.map(ct => (
+                        <option key={ct.id} value={ct.id}>{ct.nome}</option>
+                      ))}
+                    </select>
+                    <input
+                      inputMode="numeric"
+                      placeholder="min"
+                      value={c.minutos || ''}
+                      onChange={e => updateCardio(ci, { ...c, minutos: Number(e.target.value) || 0 })}
+                      style={{
+                        width: 64, border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
+                        color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 16,
+                        fontWeight: 700, padding: '8px 8px', borderRadius: 'var(--radius-xs)',
+                        outline: 'none', textAlign: 'center',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeCardio(ci)}
+                      style={{
+                        width: 40, height: 40, borderRadius: 'var(--radius-xs)',
+                        border: '1px solid rgba(248,113,113,.2)', background: 'transparent',
+                        color: 'var(--bad)', fontSize: 14, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, WebkitTapHighlightColor: 'transparent',
+                      }}
+                    >✕</button>
                   </div>
-                )}
-                <button type="button" style={addSetBtnStyle}>+ Adicionar cardio</button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addCardio({ tipo: CARDIO_TYPES[0].id, minutos: 0, kcalPerMin: CARDIO_TYPES[0].kcalMin })}
+                  style={addSetBtnStyle}
+                >+ Adicionar cardio</button>
               </div>
             )}
           </div>
 
-          {/* ── Accordion Timer ────────────────────────────────── */}
+          {/* ── Accordion Timer (original L2646–2675, CSS L1876–1889, JS L6715–6879) ── */}
           <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: 8, background: 'var(--surface)' }}>
             <button
               type="button"
@@ -596,19 +724,127 @@ export default function TreinoPage() {
               <span style={{ fontSize: 12, color: 'var(--text3)', transition: 'transform .2s', display: 'inline-block', transform: accTimerOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
             </button>
             {accTimerOpen && (
-              <div style={{ padding: '0 14px 14px', color: 'var(--text3)', fontSize: 12, fontWeight: 600 }}>
-                Timer — Sessão 3C
+              <div style={{ padding: '0 14px 14px' }}>
+
+                {/* Tabs Timer / Cronômetro */}
+                <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                  {(['timer', 'stopwatch'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setTimerTab(tab)}
+                      style={{
+                        flex: 1, padding: '8px 0', borderRadius: 8,
+                        border: `1.5px solid ${timerTab === tab ? 'var(--accent)' : 'var(--line)'}`,
+                        background: timerTab === tab ? 'var(--accent)' : 'transparent',
+                        color: timerTab === tab ? '#fff' : 'var(--text2)',
+                        fontSize: 13, fontWeight: 600, fontFamily: 'var(--font)',
+                        cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                        transition: 'all .15s',
+                      }}
+                    >
+                      {tab === 'timer' ? '⏱ Timer' : '⏱ Cronômetro'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Painel Timer countdown */}
+                {timerTab === 'timer' && (
+                  <div>
+                    <div style={{
+                      textAlign: 'center', fontSize: 56, fontWeight: 700,
+                      letterSpacing: '.03em', lineHeight: 1,
+                      fontVariantNumeric: 'tabular-nums',
+                      margin: '6px 0 14px',
+                      color: timerFinished ? 'var(--accent2)' : timerRunning ? 'var(--accent)' : 'var(--text)',
+                      transition: 'color .2s',
+                    }}>
+                      {fmtSecs(timerRemain)}
+                    </div>
+                    {/* Presets */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                      {TIMER_PRESETS.map(secs => (
+                        <button
+                          key={secs}
+                          type="button"
+                          onClick={() => timerStart(secs)}
+                          style={{
+                            flex: 1, minWidth: 52, padding: '11px 4px',
+                            borderRadius: 10,
+                            border: `1.5px solid ${timerRunning && secs === timerSecs ? 'var(--accent)' : 'var(--line)'}`,
+                            background: timerRunning && secs === timerSecs ? 'var(--accent)' : 'var(--surface2)',
+                            color: timerRunning && secs === timerSecs ? '#fff' : 'var(--text)',
+                            fontSize: 14, fontWeight: 700, fontFamily: 'var(--font)',
+                            cursor: 'pointer', textAlign: 'center',
+                            transition: 'all .15s', userSelect: 'none',
+                            WebkitTapHighlightColor: 'transparent',
+                          }}
+                        >
+                          {fmtSecs(secs)}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Controles */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={timerStop}
+                        style={timerCtrlBtnStyle}
+                      >Stop</button>
+                      <button
+                        type="button"
+                        onClick={timerReset}
+                        style={timerCtrlBtnStyle}
+                      >Reset</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Painel Cronômetro */}
+                {timerTab === 'stopwatch' && (
+                  <div>
+                    <div style={{
+                      textAlign: 'center', fontSize: 56, fontWeight: 700,
+                      letterSpacing: '.03em', lineHeight: 1,
+                      fontVariantNumeric: 'tabular-nums',
+                      margin: '6px 0 14px',
+                      color: swRunning ? 'var(--accent)' : 'var(--text)',
+                      transition: 'color .2s',
+                    }}>
+                      {fmtSecs(swElapsed)}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={swToggle}
+                        style={{
+                          ...timerCtrlBtnStyle,
+                          background: 'var(--accent)', color: '#fff',
+                          border: 'none',
+                        }}
+                      >{swRunning ? 'Pausar' : 'Iniciar'}</button>
+                      <button
+                        type="button"
+                        onClick={swReset}
+                        style={timerCtrlBtnStyle}
+                      >Reset</button>
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
           </div>
 
-          {/* ── Nota do treino ─────────────────────────────────── */}
+          {/* ── Nota do treino (original L2680–2683) ────────────── */}
           <div style={{ marginBottom: 10 }}>
             <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', display: 'block', marginBottom: 6 }}>
               📝 Observação do treino
             </label>
             <input
               placeholder="Como foi o treino, dores, energia..."
+              value={state.nota}
+              onChange={e => setNota(e.target.value)}
               style={{
                 width: '100%', boxSizing: 'border-box',
                 border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
@@ -616,7 +852,6 @@ export default function TreinoPage() {
                 fontSize: 16, fontWeight: 600, padding: '10px 12px',
                 borderRadius: 'var(--radius-xs)', outline: 'none',
               }}
-              readOnly
             />
           </div>
 
@@ -686,4 +921,11 @@ const addSetBtnStyle: React.CSSProperties = {
   border: '1px dashed var(--line)', background: 'transparent',
   color: 'var(--text3)', fontFamily: 'var(--font)', fontSize: 11, fontWeight: 700,
   cursor: 'pointer', width: '100%', textAlign: 'center',
+}
+
+const timerCtrlBtnStyle: React.CSSProperties = {
+  flex: 1, padding: '10px 0', borderRadius: 'var(--radius-xs)',
+  border: '1px solid var(--line)', background: 'var(--surface2)',
+  color: 'var(--text2)', fontFamily: 'var(--font)', fontSize: 13, fontWeight: 700,
+  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
 }
