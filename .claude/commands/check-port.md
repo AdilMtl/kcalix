@@ -1,89 +1,83 @@
 # /check-port — Verificar fidelidade do port ao original
 
-Compara o que foi implementado no Kcalix com o app original (`referência.index.html`),
-garantindo que nenhum elemento visual ou funcional foi esquecido.
+Compara o que foi implementado no Kcalix com o app original (`referência.index.html`).
+O objetivo é garantir que **a experiência do usuário seja idêntica ao original** — não avaliar detalhes técnicos.
 
-Use **após implementar** com `/port` e **antes de** `/review` e `/end`.
+**Princípio:** copiar exatamente igual. Só divergir se a arquitetura nova tornar algo impossível de copiar — e nesse caso, documentar no ROADMAP.
 
 ---
 
-## Processo de verificação
+## Como funciona
 
 ### 1. Identificar o escopo
 
 O usuário informa o elemento portado (ex: "3B — ExerciseSelector + Séries").
-Se não informado, use a sessão atual do ROADMAP.
+Se não informado, usar a sessão atual do ROADMAP.
 
-### 2. Ler o original nas linhas mapeadas
+### 2. Ler o original
 
-Consulte o `ROADMAP.md` para as linhas da sessão atual.
-Abra `memory/ref.aplicativo_antigo/referência.index.html` nas linhas indicadas.
+Abrir `memory/ref.aplicativo_antigo/referência.index.html` nas linhas da sessão.
+Para cada elemento visível ou interativo, perguntar:
 
-Extraia uma lista de **todos os elementos** presentes:
-- Elementos HTML (divs, botões, inputs, tabelas, modais)
-- Classes CSS com comportamento visual relevante
-- Funções JS / lógica de negócio
-- Estados e interações (toggle, open/close, cálculos)
+> "O usuário do app original consegue fazer X. O usuário do Kcalix também consegue?"
 
-### 3. Ler o código Kcalix implementado
+### 3. Ler o código implementado
 
-Abra os arquivos criados/modificados na sessão.
-Mapeie cada elemento do original para sua contraparte React/TS.
+Abrir os arquivos criados/modificados e mapear cada ação do usuário.
 
-### 4. Produzir o relatório de fidelidade
+### 4. Produzir o relatório
+
+O relatório fala sobre **o que o usuário vê e faz** — não sobre código.
 
 ```
 🔍 CHECK-PORT: [Nome da sessão]
 
-LINHAS ANALISADAS NO ORIGINAL: [ex: L2837–2850, L6280–6591, L1356–1456]
+O QUE O USUÁRIO CONSEGUE FAZER:
+✅ [ação] — funciona igual ao original
+✅ [ação] — funciona igual ao original
+⚠️  [ação] — funciona, mas diferente: [explicação simples]
+❌ [ação] — NÃO FUNCIONA: [o que está faltando]
 
-ELEMENTOS VERIFICADOS:
-✅ [elemento] — implementado em [arquivo:linha]
-✅ [elemento] — implementado em [arquivo:linha]
-⚠️  [elemento] — implementado parcialmente: [detalhe]
-❌ [elemento] — FALTANDO: [detalhe]
+DIFERENÇAS ENCONTRADAS:
+❌ [Crítico] [Nome] — [o que o usuário sente] → corrigir agora
+⚠️  [Menor]  [Nome] — [o que o usuário sente] → próxima sessão
+💡 [Melhoria] [Nome] — Kcalix faz melhor que o original → manter assim
 
-GAPS ENCONTRADOS:
-- ❌ [gap crítico que quebra UX]
-- ⚠️  [gap menor / pode ser próxima sessão]
-- 💡 [elemento que foi melhorado em relação ao original — aceitável]
-
-DECISÕES ARQUITETURAIS (diferenças intencionais):
-- [ex: "swap usa remove+add ao invés de troca in-place — documentado para 3D"]
+DECISÕES TÉCNICAS (diferenças que o usuário não percebe):
+- [ex: "trocar exercício move para o fim da lista em vez de manter posição — documentado para 3D"]
 
 VEREDICTO:
-✅ Fiel ao original — pronto para /review
-⚠️  Gaps menores — decidir se corrige agora ou próxima sessão
-❌ Gaps críticos — corrigir antes de /review
+✅ Idêntico ao original — pronto para /review
+⚠️  Diferenças menores — decidir se corrige agora ou na próxima sessão
+❌ Falta algo importante — corrigir antes de /review
 ```
 
-### 5. Se houver gaps críticos
+### 5. Se houver itens ❌
 
-Para cada ❌ crítico:
-1. Leia as linhas exatas do original
-2. Proponha a correção mínima necessária
-3. Aguarde confirmação antes de implementar
+1. Descrever em linguagem simples o que o usuário não consegue fazer
+2. Propor a correção
+3. Aguardar confirmação antes de implementar
 
 ---
 
-## O que é gap crítico vs. menor
+## O que é crítico vs. menor vs. melhoria
 
-**Crítico (❌) — corrigir antes de deploy:**
-- Funcionalidade principal quebrada (ex: não consegue adicionar série)
-- Input sem `font-size: 16px` (causa zoom iOS)
-- Botão sem área de toque mínima (44px)
-- Cálculo errado (ex: kcalPerSet diferente do original)
-- Estado que deveria persistir não persiste
+**Crítico ❌ — corrigir antes de avançar:**
+- Usuário não consegue completar uma ação principal (ex: não consegue adicionar série)
+- Algo causa erro ou trava
+- Input que abre teclado com zoom indesejado no celular (< 16px)
+- Cálculo diferente do original (ex: kcal estimada errada)
 
-**Menor (⚠️) — pode ir para próxima sessão:**
-- Animação de transição faltando
-- Detalhe visual de 1–2px de diferença
-- Feature de sessão futura (ex: modal de progressão na 3E)
-- Comportamento edge case raramente atingido
+**Menor ⚠️ — pode ir para próxima sessão:**
+- Animação ou transição faltando
+- Detalhe visual quase imperceptível
+- Funcionalidade de sessão futura (já planejada no ROADMAP)
+- Caso de uso raro que quase ninguém vai usar
 
-**Melhoria intencional (💡) — documentar e manter:**
-- Substituição de `confirm()` nativo por UI mais elegante (se já implementado)
-- Comportamento superior ao original que não quebra nada
+**Melhoria 💡 — manter e documentar:**
+- Kcalix faz algo melhor que o original sem quebrar nada
+- Ex: preview de exercícios no template chip (Kcalix mostra nomes, original mostra "X exercícios")
+- Ex: prev-ref carrega só quando abre o exercício (mais eficiente que carregar tudo de uma vez)
 
 ---
 
