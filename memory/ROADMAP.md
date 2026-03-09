@@ -136,7 +136,7 @@ supabase/migrations/
 | 0 | Setup do repositorio | CONCLUIDA (2026-03-07) |
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
-| 3 | Treino | Planejado |
+| 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
 | 4 | Corpo, Habitos, Mais | Planejado |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
@@ -336,17 +336,36 @@ supabase/migrations/
 - [x] Delete two-tap com auto-reset 3s
 - [x] /check-port executado — confirm() adicionado
 
-### Sessao 3E — Analytics + Modais
+### Sessao 3E — Analytics + Modais — CONCLUIDA (2026-03-09)
 
-**Arquivos a criar:**
-- `src/hooks/useMuscleVolume.ts` — calcula sets por grupo (primario + secundario) vs MEV/MAV/MRV
-- `src/components/CoachGuideModal.tsx` — 5 abas educativas (conceitos de volume, Lucas Campos)
-- `src/components/ExerciseProgressionModal.tsx` — grafico carga/volume + tabela historico + badge PR
-- `src/components/TemplateHistoryModal.tsx` — historico de uso de cada template com comparativo
+**Arquivos criados:**
+- `src/hooks/useMuscleVolume.ts` — calcMuscleVolume, calcMuscleAvg4weeks, calcFrequencyAlert, getAllExSessions, getAllTmplSessions, 5 insights automaticos, buildInsightsByGroup, hook useMuscleVolume()
+- `src/components/CoachGuideModal.tsx` — 5 abas educativas (MEV/MAV/MRV, Volume Cycling, Rep Ranges, Deload, Progressao), tabela de landmarks, chips por grupo
+- `src/components/ExerciseProgressionModal.tsx` — PR badge, grafico de barras carga/volume toggle, tabela com delta, z-index 303
+- `src/components/TemplateHistoryModal.tsx` — 3 abas (Por treino / Por exercicio / Por grupo), KPIs, tabela sessoes, progressao por exercicio, select agrupado, mg-cards com barra MEV/MRV, chips de insight expansiveis, z-index 321
+- `supabase/migrations/006_fix_workouts_unique_constraint.sql` — fix constraint UNIQUE (user_id, date) perdida na recriacao manual da tabela (erro 42P10 no upsert)
 
-**Referencia original:** mg-card (CSS L1580), coach-tabs (CSS L1605), pr-badge (CSS L1507)
+**Arquivos modificados:**
+- `src/hooks/useWorkout.ts` — getAllWorkoutRows() busca 200 sessoes historicas
+- `src/pages/TreinoPage.tsx` — wiring dos 3 modais; workoutRows recarrega ao abrir modais E apos salvar (nao so no mount)
 
-**Apos Sessao 3E:** HomePage — modal "historico semanal" pode ser implementado (dados de kcal treino disponiveis)
+**Checklist:**
+- [x] Build sem erros TypeScript
+- [x] 3 modais abrem/fecham corretamente
+- [x] Botoes 📊 (header) e 📖 conectados
+- [x] Botao 📊 em cada exercicio abre ExerciseProgressionModal
+- [x] workoutRows atualiza apos Salvar (automatico)
+- [x] /check-port executado — sem itens criticos
+- [x] fix constraint SQL criado (006) — EXECUTAR no Supabase antes de usar
+
+**Pendencias para sessoes futuras (registradas no check-port):**
+- Sessao 3F (futura): Clicar em linha da tabela de sessoes no TemplateHistoryModal deveria navegar para aquela data no TreinoPage — conectar ao dateStore.setDate(). Original: L7572–7577.
+- Fase 6: Timer — long-press nos presets para editar o valor (original L6841–6858). Atualmente presets sao fixos [30,60,90,120,180].
+- Fase 6: Timer — notificacao push ao fim da contagem (original L6775–6785: Notification API + service worker). Depende de PWA (Fase 6).
+- Fase 6: Auto-check habitos ao salvar treino (original L6709–6712: autoCheckHabit). Depende de HabitTracker (Fase 4).
+- Sessao 3F (futura): exercicio custom arquivado (flag `arquivado`) — original L6158–6166 verifica isExUsedInHistory antes de deletar. Kcalix deleta direto sem verificar historico.
+
+**Apos Fase 3 concluida:** HomePage — modal "historico semanal" pode ser implementado (dados de kcal treino disponiveis via getAllWorkoutRows)
 
 ---
 

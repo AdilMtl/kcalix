@@ -2,6 +2,28 @@
 
 ---
 
+## [0.13.0] — 2026-03-09
+
+### Adicionado
+- [feat] `src/hooks/useMuscleVolume.ts` — cálculos de volume muscular: calcMuscleVolume, calcMuscleAvg4weeks, calcFrequencyAlert, getAllExSessions, getAllTmplSessions, buildInsightsByGroup, 5 insights automáticos (plateau, volume cycling, rep monotony, imbalance, chronic low); fiel ao original L6943–7340
+- [feat] `src/components/CoachGuideModal.tsx` — guia educativo: 5 abas (MEV/MAV/MRV, Volume Cycling, Rep Ranges, Deload, Progressão), tabela de landmarks por grupo, chips de detalhe; z-index 319/320
+- [feat] `src/components/ExerciseProgressionModal.tsx` — progressão por exercício: PR badge, gráfico de barras (toggle carga/volume), tabela com delta entre sessões; z-index 302/303; fiel ao original L7357–7444
+- [feat] `src/components/TemplateHistoryModal.tsx` — histórico de treinos: 3 abas (Por treino / Por exercício / Por grupo); KPIs, tabela de sessões, progressão por exercício (clicável → ExerciseProgressionModal), select agrupado, mg-cards com barra MEV/MRV e marcador roxo, chips de insight expansíveis; z-index 320/321; fiel ao original L7446–7731
+- [feat] `src/hooks/useWorkout.ts` — getAllWorkoutRows() busca 200 sessões históricas do Supabase para analytics
+- [feat] `supabase/migrations/006_fix_workouts_unique_constraint.sql` — fix constraint UNIQUE (user_id, date) perdida na recriação manual da tabela (erro 42P10)
+- [feat] `supabase/migrations/007_fix_workouts_schema.sql` — fix completo: colunas created_at/updated_at + UNIQUE + trigger updated_at (erro 42703)
+
+### Melhorado
+- [improve] `src/pages/TreinoPage.tsx` — wiring dos 3 modais de analytics; botões 📊 (header→TemplateHistoryModal) e 📖 (CoachGuideModal) conectados; botão 📊 em cada exercício abre ExerciseProgressionModal; workoutRows recarrega ao abrir modais E após salvar
+- [improve] `src/hooks/useWorkout.ts` — botão Salvar volta para estado "Salvar ▶" automaticamente ao editar após salvar (reset via useEffect em state)
+
+### Notas
+- Z-index stack completo: ExercProg (302/303) < CoachGuide (319/320) < TmplHist (320/321) < TmplEditor (320/321) < ExerciseSelector (328/329) < CustomExModal (330/331)
+- Migrations 006 e 007 devem ser executadas no Supabase SQL Editor (schema foi recriado manualmente em sessão anterior sem colunas/constraints completas)
+- Pendências registradas no ROADMAP: click linha sessão → navegar data; long-press preset timer; notif push; arquivar custom exercise
+
+---
+
 ## [0.12.0] — 2026-03-08
 
 ### Adicionado

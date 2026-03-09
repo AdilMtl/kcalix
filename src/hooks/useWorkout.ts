@@ -64,6 +64,7 @@ interface UseWorkoutReturn {
 
   // leitura de histórico (para sessão 3B/3E)
   getLastWorkoutForExercise: (exercicioId: string) => Promise<WorkoutExercise | null>
+  getAllWorkoutRows: () => Promise<(WorkoutDayData & { date: string })[]>
 }
 
 // ── hook ──────────────────────────────────────────────────────
@@ -123,6 +124,11 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
       setLoading(false)
     })
   }, [user?.id, date])
+
+  // Reseta "salvo" quando o usuário edita após salvar (não dispara durante loading)
+  useEffect(() => {
+    if (!loading) setSaved(false)
+  }, [state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── mutadores de estado local ──
 
@@ -262,6 +268,21 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
     return null
   }, [user?.id, date])
 
+  // ── histórico completo: todas as sessões (para analytics 3E) ──
+  const getAllWorkoutRows = useCallback(async (): Promise<
+    (WorkoutDayData & { date: string })[]
+  > => {
+    if (!user) return []
+    const { data, error } = await supabase
+      .from('workouts')
+      .select('date, data')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+      .limit(200)
+    if (error || !data) return []
+    return data.map(row => ({ date: row.date, ...(row.data as WorkoutDayData) }))
+  }, [user?.id])
+
   return {
     state,
     templates,
@@ -280,5 +301,6 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
     saveWorkout,
     saveTemplates,
     getLastWorkoutForExercise,
+    getAllWorkoutRows,
   }
 }

@@ -12,7 +12,10 @@ import { EX_SECONDARY } from '../data/exerciseDb'
 import ExerciseSelector from '../components/ExerciseSelector'
 import { CustomExerciseModal } from '../components/CustomExerciseModal'
 import { TemplateEditorModal } from '../components/TemplateEditorModal'
-import type { WorkoutSet, CustomExercise, WorkoutTemplate } from '../types/workout'
+import { TemplateHistoryModal } from '../components/TemplateHistoryModal'
+import { ExerciseProgressionModal } from '../components/ExerciseProgressionModal'
+import { CoachGuideModal } from '../components/CoachGuideModal'
+import type { WorkoutSet, CustomExercise, WorkoutTemplate, WorkoutDayData } from '../types/workout'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -44,7 +47,7 @@ export default function TreinoPage() {
     applyTemplate,
     addCardio, removeCardio, updateCardio,
     setNota,
-    saveWorkout, saveTemplates, getLastWorkoutForExercise,
+    saveWorkout, saveTemplates, getLastWorkoutForExercise, getAllWorkoutRows,
   } = useWorkout(selectedDate)
   const {
     customExercises,
@@ -59,6 +62,25 @@ export default function TreinoPage() {
   const [accTimerOpen, setAccTimerOpen]   = useState(false)
   const [openExIdx, setOpenExIdx]         = useState<number | null>(null)
   const [saving, setSaving]               = useState(false)
+
+  // ── Analytics modals state (Sessão 3E) ────────────────────
+  const [tmplHistOpen, setTmplHistOpen]   = useState(false)
+  const [coachGuideOpen, setCoachGuideOpen] = useState(false)
+  const [exProgExId, setExProgExId]       = useState<string | null>(null)
+  const [workoutRows, setWorkoutRows]     = useState<(WorkoutDayData & { date: string })[]>([])
+
+  // Recarrega histórico ao abrir modais de analytics
+  const reloadWorkoutRows = useCallback(() => {
+    getAllWorkoutRows().then(rows => setWorkoutRows(rows))
+  }, [getAllWorkoutRows])
+
+  useEffect(() => {
+    if (tmplHistOpen) reloadWorkoutRows()
+  }, [tmplHistOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (exProgExId !== null) reloadWorkoutRows()
+  }, [exProgExId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Timer state (original L6715–6734) ─────────────────────
   // Presets: 30s, 1min, 1:30, 2min, 3min (fiel ao original DEFAULT_TIMER_PRESETS)
@@ -269,7 +291,10 @@ export default function TreinoPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    try { await saveWorkout() } catch (e) { console.error(e) }
+    try {
+      await saveWorkout()
+      reloadWorkoutRows() // atualiza histórico em background após salvar
+    } catch (e) { console.error(e) }
     setSaving(false)
   }
 
@@ -321,6 +346,31 @@ export default function TreinoPage() {
         }}
       />
 
+      {/* TemplateHistoryModal — z-index 320/321 */}
+      <TemplateHistoryModal
+        open={tmplHistOpen}
+        activeTmplId={state.templateId}
+        templates={templates}
+        workoutRows={workoutRows}
+        customExercises={customExercises}
+        onClose={() => setTmplHistOpen(false)}
+        onOpenExProg={exId => { setTmplHistOpen(false); setExProgExId(exId) }}
+      />
+
+      {/* ExerciseProgressionModal — z-index 302/303 */}
+      <ExerciseProgressionModal
+        exercicioId={exProgExId}
+        workoutRows={workoutRows}
+        customExercises={customExercises}
+        onClose={() => setExProgExId(null)}
+      />
+
+      {/* CoachGuideModal — z-index 319/320 */}
+      <CoachGuideModal
+        open={coachGuideOpen}
+        onClose={() => setCoachGuideOpen(false)}
+      />
+
       {/* ── Card principal ─────────────────────────────────── */}
       <div style={{
         background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
@@ -344,8 +394,8 @@ export default function TreinoPage() {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <button type="button" title="Histórico" style={iconBtnStyle}>📊</button>
-            <button type="button" title="Guia de Volume" style={iconBtnStyle}>📖</button>
+            <button type="button" title="Histórico" style={iconBtnStyle} onClick={() => setTmplHistOpen(true)}>📊</button>
+            <button type="button" title="Guia de Volume" style={iconBtnStyle} onClick={() => setCoachGuideOpen(true)}>📖</button>
             <button
               type="button"
               onClick={handleSave}
@@ -520,7 +570,7 @@ export default function TreinoPage() {
                     <button
                       type="button"
                       title="Progressão"
-                      onClick={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); setExProgExId(ex.exercicioId) }}
                       style={chartBtnStyle}
                     >📊</button>
 
