@@ -55,6 +55,17 @@ export type WorkoutTemplatesRow = {
   updated_at: string;
 };
 
+// Exercício personalizado criado pelo usuário
+export type CustomExercise = {
+  id:          string; // UUID do Supabase
+  user_id:     string;
+  nome:        string;
+  grupo:       string; // grupo principal (chave de EXERCISE_DB)
+  secundarios: string[]; // grupos secundários
+  arquivado:   boolean;
+  created_at:  string;
+};
+
 // Estado local do treino em edição (antes de salvar)
 export type WorkoutState = {
   templateId:  string | null;

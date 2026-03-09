@@ -5,15 +5,33 @@
 
 import { useState, useCallback } from 'react'
 import { useWorkout } from '../hooks/useWorkout'
+import { useCustomExercises } from '../hooks/useCustomExercises'
 import { useDateStore } from '../store/dateStore'
 import { exById } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
 import ExerciseSelector from '../components/ExerciseSelector'
-import type { WorkoutSet } from '../types/workout'
+import { CustomExerciseModal } from '../components/CustomExerciseModal'
+import type { WorkoutSet, CustomExercise } from '../types/workout'
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function getSecondary(exercicioId: string): string[] {
+// exById estendido: verifica built-in + custom (original L6168–6180)
+function resolveExName(exercicioId: string, customExercises: CustomExercise[]): string {
+  const builtin = exById(exercicioId)
+  if (builtin) return builtin.nome
+  return customExercises.find(e => e.id === exercicioId)?.nome ?? exercicioId
+}
+
+function resolveExGrupo(exercicioId: string, customExercises: CustomExercise[]): string {
+  const builtin = exById(exercicioId)
+  if (builtin) return builtin.grupo ?? ''
+  return customExercises.find(e => e.id === exercicioId)?.grupo ?? ''
+}
+
+// getSecondary: built-in via EX_SECONDARY, custom via campo secundarios (original L6191–6195)
+function getSecondary(exercicioId: string, customExercises: CustomExercise[]): string[] {
+  const custom = customExercises.find(e => e.id === exercicioId)
+  if (custom) return custom.secundarios ?? []
   return EX_SECONDARY[exercicioId] ?? []
 }
 
@@ -24,18 +42,29 @@ export default function TreinoPage() {
     addExercise, removeExercise, updateSeries,
     saveWorkout, getLastWorkoutForExercise,
   } = useWorkout(selectedDate)
+  const {
+    customExercises,
+    createCustomExercise,
+    renameCustomExercise,
+    deleteCustomExercise,
+  } = useCustomExercises()
 
   // ── UI state ──────────────────────────────────────────────
-  const [tmplOpen, setTmplOpen]         = useState(false)
+  const [tmplOpen, setTmplOpen]           = useState(false)
   const [accCardioOpen, setAccCardioOpen] = useState(true)
   const [accTimerOpen, setAccTimerOpen]   = useState(false)
   const [openExIdx, setOpenExIdx]         = useState<number | null>(null)
   const [saving, setSaving]               = useState(false)
 
   // ExerciseSelector state
-  const [exSelOpen, setExSelOpen]     = useState(false)
-  const [exSelMode, setExSelMode]     = useState<'add' | 'swap'>('add')
+  const [exSelOpen, setExSelOpen]       = useState(false)
+  const [exSelMode, setExSelMode]       = useState<'add' | 'swap'>('add')
   const [exSelSwapIdx, setExSelSwapIdx] = useState<number | null>(null)
+
+  // CustomExerciseModal state — fica por cima do ExerciseSelector (z-index 330+)
+  const [customExOpen, setCustomExOpen] = useState(false)
+  // Após criar, força ExerciseSelector na aba "⭐ Meus exercícios" (original L7983–7984)
+  const [exSelForceGroup, setExSelForceGroup] = useState<string | null>(null)
 
   // Prev-ref cache: exercicioId → último treino
   const [prevData, setPrevData] = useState<Record<string, WorkoutSet[] | null>>({})
@@ -153,8 +182,26 @@ export default function TreinoPage() {
       <ExerciseSelector
         open={exSelOpen}
         mode={exSelMode}
-        onClose={() => setExSelOpen(false)}
+        onClose={() => { setExSelOpen(false); setExSelForceGroup(null) }}
         onSelect={handleExSelect}
+        customExercises={customExercises}
+        onCreateCustom={() => setCustomExOpen(true)}
+        onDeleteCustom={deleteCustomExercise}
+        onRenameCustom={renameCustomExercise}
+        forceGroup={exSelForceGroup}
+      />
+
+      {/* CustomExerciseModal — por cima do ExerciseSelector (z-index 331) */}
+      {/* Ao salvar: fecha modal + mantém ExerciseSelector aberto na aba "⭐ Meus" (original L7982–7984) */}
+      <CustomExerciseModal
+        open={customExOpen}
+        onClose={() => setCustomExOpen(false)}
+        onSave={async (nome, grupo, secundarios) => {
+          await createCustomExercise(nome, grupo, secundarios)
+          setCustomExOpen(false)
+          setExSelForceGroup('⭐ Meus exercícios')
+          setExSelOpen(true)
+        }}
       />
 
       {/* ── Card principal ─────────────────────────────────── */}
@@ -294,10 +341,9 @@ export default function TreinoPage() {
             )}
 
             {state.exercicios.map((ex, exIdx) => {
-              const info     = exById(ex.exercicioId)
-              const nome     = info?.nome ?? ex.exercicioId
-              const grupo    = info?.grupo ?? ''
-              const secs     = getSecondary(ex.exercicioId)
+              const nome     = resolveExName(ex.exercicioId, customExercises)
+              const grupo    = resolveExGrupo(ex.exercicioId, customExercises)
+              const secs     = getSecondary(ex.exercicioId, customExercises)
               const isOpen   = openExIdx === exIdx
               const series   = ex.series
               const maxCarga = Math.max(0, ...series.map(s => Number(s.carga) || 0))
