@@ -2,6 +2,25 @@
 
 ---
 
+## [0.14.0] — 2026-03-09
+
+### Adicionado
+- [feat] `supabase/migrations/008_body_measurements.sql` — tabela `body_measurements` com RLS e CONSTRAINT nomeada (sem trigger updated_at)
+- [feat] `src/types/body.ts` — tipos `BodyMeasurement`, `Skinfolds`, `BodyRow`
+- [feat] `src/hooks/useBody.ts` — CRUD otimista por data + `getAllBodyRows()`; padrão idêntico ao `useDiary`
+- [feat] `src/pages/CorpoPage.tsx` — port fiel ao original L2526–2602: 3 accordions (Inputs / Dobras JP7 / Histórico 14 dias), tabela clicável, toast de feedback
+
+### Corrigido
+- [fix] Erro `42P10` — UNIQUE sem nome no upsert; corrigido com `CONSTRAINT body_measurements_user_date_unique`
+- [fix] Erro `42703` — trigger `updated_at` referenciando coluna inexistente; trigger removido
+
+### Notas
+- Regras críticas gravadas na memória persistente: CONSTRAINT sempre nomeada + sem trigger `updated_at`
+- "Ver evolução 📈" presente mas desabilitado — gráfico de evolução entra na Fase 6
+- Skill `/end` restaurada para formato de lista com `-` (gera botões clicáveis no Claude Code)
+
+---
+
 ## [0.13.0] — 2026-03-09
 
 ### Adicionado

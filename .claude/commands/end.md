@@ -29,19 +29,22 @@ ARQUIVOS MODIFICADOS:
 
 ### 2. Perguntas de versionamento
 
+Faça estas perguntas ao usuário (use seleção, não texto aberto):
+
 **Pergunta 1 — Tipo de release:**
 - 🔴 Major (mudança grande, breaking change)
-- 🟡 Minor (nova feature)
-- 🟢 Patch (correção/melhoria)
+- 🟡 Minor (nova feature, tudo compatível)
+- 🟢 Patch (correção/melhoria, sem feature nova)
 
 **Pergunta 2 — A fase atual avançou?**
-- Sim → atualizar status da fase no plano de execução
-- Não → registrar o que falta para concluir
+- ✅ Sim, fase concluída
+- ➡️ Parcialmente (sessão concluída, fase continua)
+- ❌ Não avançou
 
 **Pergunta 3 — Deploy agora?**
-- ✅ Sim, commit + push
+- 🚀 Sim, commit + push agora
 - ⏸️ Não, só commit local
-- ❌ Não commitar
+- ❌ Não commitar nada ainda
 
 ### 3. Atualizar CHANGELOG.md
 
@@ -93,7 +96,7 @@ Próxima sessão: abrir pasta kcalix no VS Code → /start
 ## Regras
 
 - NUNCA pule o resumo
-- SEMPRE pergunte sobre versionamento
+- SEMPRE pergunte sobre versionamento usando seleção (lista com `-`)
 - Pendências devem ser concretas, não vagas
 - Se mudou schema do banco: registrar no changelog com o arquivo de migration
 

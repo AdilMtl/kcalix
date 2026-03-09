@@ -137,7 +137,7 @@ supabase/migrations/
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
-| 4 | Corpo, Habitos, Mais | Planejado |
+| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A concluida — 2026-03-09) |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
