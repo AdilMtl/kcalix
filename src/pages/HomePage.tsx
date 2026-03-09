@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
 import { useDateStore } from '../store/dateStore'
+import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
+import { HabitTracker } from '../components/HabitTracker'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -334,50 +336,6 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal }: {
   )
 }
 
-// ── HabitTracker placeholder (topo, estilo .habit-card do original) ───────────
-function HabitTrackerPlaceholder() {
-  const habits = [
-    { id: 'dieta',   label: 'Dieta',    emoji: '🥗' },
-    { id: 'log',     label: 'Log',      emoji: '📋' },
-    { id: 'treino',  label: 'Treino',   emoji: '🏋️' },
-    { id: 'cardio',  label: 'Cardio',   emoji: '🚴' },
-    { id: 'medidas', label: 'Medidas',  emoji: '📏' },
-  ]
-  return (
-    <div style={{
-      background: 'rgba(0,0,0,.35)',
-      border: '1px solid rgba(124,92,255,.22)',
-      borderRadius: 'var(--radius)',
-      padding: '12px 14px',
-      marginBottom: '12px',
-    }}>
-      <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text2)', marginBottom: '10px' }}>Hábitos do dia</div>
-      <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between' }}>
-        {habits.map(h => (
-          <div
-            key={h.id}
-            style={{
-              flex: 1,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              padding: '8px 4px',
-              background: 'var(--surface2)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-sm)',
-              opacity: .5,
-            }}
-          >
-            <span style={{ fontSize: '18px', lineHeight: 1.2 }}>{h.emoji}</span>
-            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text3)', textAlign: 'center' }}>{h.label}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ fontSize: '10px', color: 'var(--text3)', textAlign: 'center', marginTop: '8px' }}>
-        Hábitos disponíveis na Fase 4
-      </div>
-    </div>
-  )
-}
-
 // ── Grid de ações (home-grid) ─────────────────────────────────────────────────
 function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
   const actions = [
@@ -414,25 +372,29 @@ function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
         </button>
       ))}
 
-      {/* Botão full-width: Meu Perfil Nutricional (Fase 4) */}
+      {/* Botão full-width: Meu Perfil Nutricional → navega para /mais */}
       <button
         type="button"
-        disabled
+        onClick={() => onNavigate('/mais')}
         style={{
           gridColumn: '1 / -1',
           background: 'var(--surface)',
-          border: '1px dashed rgba(124,92,255,.35)',
+          border: '1px solid rgba(124,92,255,.35)',
           borderRadius: 'var(--radius)',
           padding: '16px 12px',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-          cursor: 'not-allowed',
-          opacity: .6,
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
           fontFamily: 'var(--font)',
+          transition: 'background .15s',
         }}
+        onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
+        onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
+        onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
+        onTouchEnd={e => (e.currentTarget.style.background = 'var(--surface)')}
       >
         <span style={{ fontSize: '24px', lineHeight: 1.2 }}>🎯</span>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>Meu Perfil Nutricional</span>
-        <span style={{ fontSize: '10px', color: 'var(--text3)' }}>Disponível na Fase 4</span>
       </button>
     </div>
   )
@@ -445,9 +407,11 @@ export default function HomePage() {
   const { selectedDate } = useDateStore()
   const { settings, loading: loadingSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
+  const { habits, toggleHabit } = useHabits()
   const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
   const todayIso = new Date().toISOString().slice(0, 10)
+  const habitWeekDates = getHabitWeekDates(todayIso)
 
   useEffect(() => {
     getWeekKcal(weekDays.map(d => d.iso)).then(setWeekKcal)
@@ -470,8 +434,13 @@ export default function HomePage() {
   return (
     <div style={{ padding: '20px 16px', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
 
-      {/* HabitTracker — topo, igual ao original */}
-      <HabitTrackerPlaceholder />
+      {/* HabitTracker — topo, igual ao original L2116 */}
+      <HabitTracker
+        habits={habits}
+        weekDates={habitWeekDates}
+        todayStr={todayIso}
+        onToggle={toggleHabit}
+      />
 
       {/* Saudação + data (home-greeting / home-date-sub) */}
       <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>

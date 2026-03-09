@@ -137,7 +137,7 @@ supabase/migrations/
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
-| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B concluidas — 2026-03-09) |
+| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B+4C concluidas — 2026-03-09) |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
@@ -400,15 +400,35 @@ supabase/migrations/
 6. /check-port → comparar vs original L2313-2524
 7. /end → v0.15.0
 
-### Sessao 4C — HabitTracker — PLANEJADA
+### Sessao 4C — HabitTracker — CONCLUIDA (2026-03-09)
 
-**Referencia original:** CSS L1731-1815, JS L~4760-5122 (renderHabitTracker)
-**5 habitos fixos:** dieta, log, treino, cardio, medidas
-**Visual:** habit-card com gradiente roxo-ciano no topo, grid 7 dias, dots clicaveis (26x26px, glow quando checked)
-**Cor por habito (--h-color):** CSS custom property em cada card
-**Persistencia:** tabela `habits` no Supabase (user_id, date, dieta, log, treino, cardio, medidas)
-**SQL:** supabase/migrations/009_habits.sql
-**Aparece:** HomePage (acima da saudacao — igual ao original L2116)
+- [x] supabase/migrations/009_habits.sql + 009b_fix_habits_schema.sql — tabela habits com RLS
+- [x] src/types/habit.ts — HabitKey, HabitDef, HabitRow, HabitsMap, HABITS_DEF, HABIT_DAY_LBLS
+- [x] src/hooks/useHabits.ts — toggleHabit (optimistic), autoCheckHabit, getWeekDates
+- [x] src/components/HabitTracker.tsx — accordion fiel ao original L8138–8222
+- [x] src/index.css — bloco CSS completo L1731–1815
+- [x] src/pages/HomePage.tsx — wiring HabitTracker real
+- [x] src/pages/TreinoPage.tsx — autoCheckHabit ao salvar
+
+**Preparado para futuro:** custom_habits JSONB + HabitDef aceita id string dinamico
+
+### Sessao 4D — Historico de Habitos + Habitos Personalizados — PLANEJADA
+
+**Referencia original:** JS L8236–8390 (openHabitHistory, renderHabitHistory, renderHabitCalendar)
+
+**Parte 1 — Historico mensal (HabitHistoryModal):**
+- Modal bottom sheet com 3 abas: Calendario mensal / Por habito (barras) / Resumo semanal
+- Navegacao mes a mes com botoes ‹ ›
+- Calendario: grid de dias com dots coloridos por habito (original L8256–8330)
+- Score do dia ao clicar em um dia (original L8331–8380)
+- Botao 📊 no trigger do HabitTracker abre este modal
+
+**Parte 2 — Habitos personalizados (Fase futura):**
+- Tabela `habit_definitions` no Supabase (user_id, id, icon, label, color, ordem)
+- SQL: supabase/migrations/010_habit_definitions.sql
+- UI no HabitTracker: botao ⚙️ → modal para criar/editar/reordenar/excluir habitos
+- HabitTracker passa a renderizar HABITS_DEF dinamicos (fixos + customizados)
+- custom_habits JSONB ja preparado na tabela habits
 
 ---
 

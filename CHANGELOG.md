@@ -2,6 +2,46 @@
 
 ---
 
+## [0.16.0] — 2026-03-09
+
+### Adicionado
+- [feat] `supabase/migrations/009_habits.sql` + `009b_fix_habits_schema.sql` — tabela `habits` com 5 colunas booleanas (dieta, log, treino, cardio, medidas), `custom_habits JSONB` para futuros hábitos customizáveis, RLS e CONSTRAINT nomeada
+- [feat] `src/types/habit.ts` — tipos `HabitKey`, `HabitDef`, `HabitRow`, `HabitsMap`; constantes `HABITS_DEF` (5 hábitos fixos com cores e ícones) e `HABIT_DAY_LBLS`
+- [feat] `src/hooks/useHabits.ts` — hook com `toggleHabit` (optimistic UI), `autoCheckHabit`, `getWeekDates`; carrega 30 dias de histórico; padrão idêntico ao `useDiary`
+- [feat] `src/components/HabitTracker.tsx` — accordion fiel ao original L8138–8222: trigger com score dots coloridos + chevron animado, grid 7×5 (dias × hábitos), dots 26px com glow `--h-color`, `.future-dot` desabilitado, `.today-dot` borda mais brilhante, score bar no rodapé
+- [feat] `src/index.css` — bloco CSS completo do HabitTracker portado do original L1731–1815 (`.habit-card`, `.habit-trigger`, `.habit-dot`, `.habit-score`, etc.)
+- [feat] `src/pages/HomePage.tsx` — `HabitTrackerPlaceholder` substituído pelo componente real; botão "Meu Perfil Nutricional" agora navega para `/mais`
+- [feat] `src/pages/TreinoPage.tsx` — `autoCheckHabit('treino')` e `autoCheckHabit('cardio')` ao salvar treino (fiel ao original L6710–6711)
+
+### Corrigido
+- [fix] `HabitTracker` — `ScoreDots` usa classe `.lit` + CSS custom property `--h-color` em vez de `style` inline que sobrescrevia o CSS
+- [fix] Schema da tabela `habits` criada com coluna `data JSONB` genérica pelo Supabase — corrigido com `009b_fix_habits_schema.sql` (DROP + CREATE)
+
+### Notas
+- Arquitetura preparada para hábitos customizáveis futuros: `custom_habits JSONB` na tabela + `HabitDef` aceita `id: HabitKey | string`
+- Sessão 4D planejada: histórico mensal de hábitos (`HabitHistoryModal`) + UI para criar/editar/excluir hábitos personalizados
+- Bug recorrente do Supabase registrado na memória: tabelas criadas com `data JSONB` genérico — padrão de fix: `NNNb_fix_xxx_schema.sql`
+
+---
+
+## [0.15.0] — 2026-03-09
+
+### Adicionado
+- [feat] `src/hooks/useSettings.ts` — campos opcionais `pKg`, `cKg`, `minFatKg`, `def`, `blocks`, `kcalPerBlock` adicionados para suportar wizard JP7 e cálculo de macros
+- [feat] `src/components/CalcWizardModal.tsx` — wizard fullscreen 5 etapas: Objetivo → Perfil → Medidas → Dobras JP7 → Resultado; preview BMR em tempo real; fiel ao original L2313–2524
+- [feat] `src/pages/MaisPage.tsx` — port completo do `viewMais`: NutriBanner com BMR/TDEE/macros e status de completude; card "Calculadora JP7" com wizard integrado; card "Configurações"; fiel ao original L2313–2524
+- [feat] `src/index.css` — port de ~320 linhas de CSS estrutural do original: `.btn`, `.card`, `.accordion`, `.kpi`, `.form-group`, `.wizard-*`, `.checkin-*`
+
+### Corrigido
+- [fix] `src/hooks/useDiary.ts` — fix defensivo em `totals` ausentes em dados antigos que causava crash na `HomePage`
+
+### Impacto desbloqueado
+- `HomePage` `EnergyCard`: exibe BMR/TDEE/saldo real após configurar perfil no wizard
+- `DiarioPage` KPIs: barras P/C/G com meta real
+- `CorpoPage`: BF% JP7 visível no histórico
+
+---
+
 ## [0.14.0] — 2026-03-09
 
 ### Adicionado

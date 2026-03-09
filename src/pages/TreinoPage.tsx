@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useWorkout } from '../hooks/useWorkout'
 import { useCustomExercises } from '../hooks/useCustomExercises'
 import { useDateStore } from '../store/dateStore'
+import { useHabits } from '../hooks/useHabits'
 import { exById, CARDIO_TYPES } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
 import ExerciseSelector from '../components/ExerciseSelector'
@@ -41,6 +42,7 @@ function getSecondary(exercicioId: string, customExercises: CustomExercise[]): s
 
 export default function TreinoPage() {
   const { selectedDate } = useDateStore()
+  const { autoCheckHabit } = useHabits()
   const {
     state, templates, loading, saved,
     addExercise, removeExercise, swapExercise, updateSeries,
@@ -294,6 +296,9 @@ export default function TreinoPage() {
     try {
       await saveWorkout()
       reloadWorkoutRows() // atualiza histórico em background após salvar
+      // auto-check hábitos ao salvar (original L6710–6711)
+      if (state.exercicios.length > 0) autoCheckHabit('treino')
+      if (state.cardio.length > 0) autoCheckHabit('cardio')
     } catch (e) { console.error(e) }
     setSaving(false)
   }
