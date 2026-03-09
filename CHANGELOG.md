@@ -2,6 +2,23 @@
 
 ---
 
+## [0.17.0] — 2026-03-09
+
+### Adicionado
+- [feat] `src/components/HabitHistoryModal.tsx` — modal bottom sheet com 2 abas: calendário mensal (grid 7 colunas, score hm-0→hm-5 gradiente roxo, tooltip ao clicar dia) + por hábito (8 barras semanais, aderência 4 semanas, streak 🔥); z-index 324/325 fiel ao original L8236–8412
+- [feat] `src/hooks/useHabits.ts` — `getAllHabits()` query lazy de 365 dias; chamada só ao abrir o modal
+- [feat] `src/components/HabitTracker.tsx` — botão 📊 no trigger abre `HabitHistoryModal`; prop `onOpenHistory` adicionada
+- [feat] `src/index.css` — CSS completo do modal: `.habit-hist-*`, `.habit-hm-*`, `.habit-tr-*` portado do original L2029–2065
+
+### Melhorado
+- [improve] Calendário: dias anteriores ao primeiro registro tratados como `isBefore` (opacidade 0.2, não clicáveis) — evita falsa impressão de "score zero" em datas sem dado real
+- [improve] Aba "Por hábito": barras de semanas sem dado com `opacity: 0.2`; legendas `dd/mm` por semana em font-size 8px abaixo das barras
+
+### Notas
+- Próxima sessão (4E): `WeeklyKcalModal` — clicar no card "📅 Últimos 7 dias" da HomePage abre histórico de gasto calórico diário (ingerido + treino + saldo) com navegação semanal
+
+---
+
 ## [0.16.0] — 2026-03-09
 
 ### Adicionado

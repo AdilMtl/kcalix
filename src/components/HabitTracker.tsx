@@ -12,9 +12,10 @@ interface Props {
   weekDates: string[]
   todayStr: string
   onToggle: (date: string, key: string) => void
+  onOpenHistory: () => void
 }
 
-export function HabitTracker({ habits, weekDates, todayStr, onToggle }: Props) {
+export function HabitTracker({ habits, weekDates, todayStr, onToggle, onOpenHistory }: Props) {
   const [open, setOpen] = useState(true)
 
   const todayRow = habits[todayStr]
@@ -49,7 +50,7 @@ export function HabitTracker({ habits, weekDates, todayStr, onToggle }: Props) {
 
   return (
     <div className={`habit-card${open ? ' open' : ''}`}>
-      {/* ── Trigger (original L8182–8195) */}
+      {/* ── Trigger (original L8182–8202) */}
       <div
         className="habit-trigger"
         onClick={() => setOpen(o => !o)}
@@ -62,6 +63,13 @@ export function HabitTracker({ habits, weekDates, todayStr, onToggle }: Props) {
             <ScoreDots />
           </div>
           <span className="habit-score-num">{score}/{HABITS_DEF.length}</span>
+          {/* Botão 📊 — original L8200–8202 */}
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onOpenHistory() }}
+            style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+            title="Histórico de hábitos"
+          >📊</button>
           <span className="habit-chevron">▾</span>
         </div>
       </div>

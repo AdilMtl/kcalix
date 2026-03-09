@@ -477,3 +477,44 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 }
 .habit-score-dot.lit { background: var(--h-color); box-shadow: 0 0 5px var(--h-color); }
 .habit-score-num { font-size: 11px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+
+/* ═══════════════ HABIT HISTORY MODAL (original L2029–2065) ═══════════════ */
+.habit-hist-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 324; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.habit-hist-overlay.open { opacity: 1; pointer-events: auto; }
+.habit-hist-sheet { position: fixed; bottom: 0; left: 0; right: 0; max-height: 88dvh; background: var(--bg); border-radius: 18px 18px 0 0; z-index: 325; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.habit-hist-sheet.open { transform: translateY(0); }
+.habit-hist-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; flex-shrink: 0; }
+.habit-hist-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.habit-hist-tabs { display: flex; gap: 8px; padding: 0 16px 10px; flex-shrink: 0; border-bottom: 1px solid var(--line); }
+.habit-hist-tab { flex: 1; padding: 8px 0; border: none; border-radius: 8px; background: var(--surface2); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; font-family: var(--font); }
+.habit-hist-tab.active { background: var(--accent); color: #fff; }
+.habit-hist-body { flex: 1; overflow-y: auto; padding: 14px 16px 24px; }
+
+/* Calendário mensal (original L2040–2057) */
+.habit-hm-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.habit-hm-nav-btn { background: none; border: none; font-size: 20px; color: var(--text2); cursor: pointer; padding: 4px 10px; font-family: var(--font); }
+.habit-hm-nav-label { font-size: 14px; font-weight: 700; color: var(--text); text-transform: capitalize; }
+.habit-hm-day-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+.habit-hm-day-lbl { text-align: center; font-size: 10px; color: var(--text3); font-weight: 600; padding: 2px 0; }
+.habit-hm-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.habit-hm-cell { width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: rgba(255,255,255,.7); cursor: pointer; transition: transform .15s; }
+.habit-hm-cell:active { transform: scale(.9); }
+.habit-hm-cell.empty { background: transparent; pointer-events: none; }
+.habit-hm-cell.future { opacity: .2; pointer-events: none; }
+.habit-hm-cell.hm-0 { background: var(--surface2); color: var(--text3); }
+.habit-hm-cell.hm-1 { background: #7c3aed33; color: #a78bfa; }
+.habit-hm-cell.hm-2 { background: #7c3aed66; color: #c4b5fd; }
+.habit-hm-cell.hm-3 { background: #7c3aed99; color: #ede9fe; }
+.habit-hm-cell.hm-4 { background: #7c3aedcc; color: #fff; }
+.habit-hm-cell.hm-5 { background: var(--accent); color: #fff; box-shadow: 0 0 8px var(--accent-glow, #7c3aed88); }
+.habit-hm-tooltip { margin-top: 12px; padding: 10px 12px; background: var(--surface2); border-radius: 10px; font-size: 12px; color: var(--text2); min-height: 36px; line-height: 1.5; }
+.habit-hm-footer { margin-top: 12px; font-size: 12px; color: var(--text2); text-align: center; }
+
+/* Por hábito (original L2059–2065) */
+.habit-tr-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.habit-tr-icon { font-size: 18px; flex-shrink: 0; }
+.habit-tr-name { font-size: 13px; font-weight: 600; color: var(--text); width: 72px; flex-shrink: 0; }
+.habit-tr-bars { display: flex; align-items: flex-end; gap: 3px; height: 32px; flex: 1; }
+.habit-tr-bar-wrap { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.habit-tr-bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); min-height: 2px; transition: height .3s; }
+.habit-tr-meta { font-size: 11px; color: var(--text2); text-align: right; flex-shrink: 0; width: 52px; line-height: 1.4; }

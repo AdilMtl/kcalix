@@ -137,5 +137,28 @@ export function useHabits() {
     })
   }, [user])
 
-  return { habits, loading, toggleHabit, autoCheckHabit }
+  // ── Busca todos os hábitos históricos (até 365 dias) — usado pelo HabitHistoryModal
+  const getAllHabits = useCallback(async (): Promise<HabitsMap> => {
+    if (!user) return {}
+    const since = new Date()
+    since.setDate(since.getDate() - 365)
+    const sinceISO = since.toISOString().slice(0, 10)
+
+    const { data, error } = await supabase
+      .from('habits')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('date', sinceISO)
+      .order('date', { ascending: false })
+
+    if (error) { console.error('[useHabits] getAllHabits', error); return {} }
+
+    const map: HabitsMap = {}
+    for (const row of (data ?? [])) {
+      map[row.date] = row as HabitRow
+    }
+    return map
+  }, [user])
+
+  return { habits, loading, toggleHabit, autoCheckHabit, getAllHabits }
 }

@@ -137,7 +137,7 @@ supabase/migrations/
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
-| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B+4C concluidas — 2026-03-09) |
+| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B+4C+4D concluidas — 2026-03-09) |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
@@ -429,6 +429,27 @@ supabase/migrations/
 - UI no HabitTracker: botao ⚙️ → modal para criar/editar/reordenar/excluir habitos
 - HabitTracker passa a renderizar HABITS_DEF dinamicos (fixos + customizados)
 - custom_habits JSONB ja preparado na tabela habits
+
+### Sessao 4E — Historico de Gasto Diario (WeeklyKcalModal) — PLANEJADA
+
+**Objetivo:** Ao clicar no card "📅 Ultimos 7 dias" da HomePage, abrir um modal bottom sheet
+com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
+
+**Referencia original:** viewHome renderHome() — card semanal (JS ~L4220–4280)
+
+**O que implementar:**
+- Modal bottom sheet (z-index 315/316) abre ao clicar no card WeeklyChart
+- Grafico de barras: 7 dias — cada barra dividida em kcal_ingerida vs kcal_treino
+- Linha tracejada de meta (settings.kcalTarget)
+- Tabela abaixo: dia | ingerido | treino | saldo (+/-) | cor verde/vermelho
+- Dados: `getWeekKcal()` do useDiary (ja existe) + `getAllWorkoutRows()` do useWorkout para somar kcal_treino por data
+- Navegacao semanal ‹ › (semana anterior / proxima ate hoje)
+
+**Arquivos a criar:**
+- `src/components/WeeklyKcalModal.tsx`
+
+**Arquivos a modificar:**
+- `src/pages/HomePage.tsx` — estado `weeklyModalOpen` + prop `onClick` no card
 
 ---
 

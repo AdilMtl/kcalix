@@ -5,6 +5,7 @@ import { useDiary } from '../hooks/useDiary'
 import { useDateStore } from '../store/dateStore'
 import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
 import { HabitTracker } from '../components/HabitTracker'
+import { HabitHistoryModal } from '../components/HabitHistoryModal'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -407,7 +408,8 @@ export default function HomePage() {
   const { selectedDate } = useDateStore()
   const { settings, loading: loadingSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
-  const { habits, toggleHabit } = useHabits()
+  const { habits, toggleHabit, getAllHabits } = useHabits()
+  const [habitHistOpen, setHabitHistOpen] = useState(false)
   const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
   const todayIso = new Date().toISOString().slice(0, 10)
@@ -440,6 +442,13 @@ export default function HomePage() {
         weekDates={habitWeekDates}
         todayStr={todayIso}
         onToggle={toggleHabit}
+        onOpenHistory={() => setHabitHistOpen(true)}
+      />
+
+      <HabitHistoryModal
+        open={habitHistOpen}
+        onClose={() => setHabitHistOpen(false)}
+        getAllHabits={getAllHabits}
       />
 
       {/* Saudação + data (home-greeting / home-date-sub) */}
