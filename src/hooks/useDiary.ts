@@ -112,7 +112,8 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('useDiary fetch:', error)
-        setDiary(data?.data ?? EMPTY_DIARY)
+        const raw = data?.data as DiaryData | undefined
+        setDiary(raw ? { ...EMPTY_DIARY, ...raw, totals: raw.totals ?? recalcTotals(raw.meals ?? EMPTY_MEALS) } : EMPTY_DIARY)
         setLoading(false)
       })
   }, [user?.id, date])

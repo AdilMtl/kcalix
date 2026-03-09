@@ -100,6 +100,16 @@ Ambient glow já adicionado em `body::before/::after`.
 - **Delete two-tap no TemplateEditorModal:** estado `deleteConfirm` local com `setTimeout` 3s auto-reset — fiel ao original L8034–8066
 - **Z-index stack:** TemplateEditorModal (320/321) < ExerciseSelector (328/329) < CustomExerciseModal (330/331)
 
+## Padrões adicionados na Sessão 4A
+- **useBody:** `src/hooks/useBody.ts` — CRUD body_measurements; mesmo padrão useDiary/useWorkout
+- **CorpoPage:** 3 accordions (inputs dia, dobras JP7, histórico 14 dias) — fiel ao original L2526-2602
+- **Migration 008:** body_measurements com UNIQUE CONSTRAINT (user_id, date) e SEM trigger updated_at
+
+## Padrões adicionados na Sessão 4B
+- **CSS estrutural:** `index.css` agora tem ~390 linhas — `.btn`, `.card`, `.accordion`, `.kpi-grid`, `.form-grid`, `.form-row`, `.grid3`, `.hint`, `.calc-wizard`, `.wz-*` portados do original. Novas páginas usam essas classes diretamente.
+- **MaisPage pattern:** `useSettings()` instanciado uma vez na página; `CalcWizardModal` recebe `initialData` e `onSave` via props — nunca instancia `useSettings` internamente.
+- **useDiary fix defensivo:** ao carregar do Supabase: `{ ...EMPTY_DIARY, ...raw, totals: raw.totals ?? recalcTotals(raw.meals) }` — protege contra dados antigos sem campo `totals`.
+- **kpi-grid correto:** usar `.kpi > .kpi-label + .kpi-value > .num + .den` — nunca inventar classes `kpi-cell`/`kpi-val`.
+
 ## Próximo passo
-Sessão 3D: CONCLUÍDA (2026-03-08) — Editor de Templates funcional.
-Próxima: **Sessão 3E** — Analytics + Modais (useMuscleVolume, CoachGuideModal, ExerciseProgressionModal, TemplateHistoryModal).
+Fase 4 em andamento (4A+4B concluídas). Próxima: **Sessão 4C — HabitTracker** (referência original CSS L1731-1815, JS L~4760-5122). 5 hábitos fixos: dieta, log, treino, cardio, medidas. SQL: `supabase/migrations/009_habits.sql`.

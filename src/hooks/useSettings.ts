@@ -28,6 +28,14 @@ export interface UserSettingsData {
     th: number
   }
   fixedKcal?: number
+  // Override dos defaults do GOAL_PRESET (para re-edição fiel ao wizard)
+  pKg?: number
+  cKg?: number
+  minFatKg?: number
+  def?: number
+  // Configurações de bloco
+  blocks?: { pG: number; cG: number; gG: number }
+  kcalPerBlock?: { p: number; c: number; g: number }
 }
 
 interface UseSettingsReturn {

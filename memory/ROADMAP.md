@@ -137,7 +137,7 @@ supabase/migrations/
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
-| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A concluida — 2026-03-09) |
+| 4 | Corpo, Habitos, Mais | EM ANDAMENTO (4A+4B concluidas — 2026-03-09) |
 | 5 | Ferramenta de migracao | Planejado |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
@@ -369,11 +369,46 @@ supabase/migrations/
 
 ---
 
-## FASE 4 — Corpo, Habitos e Mais (Planejado)
+## FASE 4 — Corpo, Habitos e Mais (Em andamento)
 
-- CorpoPage: medicoes, dobras, historico de peso
-- Habitos: heatmap mensal, streak
-- MaisPage: calculadora JP7, wizard de configuracao, perfil nutricional
+### Sessao 4A — CorpoPage + useBody + body_measurements — CONCLUIDA (2026-03-09)
+
+- [x] src/hooks/useBody.ts — CRUD body_measurements no Supabase
+- [x] src/pages/CorpoPage.tsx — 3 accordions: inputs do dia, dobras JP7, historico 14 dias
+- [x] supabase/migrations/008_body_measurements.sql — tabela com UNIQUE constraint correta
+- [x] src/types/body.ts — tipos BodyMeasurement, BodyRow
+
+### Sessao 4B — MaisPage (Metas + Calculadora JP7 + Wizard) — CONCLUIDA (2026-03-09)
+
+- [x] src/hooks/useSettings.ts — campos opcionais pKg, cKg, minFatKg, def, blocks, kcalPerBlock
+- [x] src/components/CalcWizardModal.tsx — wizard fullscreen 5 etapas com preview BMR em tempo real
+- [x] src/pages/MaisPage.tsx — port completo viewMais (L2313-2524): NutriBanner + 2 cards
+- [x] src/index.css — port de ~320 linhas de CSS estrutural (btn, card, accordion, kpi, form, wizard)
+- [x] src/hooks/useDiary.ts — fix defensivo totals ausentes em dados antigos (crash HomePage)
+
+**Impacto desbloqueado:**
+- HomePage EnergyCard: exibe BMR/TDEE/saldo apos configurar perfil
+- DiarioPage KPIs: barras P/C/G com meta real
+- CorpoPage: BF% JP7 visivel no historico
+
+**Ordem de implementacao na sessao:**
+1. useSettings.ts — adicionar campos opcionais
+2. CalcWizardModal.tsx — wizard completo
+3. MaisPage.tsx — port dos 2 cards
+4. Verificar HomePage + DiarioPage leem pTarget/cTarget/gTarget corretamente
+5. npm run build → sem erros
+6. /check-port → comparar vs original L2313-2524
+7. /end → v0.15.0
+
+### Sessao 4C — HabitTracker — PLANEJADA
+
+**Referencia original:** CSS L1731-1815, JS L~4760-5122 (renderHabitTracker)
+**5 habitos fixos:** dieta, log, treino, cardio, medidas
+**Visual:** habit-card com gradiente roxo-ciano no topo, grid 7 dias, dots clicaveis (26x26px, glow quando checked)
+**Cor por habito (--h-color):** CSS custom property em cada card
+**Persistencia:** tabela `habits` no Supabase (user_id, date, dieta, log, treino, cardio, medidas)
+**SQL:** supabase/migrations/009_habits.sql
+**Aparece:** HomePage (acima da saudacao — igual ao original L2116)
 
 ---
 
