@@ -135,7 +135,7 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
   const addExercise = useCallback((exercicioId: string) => {
     setState(s => ({
       ...s,
-      exercicios: [...s.exercicios, { exercicioId, series: [{ reps: '', carga: '' }] }],
+      exercicios: [...s.exercicios, { exercicioId, series: [{ reps: '', carga: '' }, { reps: '', carga: '' }, { reps: '', carga: '' }] }],
     }))
   }, [])
 

@@ -42,6 +42,7 @@ Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nut
 │ /feature     │ Adicionar algo novo      │ Planeja → implementa → valida               │
 │ /fix         │ Corrigir bug             │ Diagnostica causa raiz → corrige            │
 │ /improve     │ Melhorar algo existente  │ Propõe melhoria → implementa               │
+│ /check-port  │ Após implementar um port │ Compara Kcalix com original linha a linha   │
 │ /review      │ Antes de deploy          │ Checklist TypeScript, Supabase, mobile      │
 │ /status      │ A qualquer momento       │ Resumo rápido do estado e fase atual        │
 │ /deploy      │ Publicar mudanças        │ Commit + push → Vercel auto-deploya         │
@@ -50,7 +51,8 @@ Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nut
 │ /migrate     │ Trabalhar na migração    │ Exportador/importador de dados do app antigo│
 └──────────────┴──────────────────────────┴─────────────────────────────────────────────┘
 
-💡 Fluxo recomendado: /spec → /feature ou /fix → /review → /end (inclui deploy)
+💡 Fluxo recomendado (port): /port → implementa → /check-port → /review → /end
+💡 Fluxo recomendado (feature): /spec → /feature ou /fix → /review → /end
 ⚠️  Use /deploy apenas para publicações rápidas sem encerrar a sessão
 ```
 

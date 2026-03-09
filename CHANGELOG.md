@@ -2,6 +2,27 @@
 
 ---
 
+## [0.9.0] — 2026-03-08
+
+### Adicionado
+- [feat] `src/components/ExerciseSelector.tsx` — bottom sheet: abas por grupo muscular, grid de exercícios, modos "add" e "swap"; fiel ao original L2837–2850 + L6440–6591
+- [feat] `src/pages/TreinoPage.tsx` — lista de exercícios funcional: accordion por exercício, set-table com inputs reps/carga (16px, tabular-nums, :focus roxo), prev-ref ▲▼= assíncrono (lazy ao abrir accordion), badge dinâmico (carga/preenchidas), volume, botões 📊/🔄/✕; fiel ao original L6323–6438
+- [feat] `src/index.css` — classe `.set-input` com `:focus { border-color: rgba(124,92,255,.4) }` e `font-variant-numeric: tabular-nums` (fiel ao original L1426–1432)
+- [feat] `.claude/commands/check-port.md` — nova skill `/check-port` para validar fidelidade do port ao original linha a linha
+
+### Corrigido
+- [fix] `useWorkout.ts` — `addExercise` agora inicia com 3 séries vazias (fiel ao original L6531; era 1)
+- [fix] `TreinoPage.tsx` — `chartBtnStyle` corrigido para circular 28×28 + `color: var(--text3)` (fiel ao original L1533–1540)
+- [fix] `TreinoPage.tsx` — `getSecondary()` recebia grupo em vez de exercicioId — grupos secundários não apareciam
+
+### Notas
+- Sessão 3B concluída — ExerciseSelector + Exercícios + Séries
+- Swap usa remove+add (exercício vai para o fim) — `swapExercise` in-place planejado para Sessão 3D
+- Exercícios personalizados (aba "⭐ Meus") adicionados ao ROADMAP como Sessão 3B+ antes da 3C
+- Skill `/check-port` incorporada ao fluxo: `/port → implementa → /check-port → /review → /end`
+
+---
+
 ## [0.8.0] — 2026-03-08
 
 ### Adicionado

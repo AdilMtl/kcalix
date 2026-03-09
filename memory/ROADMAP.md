@@ -268,17 +268,45 @@ supabase/migrations/
 - [x] Build sem erros TypeScript
 - [x] TreinoPage renderiza estado vazio sem crash
 - [x] useWorkout nao faz chamadas Supabase diretas em componente
-- [ ] Deploy pendente (proxima sessao)
+- [x] Deploy pendente (proxima sessao) — FEITO em 2026-03-08
 
-### Sessao 3B — ExerciseSelector + Exercicios + Series
+### Sessao 3B — ExerciseSelector + Exercicios + Series — CONCLUIDA (2026-03-08)
+
+**Arquivos criados:**
+- `src/components/ExerciseSelector.tsx` — bottom sheet por grupo muscular, modos add/swap
+
+**Arquivos modificados:**
+- `src/pages/TreinoPage.tsx` — lista funcional: accordion, set-table (inputs 16px, tabular-nums, :focus roxo), prev-ref ▲▼= async, badge dinamico, volume, swap/delete
+- `src/hooks/useWorkout.ts` — addExercise inicia com 3 series (era 1)
+- `src/index.css` — classe .set-input com :focus e font-variant-numeric
+- `.claude/commands/check-port.md` — nova skill /check-port
+
+**Checklist:**
+- [x] Build sem erros TypeScript
+- [x] ExerciseSelector abre/fecha por grupo muscular
+- [x] Accordion de exercicio abre/fecha series
+- [x] Inputs reps/carga 16px sem zoom iOS
+- [x] prev-ref carrega assincronamente ao abrir accordion
+- [x] /check-port executado — gaps menores corrigidos
+
+**Pendencias registradas:**
+- Exercicios personalizados (aba "⭐ Meus") → Sessao 3B+
+- swapExercise in-place (preserva posicao) → Sessao 3D
+
+### Sessao 3B+ — Exercicios Personalizados
+
+**Objetivo:** Permitir ao usuario criar exercicios proprios que aparecem na aba "⭐ Meus" do ExerciseSelector.
 
 **Arquivos a criar:**
-- `src/components/ExerciseSelector.tsx` — bottom sheet por grupo muscular, busca, exercicios customizados (placeholder)
+- `supabase/migrations/005_custom_exercises.sql` — tabela `custom_exercises` com RLS
+- `src/hooks/useCustomExercises.ts` — CRUD de exercicios personalizados no Supabase
+- `src/components/CustomExerciseModal.tsx` — form: nome, grupo principal, grupos secundarios (chips)
 
 **Arquivos a modificar:**
-- `src/pages/TreinoPage.tsx` — lista de exercicios com tabela series/reps/carga (inputs 16px), referencia de progressao anterior (prev-ref), botoes swap/delete, botao "+ Adicionar exercicio"
+- `src/components/ExerciseSelector.tsx` — adicionar aba "⭐ Meus" com exercicios customizados + botao "＋ Criar exercicio" + renomear/excluir inline
+- `src/types/workout.ts` — tipo CustomExercise
 
-**Referencia original:** renderExList (L~6300), set-table (CSS L1423), prev-ref (CSS L1447)
+**Referencia original:** customExercises (L6486–6556), openCustomExModal (L2812–2835), CUSTOM_EX_GROUP = "⭐ Meus"
 
 ### Sessao 3C — Cardio + Timer + Nota + Salvar
 
