@@ -114,7 +114,8 @@ export interface TransformResult {
   diary: Array<{ date: string; data: DiaryData }>
   workouts: Array<{ date: string; data: WorkoutDayData }>
   templates: WorkoutTemplate[]
-  customExercises: Array<Omit<CustomExercise, 'id' | 'user_id' | 'created_at'>>
+  // idOriginal preservado para o import reescrever exercicioId nos workouts
+  customExercises: Array<Omit<CustomExercise, 'id' | 'user_id' | 'created_at'> & { idOriginal: string }>
   body: Array<{ date: string; data: BodyMeasurement }>
   habits: Array<Omit<HabitRow, 'id' | 'user_id' | 'created_at'>>
 }
@@ -316,10 +317,12 @@ export function transformTemplates(templates: ExportTemplate[]): WorkoutTemplate
 }
 
 // ATENÇÃO: stripEmojiPrefix obrigatório — app antigo salva "🦅 Costas"
+// idOriginal preservado para o import mapear exercicioId nos workouts
 export function transformCustomExercises(
   exs: ExportCustomExercise[]
-): Array<Omit<CustomExercise, 'id' | 'user_id' | 'created_at'>> {
+): Array<Omit<CustomExercise, 'id' | 'user_id' | 'created_at'> & { idOriginal: string }> {
   return (exs ?? []).map(e => ({
+    idOriginal:  e.id,
     nome:        e.nome,
     grupo:       stripEmojiPrefix(e.grupo),
     secundarios: e.secundarios ?? [],

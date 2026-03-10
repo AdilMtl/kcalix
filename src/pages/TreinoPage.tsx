@@ -235,7 +235,8 @@ export default function TreinoPage() {
   }, [swRunning, swElapsed, swStop])
 
   // ── Workout summary ───────────────────────────────────────
-  const totalSeries    = state.exercicios.reduce((acc, ex) => acc + ex.series.length, 0)
+  const totalSeries    = state.exercicios.reduce((acc, ex) =>
+    acc + ex.series.filter(s => (Number(s.reps) || 0) > 0).length, 0)
   const totalVolume    = state.exercicios.reduce((acc, ex) =>
     acc + ex.series.reduce((a, s) => a + (Number(s.reps) || 0) * (Number(s.carga) || 0), 0), 0)
   const totalCardioMin = state.cardio.reduce((acc, c) => acc + c.minutos, 0)

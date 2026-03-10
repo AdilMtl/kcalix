@@ -78,7 +78,10 @@ export function resolvePrimaryGroup(
   const cust = customExercises.find(e => e.id === exercicioId)
   if (cust) {
     const g = cust.grupo as MuscleGroup
-    return MUSCLE_ORDER.includes(g) ? g : null
+    if (MUSCLE_ORDER.includes(g)) return g
+    // Fallback: grupo salvo sem emoji (migração stripEmojiPrefix) — casa pelo sufixo
+    const match = MUSCLE_ORDER.find(m => m.replace(/^[\p{Emoji}\s]+/u, '').trim() === g.trim())
+    return match ?? null
   }
   // Built-in
   for (const [grp, exs] of Object.entries(EXERCISE_DB)) {

@@ -112,4 +112,5 @@ Ambient glow já adicionado em `body::before/::after`.
 - **kpi-grid correto:** usar `.kpi > .kpi-label + .kpi-value > .num + .den` — nunca inventar classes `kpi-cell`/`kpi-val`.
 
 ## Próximo passo
-Fase 4 em andamento (4A+4B concluídas). Próxima: **Sessão 4C — HabitTracker** (referência original CSS L1731-1815, JS L~4760-5122). 5 hábitos fixos: dieta, log, treino, cardio, medidas. SQL: `supabase/migrations/009_habits.sql`.
+Bug exercícios custom importados (Sessão 5C). Ver ROADMAP seção "Exercicios customizados importados — BUG".
+Resumo: workouts importados referenciam `exercicioId: "custom_177xxxx"` (ID antigo do app), mas `custom_exercises` no Supabase tem IDs gerados pelo Supabase (UUID novo). Solução: em `transformCustomExercises`, preservar o `id` original do app antigo em vez de deixar o Supabase gerar UUID.

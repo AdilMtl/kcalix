@@ -7,8 +7,8 @@ import { supabase } from './supabase'
 import type { TransformResult } from './migrationTransform'
 
 export interface ImportProgress {
-  step:  'settings' | 'diary' | 'workouts' | 'templates' |
-         'customExercises' | 'body' | 'habits' | 'done'
+  step:  'settings' | 'diary' | 'customExercises' | 'workouts' | 'templates' |
+         'body' | 'habits' | 'done'
   done:  number
   total: number
 }
@@ -64,17 +64,64 @@ export async function runImport(
   total += diaryCount
   onProgress({ step: 'diary', done: diaryRows.length, total: diaryRows.length })
 
-  // 3. Treinos
-  const workoutRows = result.workouts.map(w => ({
-    user_id: userId, date: w.date, data: w.data,
-  }))
+  // 3. Exercícios personalizados — ANTES dos workouts para construir o mapa de IDs
+  // Mapa idOriginal (custom_177xxxx) → UUID Supabase
+  const customIdMap: Record<string, string> = {}
+  onProgress({ step: 'customExercises', done: 0, total: result.customExercises.length })
+  if (result.customExercises.length > 0) {
+    const { data: existing } = await supabase
+      .from('custom_exercises')
+      .select('id, nome')
+      .eq('user_id', userId)
+    const existingByNome = new Map((existing ?? []).map((r: { id: string; nome: string }) => [r.nome, r.id]))
+
+    // Registra no mapa os exercícios já existentes
+    for (const e of result.customExercises) {
+      const existingId = existingByNome.get(e.nome)
+      if (existingId) customIdMap[e.idOriginal] = existingId
+    }
+
+    // Insere apenas os novos (sem idOriginal — não é coluna da tabela)
+    const novos = result.customExercises
+      .filter(e => !existingByNome.has(e.nome))
+      .map(({ idOriginal: _id, ...rest }) => ({ user_id: userId, ...rest }))
+
+    if (novos.length > 0) {
+      const { data: inserted, error: exErr } = await supabase
+        .from('custom_exercises')
+        .insert(novos)
+        .select('id, nome')
+      if (exErr) {
+        errors.push('customExercises: ' + exErr.message)
+      } else {
+        total += novos.length
+        // Mapeia idOriginal → UUID novo gerado pelo Supabase
+        for (const e of result.customExercises) {
+          if (!customIdMap[e.idOriginal]) {
+            const row = (inserted ?? []).find((r: { id: string; nome: string }) => r.nome === e.nome)
+            if (row) customIdMap[e.idOriginal] = row.id
+          }
+        }
+      }
+    }
+  }
+  onProgress({ step: 'customExercises', done: result.customExercises.length, total: result.customExercises.length })
+
+  // 4. Treinos — reescreve exercicioId custom usando o mapa acima
+  const workoutRows = result.workouts.map(w => {
+    const exercicios = w.data.exercicios.map(ex => {
+      const newId = customIdMap[ex.exercicioId]
+      return newId ? { ...ex, exercicioId: newId } : ex
+    })
+    return { user_id: userId, date: w.date, data: { ...w.data, exercicios } }
+  })
   onProgress({ step: 'workouts', done: 0, total: workoutRows.length })
   const workoutCount = await batchUpsert('workouts', workoutRows, 'user_id,date', signal)
     .catch(e => { errors.push('workouts: ' + String(e)); return 0 })
   total += workoutCount
   onProgress({ step: 'workouts', done: workoutRows.length, total: workoutRows.length })
 
-  // 4. Templates (upsert único — substitui o array inteiro se não existir)
+  // 5. Templates (upsert único — substitui o array inteiro se não existir)
   onProgress({ step: 'templates', done: 0, total: 1 })
   if (result.templates.length > 0) {
     const { error: tmplErr } = await supabase
@@ -87,24 +134,6 @@ export async function runImport(
     else total++
   }
   onProgress({ step: 'templates', done: 1, total: 1 })
-
-  // 5. Exercícios personalizados (sem UNIQUE user_id+nome — verificar antes de inserir)
-  const exRows = result.customExercises.map(e => ({ user_id: userId, ...e }))
-  onProgress({ step: 'customExercises', done: 0, total: exRows.length })
-  if (exRows.length > 0) {
-    const { data: existing } = await supabase
-      .from('custom_exercises')
-      .select('nome')
-      .eq('user_id', userId)
-    const existingNomes = new Set((existing ?? []).map((r: { nome: string }) => r.nome))
-    const novos = exRows.filter(e => !existingNomes.has(e.nome))
-    if (novos.length > 0) {
-      const { error: exErr } = await supabase.from('custom_exercises').insert(novos)
-      if (exErr) errors.push('customExercises: ' + exErr.message)
-      else total += novos.length
-    }
-  }
-  onProgress({ step: 'customExercises', done: exRows.length, total: exRows.length })
 
   // 6. Medições corporais
   const bodyRows = result.body.map(b => ({

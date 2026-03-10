@@ -2,6 +2,25 @@
 
 ---
 
+## [0.21.0] — 2026-03-09
+
+### Adicionado
+- [feat] `memory/supabase-utils.md` — SQL de referência para limpar dados do usuário no Supabase
+
+### Melhorado
+- [improve] `src/components/CalcWizardModal.tsx` — step `summary` fiel ao original: card com formato `♂/♀ · idade · peso · altura`, pergunta "Tem algo que queira atualizar?", botões "Revisar tudo →" e "Recalcular assim ✅" (recalcula BMR/TDEE/metas sem passar pelos 4 passos)
+- [improve] `src/hooks/useSettings.ts` — adicionado `updatedAt?: string` ao tipo + `saveSettings` injeta timestamp automaticamente
+- [improve] `src/components/ProfileCheckinModal.tsx` — campo "Perfil atualizado" lê `settings.updatedAt` diretamente (sem cast `unknown`)
+- [improve] `src/pages/HomePage.tsx` — `onSave` do wizard chama `setProfileOpen(true)` após fechar: perfil reabre automaticamente; saldo no EnergyCard arredondado com `Math.round`
+- [improve] `src/lib/migrationTransform.ts` — `transformCustomExercises` preserva `idOriginal` de cada exercício
+- [improve] `src/lib/migrationImport.ts` — custom exercises inseridos antes dos workouts; constrói mapa `idOriginal → UUID Supabase`; workouts têm `exercicioId` reescrito antes de inserir (corrige nomes como `custom_177xxxx`)
+
+### Corrigido
+- [fix] `src/pages/TreinoPage.tsx` — `totalSeries` conta apenas séries com `reps > 0` (fiel ao original L6688)
+- [fix] `src/hooks/useMuscleVolume.ts` — `resolvePrimaryGroup` tem fallback para grupos sem emoji (exercícios importados com `stripEmojiPrefix`)
+
+---
+
 ## [0.20.0] — 2026-03-09
 
 ### Adicionado

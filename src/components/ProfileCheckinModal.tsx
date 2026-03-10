@@ -29,10 +29,9 @@ function ProfileView({
   const goalLabel = WZ_GOAL_LABELS[settings.goal ?? 'maintain'] ?? '—'
   const actLabel  = WZ_ACTIVITY_LABELS[String(settings.activityFactor)] ?? String(settings.activityFactor)
 
-  const updatedAt = (settings as unknown as Record<string, unknown>).updatedAt as string | undefined
   let dateStr = '—'
-  if (updatedAt) {
-    dateStr = new Date(updatedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  if (settings.updatedAt) {
+    dateStr = new Date(settings.updatedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
   // Último check-in registrado

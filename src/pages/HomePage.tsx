@@ -160,7 +160,7 @@ function EnergyCard({
   kcalTarget: number
 }) {
   const hasBmr = bmr != null && bmr > 0
-  const saldo  = hasBmr ? consumed - (bmr + kcalTreino) : null
+  const saldo  = hasBmr ? Math.round(consumed - (bmr + kcalTreino)) : null
   const balTxt = saldo != null ? (saldo > 0 ? `+${saldo}` : `${saldo}`) : '—'
   const balClr = saldo != null ? balanceColor(saldo) : 'var(--text2)'
   const goalPct = kcalTarget > 0 ? Math.min(100, Math.round((consumed / kcalTarget) * 100)) : 0
@@ -549,7 +549,7 @@ export default function HomePage() {
         open={wizardOpen}
         isNewUser={false}
         initialData={settings}
-        onSave={async (result) => { await saveSettings(result); setWizardOpen(false) }}
+        onSave={async (result) => { await saveSettings(result); setWizardOpen(false); setProfileOpen(true) }}
         onClose={() => setWizardOpen(false)}
       />
 

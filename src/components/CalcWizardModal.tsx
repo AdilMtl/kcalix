@@ -169,23 +169,46 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
     )
   }
 
+  function handleRecalc() {
+    if (!initialData) return
+    const { sex: s, age: a, weightKg: w, heightCm: h, activityFactor: af, goal: g, skinfolds: skf } = initialData
+    if (!s || !a || !w || !h || !af || !g) return
+    const result = calcFromProfile({ sex: s, age: a, weightKg: w, heightCm: h, activityFactor: af, goal: g, skinfolds: skf })
+    const newSettings: UserSettingsData = {
+      ...initialData as UserSettingsData,
+      bmr: result.bmr ?? 0,
+      tdee: result.tdee ?? 0,
+      kcalTarget: result.kcalTarget,
+      pTarget: result.pTarget,
+      cTarget: result.cTarget,
+      gTarget: result.gTarget,
+    }
+    onSave(newSettings)
+  }
+
   function renderSummary() {
+    const goalLabel = initialData?.goal ? WZ_GOAL_LABELS[initialData.goal] : '—'
+    const actLabel  = initialData?.activityFactor ? (WZ_ACTIVITY_LABELS[String(initialData.activityFactor)] ?? String(initialData.activityFactor)) : '—'
+    const sexLabel  = initialData?.sex === 'female' ? '♀ Mulher' : '♂ Homem'
+    const hasSF     = initialData?.skinfolds != null && Object.values(initialData.skinfolds).some(v => v > 0)
+
     return (
       <>
         <div className="wz-step-content">
           <div className="wz-headline">Seu perfil atual</div>
           <div className="wz-summary-card">
-            <div><b>Sexo:</b> {initialData?.sex === 'female' ? 'Mulher' : 'Homem'}</div>
-            <div><b>Idade:</b> {initialData?.age} anos</div>
-            <div><b>Peso:</b> {initialData?.weightKg} kg · <b>Altura:</b> {initialData?.heightCm} cm</div>
-            <div><b>Objetivo:</b> {initialData?.goal ? WZ_GOAL_LABELS[initialData.goal] : '—'}</div>
-            <div><b>BMR:</b> {initialData?.bmr ?? '—'} kcal · <b>TDEE:</b> {initialData?.tdee ?? '—'} kcal</div>
-            <div><b>Meta:</b> {initialData?.kcalTarget ?? '—'} kcal · P {initialData?.pTarget ?? '—'}g / C {initialData?.cTarget ?? '—'}g / G {initialData?.gTarget ?? '—'}g</div>
+            <div>{sexLabel} · {initialData?.age || '—'} anos · {initialData?.weightKg || '—'} kg · {initialData?.heightCm || '—'} cm</div>
+            <div>{goalLabel}</div>
+            <div>{actLabel}</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+              {hasSF ? 'Dobras JP7 configuradas' : 'Estimativa Mifflin-St Jeor'}
+            </div>
           </div>
+          <div className="wz-question">Tem algo que queira atualizar?</div>
         </div>
         <div className="calc-wizard-footer">
-          <button className="btn ghost" onClick={onClose}>Fechar</button>
-          <button className="btn primary" onClick={() => setStep(1)}>✏️ Editar</button>
+          <button className="btn ghost" onClick={() => setStep(1)}>Revisar tudo →</button>
+          <button className="btn primary" onClick={handleRecalc}>Recalcular assim ✅</button>
         </div>
       </>
     )

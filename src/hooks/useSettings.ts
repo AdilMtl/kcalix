@@ -28,6 +28,7 @@ export interface UserSettingsData {
     th: number
   }
   fixedKcal?: number
+  updatedAt?: string
   // Override dos defaults do GOAL_PRESET (para re-edição fiel ao wizard)
   pKg?: number
   cKg?: number
@@ -71,11 +72,12 @@ export function useSettings(): UseSettingsReturn {
 
   const saveSettings = useCallback(async (data: UserSettingsData) => {
     if (!user) return
+    const dataWithTs: UserSettingsData = { ...data, updatedAt: new Date().toISOString() }
     const { error } = await supabase
       .from('user_settings')
-      .upsert({ user_id: user.id, data }, { onConflict: 'user_id' })
+      .upsert({ user_id: user.id, data: dataWithTs }, { onConflict: 'user_id' })
     if (error) throw error
-    setSettings(data)
+    setSettings(dataWithTs)
   }, [user?.id])
 
   return { settings, loading, saveSettings }
