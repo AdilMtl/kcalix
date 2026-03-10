@@ -2,6 +2,27 @@
 
 ---
 
+## [0.20.0] — 2026-03-09
+
+### Adicionado
+- [feat] `supabase/migrations/011_checkins.sql` — tabela `checkins` com RLS e UNIQUE constraint nomeada (user_id, date)
+- [feat] `src/hooks/useCheckins.ts` — CRUD Supabase, `buildCheckinPeriod` (resumo 7 dias: treino + nutrição), `calcProfileMetrics` (BF%/massa magra JP7), labels WZ_GOAL_LABELS / WZ_ACTIVITY_LABELS
+- [feat] `src/components/ProfileCheckinModal.tsx` — modal com 3 views: perfil nutricional (Corpo/Energia/Macros/Perfil), form de check-in (peso/cintura/BF%/nota), histórico em cards; fiel ao original L4751–5063
+- [feat] `src/index.css` — bloco CSS completo ProfileCheckinModal portado do original L1955–2026 (checkin-section, checkin-row, checkin-delta, checkin-last, checkin-hcard, checkin-form)
+- [feat] `src/pages/HomePage.tsx` — botão "Meu Perfil Nutricional" abre ProfileCheckinModal em vez de navegar para /mais; CalcWizardModal integrado para botão "Atualizar →"
+- [feat] `memory/ROADMAP.md` — Fase 5 marcada CONCLUÍDA, Fase 3 corrigida, Sessão 5B adiada
+
+### Corrigido
+- [fix] Botão "Atualizar →" no perfil: fecha o modal de perfil antes de abrir o wizard (fiel ao original L8843: `closeProfileCheckin(); openCalcWizard()`) — anterior abria wizard por trás do perfil
+
+### Notas
+- SQL `011_checkins.sql` deve ser executado no Supabase antes de usar check-in
+- Pendência: botão "Atualizar →" abre wizard mas ao salvar não volta para o modal de perfil (próxima sessão)
+- Pendência: checkins do app antigo não são importados pelo migrationTransform ainda (Sessão 5C)
+- Pendência: `updatedAt` não é salvo no UserSettingsData — campo "Perfil atualizado" exibe "—"
+
+---
+
 ## [0.19.0] — 2026-03-09
 
 ### Adicionado

@@ -9,6 +9,8 @@ import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits
 import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
+import ProfileCheckinModal from '../components/ProfileCheckinModal'
+import CalcWizardModal from '../components/CalcWizardModal'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -341,7 +343,7 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal }: {
 }
 
 // ── Grid de ações (home-grid) ─────────────────────────────────────────────────
-function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
+function ActionGrid({ onNavigate, onOpenProfile }: { onNavigate: (path: string) => void; onOpenProfile: () => void }) {
   const actions = [
     { icon: '📊', label: 'Diário',  path: '/diario' },
     { icon: '🏋️', label: 'Treino',  path: '/treino' },
@@ -376,10 +378,10 @@ function ActionGrid({ onNavigate }: { onNavigate: (path: string) => void }) {
         </button>
       ))}
 
-      {/* Botão full-width: Meu Perfil Nutricional → navega para /mais */}
+      {/* Botão full-width: Meu Perfil Nutricional → abre ProfileCheckinModal */}
       <button
         type="button"
-        onClick={() => onNavigate('/mais')}
+        onClick={onOpenProfile}
         style={{
           gridColumn: '1 / -1',
           background: 'var(--surface)',
@@ -410,11 +412,13 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { selectedDate } = useDateStore()
-  const { settings, loading: loadingSettings } = useSettings()
+  const { settings, loading: loadingSettings, saveSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
   const { habits, toggleHabit, getAllHabits } = useHabits()
   const [habitHistOpen, setHabitHistOpen]   = useState(false)
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
+  const [profileOpen, setProfileOpen]       = useState(false)
+  const [wizardOpen, setWizardOpen]         = useState(false)
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
@@ -528,7 +532,26 @@ export default function HomePage() {
       </Card>
 
       {/* Grid de ações */}
-      <ActionGrid onNavigate={navigate} />
+      <ActionGrid onNavigate={navigate} onOpenProfile={() => setProfileOpen(true)} />
+
+      {/* Modal perfil nutricional + check-in */}
+      {settings && (
+        <ProfileCheckinModal
+          open={profileOpen}
+          settings={settings}
+          onClose={() => setProfileOpen(false)}
+          onOpenWizard={() => { setProfileOpen(false); setWizardOpen(true) }}
+        />
+      )}
+
+      {/* CalcWizardModal aberto pelo botão "Atualizar →" do perfil */}
+      <CalcWizardModal
+        open={wizardOpen}
+        isNewUser={false}
+        initialData={settings}
+        onSave={async (result) => { await saveSettings(result); setWizardOpen(false) }}
+        onClose={() => setWizardOpen(false)}
+      />
 
       {/* Modal histórico semanal de kcal */}
       <WeeklyKcalModal

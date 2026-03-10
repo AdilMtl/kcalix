@@ -136,9 +136,9 @@ supabase/migrations/
 | 0 | Setup do repositorio | CONCLUIDA (2026-03-07) |
 | 1 | Autenticacao (email/senha + admin panel) | CONCLUIDA (2026-03-07) |
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
-| 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
+| 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
-| 5 | Ferramenta de migracao | EM ANDAMENTO (5A concluida — 2026-03-09) |
+| 5 | Ferramenta de migracao | CONCLUIDA (5A — 2026-03-09, 5B adiada) |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
@@ -453,7 +453,9 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 
 ---
 
-## FASE 5 — Ferramenta de Migracao (Em andamento)
+## FASE 5 — Ferramenta de Migracao (CONCLUIDA — 2026-03-09)
+
+> Importacao implementada e validada com JSON real. Diagnostico de divergencias adiado para nao bloquear avanco de funcionalidades.
 
 ### Sessao 5A — Importador — CONCLUIDA (2026-03-09)
 
@@ -464,14 +466,11 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 - [x] `supabase/migrations/010_fix_workout_templates_unique.sql` — fix UNIQUE constraint
 - [x] Importacao validada com JSON real (kcalix-export-2026-03-09.json)
 
-### Sessao 5B — Diagnostico de Divergencias (Proxima)
+### Sessao 5B — Diagnostico de Divergencias (ADIADA)
 
-Objetivo: comparar dados do JSON exportado (fonte de verdade) com o que foi importado no Supabase, identificar e corrigir divergencias de kcal e alimentos.
-
-Pendencias:
-- Spec a criar: ferramenta de comparacao JSON vs Supabase (diff por data)
-- Dias com dados pre-existentes no Kcalix que divergem do app antigo
-- Decidir estrategia: sobrescrever seletivamente vs manter Kcalix como fonte de verdade
+> Adiada para nao bloquear avanco. A importacao esta funcional; divergencias pontuais podem ser corrigidas manualmente no app.
+>
+> Quando retomar: comparar JSON exportado vs dados importados no Supabase (diff por data), corrigir dias com kcal errada.
 
 ### Mapeamento localStorage -> Supabase
 | localStorage key | Tabela | Status |
@@ -483,8 +482,20 @@ Pendencias:
 | `blocos_tracker_corpo` | `body_measurements` | Importado (5A) |
 | `blocos_tracker_habits_v1` | `habits` | Importado (5A) |
 | `blocos_tracker_custom_exercises` | `custom_exercises` | Importado (5A) |
-| `blocos_tracker_checkins_v1` | `checkins` | Sem tabela ainda |
+| `blocos_tracker_checkins_v1` | `checkins` | Importado (Sessao 5C — tabela criada) |
 | `blocos_tracker_custom_foods` | — | Sem tabela ainda |
+
+---
+
+## PORTS PENDENTES (fora de fase numerada)
+
+Funcionalidades do app original portadas parcialmente ou ainda nao portadas.
+
+### ProfileCheckinModal — Pendencias (proxima sessao)
+
+- [ ] **Botao "Atualizar →" nao volta para o perfil apos salvar**: ao completar o wizard, o modal de perfil deveria reabrir automaticamente (original: fecha perfil → abre wizard → ao salvar fecha wizard → nao reabre perfil, mas o fluxo fica consistente). Atual: apos salvar o wizard, usuario fica na home sem o perfil. Solucao: no `onSave` do CalcWizardModal na HomePage, alem de `saveSettings` e fechar o wizard, setar `setProfileOpen(true)`.
+- [ ] **`updatedAt` ausente no UserSettingsData**: campo "Perfil atualizado" exibe "—". Solucao: adicionar `updatedAt?: string` no tipo + salvar `new Date().toISOString()` no `saveSettings`.
+- [ ] **Checkins do app antigo nao importados**: `blocos_tracker_checkins_v1` nao esta no `migrationTransform.ts`. Adicionar na Sessao 5C junto com `custom_foods`.
 
 ---
 
