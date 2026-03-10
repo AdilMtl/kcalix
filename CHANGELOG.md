@@ -2,6 +2,27 @@
 
 ---
 
+## [0.19.0] — 2026-03-09
+
+### Adicionado
+- [feat] `src/lib/migrationTransform.ts` — tipos do JSON exportado, `validateExport`, `buildPreview`, `transformAll` e funções puras por entidade; correções: `stripEmojiPrefix` ("🦅 Costas" → "Costas"), `kcalPerMin` ausente via lookup em CARDIO_TYPES, `bmr/tdee=0` recalculados via `calcFromProfile`, campos ausentes em habits → `false`
+- [feat] `src/lib/migrationImport.ts` — `runImport` com batches de 50, `ignoreDuplicates: true` em todos os upserts, progress callback por etapa
+- [feat] `src/components/MigrateModal.tsx` — bottom sheet 4 etapas: instruções → preview → progresso animado → resultado; file picker via `<label>` nativo (iOS/Android); z-index 318/319
+- [feat] `src/pages/MaisPage.tsx` — Card 3 "🔄 Migrar dados"
+- [feat] `src/index.css` — bloco `/* MIGRATE MODAL */` com 11 classes
+- [feat] `supabase/migrations/010_fix_workout_templates_unique.sql` — UNIQUE constraint nomeada em `workout_templates.user_id` (fix 42P10)
+
+### Corrigido
+- [fix] File picker não abria no mobile — substituído `button + .click()` por `<label>` com `<input>` embutido
+- [fix] Sheet invisível — `.modal-sheet` não existia no CSS; convertido para `style` inline
+
+### Notas
+- Fase 5 em andamento. Importação funcional e validada com JSON real
+- Divergências de kcal em dias pré-existentes são esperadas (`ignoreDuplicates: true`) — spec de diagnóstico pendente (Sessão 5B)
+- Migration 010 deve ser executada no Supabase antes de re-importar com templates
+
+---
+
 ## [0.18.0] — 2026-03-09
 
 ### Adicionado

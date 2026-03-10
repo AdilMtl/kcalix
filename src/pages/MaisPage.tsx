@@ -7,6 +7,7 @@ import { GOAL_PRESETS, WZ_ACTIVITY_LABELS } from '../data/goalPresets'
 import type { GoalType } from '../data/goalPresets'
 import type { UserSettingsData } from '../hooks/useSettings'
 import CalcWizardModal from '../components/CalcWizardModal'
+import MigrateModal from '../components/MigrateModal'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -78,6 +79,9 @@ export default function MaisPage() {
 
   // Wizard
   const [wizardOpen, setWizardOpen] = useState(false)
+
+  // Migração
+  const [migrateOpen, setMigrateOpen] = useState(false)
 
   // ── Metas diárias (accordion) ────────────────────────────────────────────
   const [goalP, setGoalP] = useState(String(settings?.pTarget ?? ''))
@@ -570,6 +574,32 @@ export default function MaisPage() {
 
         </div>
       </div>
+
+      {/* ── Card 3: Migração ── */}
+      <div className="card">
+        <div className="card-header">
+          <div className="ch-info">
+            <b>🔄 Migrar dados</b>
+            <span>Importar histórico do Blocos Tracker.</span>
+          </div>
+        </div>
+        <div className="card-body">
+          <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 12px', lineHeight: 1.6 }}>
+            Importe seu histórico de diário, treinos, medições e hábitos do app antigo.
+            Dados existentes no Kcalix não serão sobrescritos.
+          </p>
+          <button
+            className="btn primary"
+            type="button"
+            onClick={() => setMigrateOpen(true)}
+          >
+            🔄 Migrar dados do app antigo
+          </button>
+        </div>
+      </div>
+
+      {/* ── MigrateModal ── */}
+      <MigrateModal open={migrateOpen} onClose={() => setMigrateOpen(false)} />
 
       {/* ── Wizard ── */}
       <CalcWizardModal

@@ -518,3 +518,101 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 .habit-tr-bar-wrap { flex: 1; height: 100%; display: flex; align-items: flex-end; }
 .habit-tr-bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); min-height: 2px; transition: height .3s; }
 .habit-tr-meta { font-size: 11px; color: var(--text2); text-align: right; flex-shrink: 0; width: 52px; line-height: 1.4; }
+
+/* ── MIGRATE MODAL ────────────────────────────────────────────────────────── */
+.mg-step-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.mg-instructions {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.mg-instructions ol {
+  padding-left: 18px;
+  margin: 8px 0;
+}
+.mg-instructions code {
+  font-size: 11px;
+  background: var(--surface3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--accent2);
+}
+.mg-preview-card {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.mg-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--line);
+}
+.mg-preview-row:last-child { border-bottom: none; }
+.mg-preview-row b { color: var(--text); }
+.mg-warn {
+  font-size: 12px;
+  color: var(--text3);
+  background: rgba(251,191,36,.08);
+  border: 1px solid rgba(251,191,36,.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.mg-progress-bar-wrap {
+  background: var(--surface2);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+  margin: 12px 0 6px;
+}
+.mg-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 4px;
+  transition: width .3s ease;
+}
+.mg-step-label {
+  font-size: 12px;
+  color: var(--text3);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.mg-success {
+  text-align: center;
+  padding: 24px 0 16px;
+}
+.mg-success-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.mg-success-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.mg-success-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 20px;
+}
+.mg-error-box {
+  background: rgba(248,113,113,.12);
+  border: 1px solid rgba(248,113,113,.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 12px;
+}

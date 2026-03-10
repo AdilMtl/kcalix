@@ -138,7 +138,7 @@ supabase/migrations/
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | EM ANDAMENTO (3A–3E concluidas) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
-| 5 | Ferramenta de migracao | Planejado |
+| 5 | Ferramenta de migracao | EM ANDAMENTO (5A concluida — 2026-03-09) |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
@@ -453,19 +453,38 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 
 ---
 
-## FASE 5 — Ferramenta de Migracao (Planejado)
+## FASE 5 — Ferramenta de Migracao (Em andamento)
+
+### Sessao 5A — Importador — CONCLUIDA (2026-03-09)
+
+- [x] `src/lib/migrationTransform.ts` — validacao, preview, transformAll
+- [x] `src/lib/migrationImport.ts` — upserts batches 50, ignoreDuplicates
+- [x] `src/components/MigrateModal.tsx` — bottom sheet 4 etapas, file picker label nativo
+- [x] `src/pages/MaisPage.tsx` — Card 3 Migracao
+- [x] `supabase/migrations/010_fix_workout_templates_unique.sql` — fix UNIQUE constraint
+- [x] Importacao validada com JSON real (kcalix-export-2026-03-09.json)
+
+### Sessao 5B — Diagnostico de Divergencias (Proxima)
+
+Objetivo: comparar dados do JSON exportado (fonte de verdade) com o que foi importado no Supabase, identificar e corrigir divergencias de kcal e alimentos.
+
+Pendencias:
+- Spec a criar: ferramenta de comparacao JSON vs Supabase (diff por data)
+- Dias com dados pre-existentes no Kcalix que divergem do app antigo
+- Decidir estrategia: sobrescrever seletivamente vs manter Kcalix como fonte de verdade
 
 ### Mapeamento localStorage -> Supabase
-| localStorage key | Tabela |
-|---|---|
-| `blocos_tracker_settings` | `user_settings` |
-| `blocos_tracker_diary` | `diary_entries` |
-| `blocos_tracker_workouts` (workouts[]) | `workouts` |
-| `blocos_tracker_workouts` (templates[]) | `workout_templates` |
-| `blocos_tracker_corpo` | `body_measurements` |
-| `blocos_tracker_habits_v1` | `habits` |
-| `blocos_tracker_checkins_v1` | `checkins` |
-| `blocos_tracker_custom_exercises` | `custom_exercises` |
+| localStorage key | Tabela | Status |
+|---|---|---|
+| `blocos_tracker_settings` | `user_settings` | Importado (5A) |
+| `blocos_tracker_diary` | `diary_entries` | Importado (5A) |
+| `blocos_tracker_workouts` (workouts[]) | `workouts` | Importado (5A) |
+| `blocos_tracker_workouts` (templates[]) | `workout_templates` | Importado (5A) |
+| `blocos_tracker_corpo` | `body_measurements` | Importado (5A) |
+| `blocos_tracker_habits_v1` | `habits` | Importado (5A) |
+| `blocos_tracker_custom_exercises` | `custom_exercises` | Importado (5A) |
+| `blocos_tracker_checkins_v1` | `checkins` | Sem tabela ainda |
+| `blocos_tracker_custom_foods` | — | Sem tabela ainda |
 
 ---
 
