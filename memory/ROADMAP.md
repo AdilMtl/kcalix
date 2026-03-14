@@ -138,7 +138,7 @@ supabase/migrations/
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
-| 5 | Ferramenta de migracao | Em andamento (5A+5C concluidas, 5D testes pendentes) |
+| 5 | Ferramenta de migracao | Em andamento (5A+5C+export v0.23.0 concluidos, 5D pendente: skinfolds+checkins) |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
@@ -518,22 +518,11 @@ Funcionalidades do app original portadas parcialmente ou ainda nao portadas.
 - [x] **`updatedAt` ausente no UserSettingsData** — CORRIGIDO (v0.21.0)
 - [ ] **Checkins do app antigo nao importados**: `blocos_tracker_checkins_v1` nao esta no `migrationTransform.ts`. Adicionar na Sessao 5C junto com `custom_foods`.
 
-### Exercicios customizados importados — BUG (investigar Sessao 5C)
+### Exercicios customizados importados — CORRIGIDO (v0.21.0 + fix manual Supabase)
 
-- [ ] **Nome exibido como ID**: exercicios importados do app antigo aparecem como `custom_1772747615536...` em vez do nome real (ex: "Pulley Costas Maquina"). Causa provavel: `transformCustomExercises` salva no Supabase com `id` gerado novo — mas os `workouts` importados referenciam o `exercicioId` ORIGINAL do app antigo. O `resolveExName` procura o ID novo e nao acha → exibe o ID bruto.
-- [ ] **Grupo/subgrupo nao exibido**: mesmo motivo — `resolveExGrupo` nao encontra o exercicio custom pelo ID antigo.
-- [ ] **Volume muscular nao contabilizado**: fix parcial ja aplicado em `useMuscleVolume.resolvePrimaryGroup` (fallback sem emoji). Mas a raiz e o mismatch de IDs.
-
-**Diagnostico completo:**
-- App antigo salva: `{ exercicioId: "custom_1772747615536", ... }` nos workouts
-- Migracao importa `custom_exercises` com IDs gerados pelo Supabase (UUID novo)
-- Os workouts importados ainda referenciam o ID antigo `custom_1772747615536`
-- `resolveExName("custom_1772747615536", customExercises)` → nao acha → exibe o proprio ID
-
-**Solucao proposta (Sessao 5C):**
-1. Em `migrationImport.ts`, ao inserir `custom_exercises`, mapear `{ id_antigo → id_novo }`
-2. Reescrever os `exercicioId` dos workouts antes de inserir usando esse mapa
-3. Alternativa mais simples: em `transformCustomExercises`, preservar o `id` original do app antigo em vez de deixar o Supabase gerar um UUID novo
+- [x] **Nome exibido como ID** — CORRIGIDO: `migrationImport.ts` v0.21.0 agora constroi `customIdMap` (idOriginal → UUID Supabase) e reescreve os `exercicioId` nos workouts antes de inserir. Dados ja importados foram corrigidos manualmente no Supabase.
+- [x] **Grupo/subgrupo nao exibido** — CORRIGIDO: mesmo fix acima resolve.
+- [x] **Volume muscular nao contabilizado** — CORRIGIDO: IDs agora resolvem corretamente.
 
 ---
 

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { useBody } from '../hooks/useBody'
+import { useAuthStore } from '../store/authStore'
+import { exportAll } from '../lib/exportData'
 import { calcFromProfile } from '../lib/calculators'
 import type { CalcResult } from '../lib/calculators'
 import { GOAL_PRESETS, WZ_ACTIVITY_LABELS } from '../data/goalPresets'
@@ -41,8 +43,8 @@ function NutriBanner({ settings, onConfigure }: { settings: UserSettingsData | n
       borderRadius: 10, padding: '10px 12px', marginBottom: 12, gap: 10, flexWrap: 'wrap',
     }}>
       <span style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.7 }}>
-        BMR: <b style={{ color: 'var(--text)' }}>{settings.bmr} kcal</b>
-        {' · '}TDEE: <b style={{ color: 'var(--text)' }}>{settings.tdee} kcal</b>
+        BMR: <b style={{ color: 'var(--text)' }}>{Math.round(settings.bmr)} kcal</b>
+        {' · '}TDEE: <b style={{ color: 'var(--text)' }}>{Math.round(settings.tdee)} kcal</b>
         {' · '}Meta: <b style={{ color: 'var(--accent)' }}>{settings.kcalTarget} kcal</b>
         {' · '}P <b>{settings.pTarget}g</b> / C <b>{settings.cTarget}g</b> / G <b>{settings.gTarget}g</b>
       </span>
@@ -82,6 +84,28 @@ export default function MaisPage() {
 
   // Migração
   const [migrateOpen, setMigrateOpen] = useState(false)
+
+  // Export
+  const { user } = useAuthStore()
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    if (!user) return
+    setExporting(true)
+    try {
+      const data = await exportAll(user.id)
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `kcalix-export-${todayISO()}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   // ── Metas diárias (accordion) ────────────────────────────────────────────
   const [goalP, setGoalP] = useState(String(settings?.pTarget ?? ''))
@@ -594,6 +618,30 @@ export default function MaisPage() {
             onClick={() => setMigrateOpen(true)}
           >
             🔄 Migrar dados do app antigo
+          </button>
+        </div>
+      </div>
+
+      {/* ── Card 4: Exportar dados ── */}
+      <div className="card">
+        <div className="card-header">
+          <div className="ch-info">
+            <b>📦 Exportar dados</b>
+            <span>Backup completo dos seus dados.</span>
+          </div>
+        </div>
+        <div className="card-body">
+          <p style={{ fontSize: 13, color: 'var(--text2)', margin: '0 0 12px', lineHeight: 1.6 }}>
+            Baixe todos os seus dados (diário, treinos, medições, hábitos, alimentos) em formato JSON.
+            Use para backup ou para verificar dados importados.
+          </p>
+          <button
+            className="btn primary"
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? 'Exportando...' : '⬇️ Baixar backup completo'}
           </button>
         </div>
       </div>

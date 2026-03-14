@@ -1,5 +1,19 @@
 # Kcalix — CHANGELOG
 
+## [v0.23.0] — 2026-03-14
+
+### Adicionado
+- [feat] `src/lib/exportData.ts` — `exportAll(userId)`: busca as 8 tabelas do Supabase em paralelo e gera JSON no formato `FullExport` idêntico ao export do blocos-tracker
+- [feat] `src/pages/MaisPage.tsx` — Card "📦 Exportar dados" com botão "⬇️ Baixar backup completo" e estado de loading; arquivo gerado: `kcalix-export-YYYY-MM-DD.json`
+
+### Corrigido
+- [fix] `src/lib/migrationTransform.ts` — `validateExport` agora aceita `_app: 'kcalix'` além de `'blocos-tracker'` — permite reimportar o próprio export do Kcalix
+- [fix] `src/pages/MaisPage.tsx` — BMR e TDEE exibidos com `Math.round` (sem casas decimais infinitas)
+
+### Notas
+- Export validado: comparação entre JSON do blocos-tracker (2026-03-09) e Kcalix/Supabase (2026-03-14) — dados de diary, workouts, body e templates 100% íntegros
+- Pendente Sessão 5D: (1) CorpoPage → salvar dobras atualiza `user_settings.skinfolds`; (2) import de checkins do app antigo. Spec em `memory/spec-sessao-5D.md`
+
 ## [v0.15.0] — 2026-03-09
 
 ### Adicionado

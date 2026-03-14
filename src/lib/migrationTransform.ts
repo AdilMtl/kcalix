@@ -153,7 +153,7 @@ export function validateExport(raw: unknown): FullExport {
   if (!raw || typeof raw !== 'object') throw new Error('Arquivo inválido')
   const obj = raw as Record<string, unknown>
   if (obj._version !== 1) throw new Error('Versão do arquivo não suportada')
-  if (obj._app !== 'blocos-tracker') throw new Error('Arquivo não é do blocos-tracker')
+  if (obj._app !== 'blocos-tracker' && obj._app !== 'kcalix') throw new Error('Arquivo não é do blocos-tracker ou kcalix')
   if (!obj.diary || typeof obj.diary !== 'object') throw new Error('Campo "diary" ausente')
   if (!obj.settings || typeof obj.settings !== 'object') throw new Error('Campo "settings" ausente')
   return obj as unknown as FullExport
