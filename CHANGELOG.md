@@ -2,6 +2,22 @@
 
 ---
 
+## [0.22.0] — 2026-03-14
+
+### Adicionado
+- [feat] `supabase/migrations/012_custom_foods.sql` — tabela `custom_foods` com RLS e UNIQUE constraint nomeada `custom_foods_user_id_nome_unique`
+- [feat] `src/lib/migrationTransform.ts` — interface `CustomFoodRow`, função `transformCustomFoods()`, campo `customFoods` no `TransformResult` e `transformAll()`
+- [feat] `src/lib/migrationImport.ts` — step 8 upsert em `custom_foods` (batch 50, ignoreDuplicates), `customFoods` adicionado ao tipo `ImportProgress`
+
+### Melhorado
+- [improve] `src/components/MigrateModal.tsx` — alimentos personalizados entram no array de preview normalmente (removido "(em breve)"), label `Alimentos personalizados...` adicionado ao `STEP_LABELS`
+
+### Notas
+- Migration 012 deve ser executada no Supabase Dashboard antes de usar o import
+- Sessão 5C concluída — próxima etapa: testes extensos de compatibilidade do import (dados reais, edge cases)
+
+---
+
 ## [0.21.0] — 2026-03-09
 
 ### Adicionado

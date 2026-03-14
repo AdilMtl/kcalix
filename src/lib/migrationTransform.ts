@@ -109,6 +109,16 @@ export interface ExportCustomFood {
 
 // ── Resultado da transformação ────────────────────────────────────────────────
 
+export interface CustomFoodRow {
+  nome:     string
+  porcao:   string
+  porcao_g: number
+  p:        number
+  c:        number
+  g:        number
+  kcal:     number
+}
+
 export interface TransformResult {
   settings: UserSettingsData
   diary: Array<{ date: string; data: DiaryData }>
@@ -118,6 +128,7 @@ export interface TransformResult {
   customExercises: Array<Omit<CustomExercise, 'id' | 'user_id' | 'created_at'> & { idOriginal: string }>
   body: Array<{ date: string; data: BodyMeasurement }>
   habits: Array<Omit<HabitRow, 'id' | 'user_id' | 'created_at'>>
+  customFoods: CustomFoodRow[]
 }
 
 // ── Preview (para mostrar ao usuário antes de importar) ───────────────────────
@@ -360,6 +371,18 @@ export function transformHabits(
   }))
 }
 
+export function transformCustomFoods(foods: ExportCustomFood[]): CustomFoodRow[] {
+  return (foods ?? []).map(f => ({
+    nome:     f.nome,
+    porcao:   f.porcao ?? '100g',
+    porcao_g: f.porcaoG ?? 100,
+    p:        f.p ?? 0,
+    c:        f.c ?? 0,
+    g:        f.g ?? 0,
+    kcal:     f.kcal ?? 0,
+  }))
+}
+
 export function transformAll(data: FullExport): TransformResult {
   return {
     settings:        transformSettings(data.settings),
@@ -369,5 +392,6 @@ export function transformAll(data: FullExport): TransformResult {
     customExercises: transformCustomExercises(data.customExercises ?? []),
     body:            transformBody(data.body ?? {}),
     habits:          transformHabits(data.habits ?? {}),
+    customFoods:     transformCustomFoods(data.customFoods ?? []),
   }
 }

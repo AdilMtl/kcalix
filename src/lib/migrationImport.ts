@@ -8,7 +8,7 @@ import type { TransformResult } from './migrationTransform'
 
 export interface ImportProgress {
   step:  'settings' | 'diary' | 'customExercises' | 'workouts' | 'templates' |
-         'body' | 'habits' | 'done'
+         'body' | 'habits' | 'customFoods' | 'done'
   done:  number
   total: number
 }
@@ -152,6 +152,16 @@ export async function runImport(
     .catch(e => { errors.push('habits: ' + String(e)); return 0 })
   total += habitCount
   onProgress({ step: 'habits', done: habitRows.length, total: habitRows.length })
+
+  // 8. Alimentos personalizados
+  const customFoodRows = (result.customFoods ?? []).map(f => ({ user_id: userId, ...f }))
+  onProgress({ step: 'customFoods', done: 0, total: customFoodRows.length })
+  if (customFoodRows.length > 0) {
+    const customFoodCount = await batchUpsert('custom_foods', customFoodRows, 'user_id,nome', signal)
+      .catch(e => { errors.push('customFoods: ' + String(e)); return 0 })
+    total += customFoodCount
+  }
+  onProgress({ step: 'customFoods', done: customFoodRows.length, total: customFoodRows.length })
 
   onProgress({ step: 'done', done: total, total })
   return { total, errors }

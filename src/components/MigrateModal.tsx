@@ -26,6 +26,7 @@ const STEP_LABELS: Record<ImportProgress['step'], string> = {
   customExercises: 'Exercícios personalizados...',
   body:            'Medições corporais...',
   habits:          'Hábitos...',
+  customFoods:     'Alimentos personalizados...',
   done:            'Concluído',
 }
 
@@ -104,6 +105,7 @@ function StepPreview({
     { icon: '💪', label: 'Exercícios personalizados',   value: preview.customExercises },
     { icon: '📏', label: 'Dias de medições corporais',  value: preview.bodyDays },
     { icon: '✅', label: 'Dias de hábitos',             value: preview.habitDays },
+    { icon: '🍎', label: 'Alimentos personalizados',    value: preview.customFoods },
   ].filter(r => r.value > 0)
 
   const period = preview.firstDate && preview.lastDate
@@ -121,12 +123,6 @@ function StepPreview({
             <b>{r.value}</b>
           </div>
         ))}
-        {preview.customFoods > 0 && (
-          <div className="mg-preview-row" style={{ opacity: 0.5 }}>
-            <span>🍎 Alimentos personalizados</span>
-            <b>{preview.customFoods} <span style={{ fontSize: 10 }}>(em breve)</span></b>
-          </div>
-        )}
       </div>
 
       <div className="mg-warn">

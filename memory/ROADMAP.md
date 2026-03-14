@@ -138,7 +138,7 @@ supabase/migrations/
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
-| 5 | Ferramenta de migracao | CONCLUIDA (5A — 2026-03-09, 5B adiada) |
+| 5 | Ferramenta de migracao | Em andamento (5A+5C concluidas, 5D testes pendentes) |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
@@ -453,9 +453,10 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 
 ---
 
-## FASE 5 — Ferramenta de Migracao (CONCLUIDA — 2026-03-09)
+## FASE 5 — Ferramenta de Migracao (em andamento — testes pendentes)
 
-> Importacao implementada e validada com JSON real. Diagnostico de divergencias adiado para nao bloquear avanco de funcionalidades.
+> Importacao implementada e validada com JSON real. Sessao 5C concluida (2026-03-14): custom_foods importados.
+> Proxima etapa: testes extensos de compatibilidade com dados reais e edge cases.
 
 ### Sessao 5A — Importador — CONCLUIDA (2026-03-09)
 
@@ -472,6 +473,26 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 >
 > Quando retomar: comparar JSON exportado vs dados importados no Supabase (diff por data), corrigir dias com kcal errada.
 
+### Sessao 5C — custom_foods + CONCLUIDA (2026-03-14)
+
+- [x] `supabase/migrations/012_custom_foods.sql` — tabela custom_foods com RLS e UNIQUE constraint nomeada
+- [x] `src/lib/migrationTransform.ts` — CustomFoodRow, transformCustomFoods(), customFoods no TransformResult
+- [x] `src/lib/migrationImport.ts` — step 8 upsert em custom_foods, customFoods no ImportProgress
+- [x] `src/components/MigrateModal.tsx` — preview mostra customFoods normalmente (removido "em breve")
+- [ ] EXECUTAR migration 012 no Supabase Dashboard
+
+### Sessao 5D — Testes de compatibilidade (PROXIMA)
+
+> Objetivo: garantir que o import funciona corretamente com dados reais de outros usuarios e edge cases.
+
+**O que testar:**
+- [ ] Import com JSON que tem customFoods reais (usuario com alimentos personalizados)
+- [ ] Import com JSON sem customFoods (campo ausente ou array vazio) — deve ser silencioso
+- [ ] Import duplicado (reimportar o mesmo JSON) — dados Kcalix nao devem ser sobrescritos
+- [ ] Import com customExercises que referenciam workouts — validar que nomes resolvem corretamente
+- [ ] Import com checkins (se usuario tiver feito check-ins no app antigo)
+- [ ] Verificar tabela custom_foods no Supabase apos import real
+
 ### Mapeamento localStorage -> Supabase
 | localStorage key | Tabela | Status |
 |---|---|---|
@@ -481,9 +502,9 @@ com historico de gasto calorico diario (ingerido + treino + saldo) navegavel.
 | `blocos_tracker_workouts` (templates[]) | `workout_templates` | Importado (5A) |
 | `blocos_tracker_corpo` | `body_measurements` | Importado (5A) |
 | `blocos_tracker_habits_v1` | `habits` | Importado (5A) |
-| `blocos_tracker_custom_exercises` | `custom_exercises` | Importado (5A) |
-| `blocos_tracker_checkins_v1` | `checkins` | Importado (Sessao 5C — tabela criada) |
-| `blocos_tracker_custom_foods` | — | Sem tabela ainda |
+| `blocos_tracker_custom_exercises` | `custom_exercises` | Importado (5A — fix IDs em 0.21.0) |
+| `blocos_tracker_checkins_v1` | `checkins` | Tabela criada (011) — sem dados a importar no JSON atual |
+| `blocos_tracker_custom_foods` | `custom_foods` | Importado (5C — 012) |
 
 ---
 
