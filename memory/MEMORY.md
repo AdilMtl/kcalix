@@ -54,8 +54,10 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 0: CONCLUÍDA
 - Fase 1: CONCLUÍDA (auth email/senha + admin panel)
 - Fase 2: CONCLUÍDA (2026-03-08) — Sessões 2A–2E completas
-- Fase 3: EM ANDAMENTO — Sessões 3A–3D concluídas (2026-03-08); próxima: 3E
-- Fases 4–8: Planejadas
+- Fase 3: CONCLUÍDA (2026-03-09) — Sessões 3A–3E completas
+- Fase 4: CONCLUÍDA (2026-03-09) — Sessões 4A–4E completas
+- Fase 5: CONCLUÍDA (2026-03-09) — Sessão 5A (importador) concluída; 5B adiada
+- Fases 6–8: Planejadas
 
 ## Padrões adicionados na Sessão 2E
 - **dateStore (Zustand):** `src/store/dateStore.ts` — selectedDate global, goToPrev/goToNext/goToToday/isToday
@@ -112,5 +114,9 @@ Ambient glow já adicionado em `body::before/::after`.
 - **kpi-grid correto:** usar `.kpi > .kpi-label + .kpi-value > .num + .den` — nunca inventar classes `kpi-cell`/`kpi-val`.
 
 ## Próximo passo
-Bug exercícios custom importados (Sessão 5C). Ver ROADMAP seção "Exercicios customizados importados — BUG".
-Resumo: workouts importados referenciam `exercicioId: "custom_177xxxx"` (ID antigo do app), mas `custom_exercises` no Supabase tem IDs gerados pelo Supabase (UUID novo). Solução: em `transformCustomExercises`, preservar o `id` original do app antigo em vez de deixar o Supabase gerar UUID.
+Ports pendentes. Ver seção "PORTS PENDENTES" no ROADMAP. Pendências prioritárias:
+1. ProfileCheckinModal "Atualizar →": após salvar o wizard, reabrir o perfil (setProfileOpen(true) no onSave)
+2. updatedAt em UserSettingsData: adicionar campo + salvar no wizard
+3. Checkins no migrationTransform (Sessão 5C)
+4. Bug exercícios custom importados (Sessão 5C): workouts referenciam `custom_177xxxx` (ID antigo), mas `custom_exercises` no Supabase tem UUIDs novos. Fix em `migrationImport.ts`: mapear id_antigo→id_novo ao inserir, reescrever exercicioId dos workouts antes de inserir.
+5. custom_foods: sem tabela ainda — planejar para Sessão 5C
