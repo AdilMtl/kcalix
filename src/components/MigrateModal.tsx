@@ -27,6 +27,7 @@ const STEP_LABELS: Record<ImportProgress['step'], string> = {
   body:            'Medições corporais...',
   habits:          'Hábitos...',
   customFoods:     'Alimentos personalizados...',
+  checkins:        'Check-ins...',
   done:            'Concluído',
 }
 
@@ -106,6 +107,7 @@ function StepPreview({
     { icon: '📏', label: 'Dias de medições corporais',  value: preview.bodyDays },
     { icon: '✅', label: 'Dias de hábitos',             value: preview.habitDays },
     { icon: '🍎', label: 'Alimentos personalizados',    value: preview.customFoods },
+    { icon: '📊', label: 'Check-ins de progresso',      value: preview.checkins },
   ].filter(r => r.value > 0)
 
   const period = preview.firstDate && preview.lastDate

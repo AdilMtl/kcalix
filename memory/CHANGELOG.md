@@ -1,5 +1,20 @@
 # Kcalix — CHANGELOG
 
+## [v0.24.0] — 2026-03-14
+
+### Adicionado
+- [feat] `src/lib/exportData.ts` — checkins incluídos no export do Kcalix (campo estava ausente no JSON gerado)
+- [feat] `src/hooks/useCheckins.ts` — auto-cálculo de BF% via JP7 ao salvar checkin quando `bfPct` não é informado manualmente e skinfolds estão configuradas no perfil
+
+### Corrigido
+- [fix] `src/lib/migrationTransform.ts` — checkins retornavam camelCase no upsert; Supabase esperava snake_case (`weight_kg`, `activity_type`, etc.) — causava erro PGRST204
+- [fix] `src/lib/migrationTransform.ts` — deduplicação de checkins por data com mesclagem: registro duplicado na mesma data preserva campos não-nulos do segundo registro (ex: `bfPct` atualizado)
+
+### Notas
+- Bug recorrente de schema Supabase confirmado em `checkins` (011): tabela criada sem colunas corretas. SQL de fix documentado em `memory/supabase-utils.md`
+- Sessão 5D (testes de compatibilidade) concluída informalmente via comparação de exports reais
+- Melhorias futuras de composição corporal planejadas em `memory/ROADMAP.md` (histórico de dobras por data, BF% histórico, etc.)
+
 ## [v0.23.0] — 2026-03-14
 
 ### Adicionado

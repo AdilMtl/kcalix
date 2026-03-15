@@ -5,6 +5,7 @@
 
 import type { DiaryData, DiaryMeals, FoodEntry } from '../hooks/useDiary'
 import type { UserSettingsData } from '../hooks/useSettings'
+import type { CheckinRow } from '../hooks/useCheckins'
 import type { BodyMeasurement } from '../types/body'
 import type { HabitRow } from '../types/habit'
 import type { WorkoutDayData, WorkoutTemplate, CustomExercise } from '../types/workout'
@@ -25,6 +26,7 @@ export interface FullExport {
   body: Record<string, ExportBodyDay>
   habits: Record<string, ExportHabitDay>
   customFoods: ExportCustomFood[]
+  checkins?: ExportCheckin[]
 }
 
 export interface ExportSettings {
@@ -107,6 +109,23 @@ export interface ExportCustomFood {
   p: number; c: number; g: number; kcal: number
 }
 
+export interface ExportCheckin {
+  date: string
+  weightKg?: number
+  waistCm?: number
+  bfPct?: number
+  bmr?: number
+  tdee?: number
+  kcalTarget?: number
+  goalType?: string
+  trainingSessions?: number
+  avgTrainingKcal?: number
+  activityType?: string
+  avgConsumed?: number
+  adherencePct?: number
+  note?: string | null
+}
+
 // ── Resultado da transformação ────────────────────────────────────────────────
 
 export interface CustomFoodRow {
@@ -129,6 +148,7 @@ export interface TransformResult {
   body: Array<{ date: string; data: BodyMeasurement }>
   habits: Array<Omit<HabitRow, 'id' | 'user_id' | 'created_at'>>
   customFoods: CustomFoodRow[]
+  checkins: Array<Record<string, unknown>>
 }
 
 // ── Preview (para mostrar ao usuário antes de importar) ───────────────────────
@@ -140,7 +160,8 @@ export interface ImportPreview {
   customExercises: number
   bodyDays: number
   habitDays: number
-  customFoods: number   // informativo — tabela ainda não existe
+  customFoods: number
+  checkins: number
   firstDate: string     // data mais antiga
   lastDate: string      // data mais recente
 }
@@ -177,6 +198,7 @@ export function buildPreview(data: FullExport): ImportPreview {
     bodyDays:        Object.keys(data.body ?? {}).length,
     habitDays:       Object.keys(data.habits ?? {}).length,
     customFoods:     (data.customFoods ?? []).length,
+    checkins:        (data.checkins ?? []).length,
     firstDate:       allDates[0] ?? '',
     lastDate:        allDates[allDates.length - 1] ?? '',
   }
@@ -371,6 +393,41 @@ export function transformHabits(
   }))
 }
 
+export function transformCheckins(checkins: ExportCheckin[]): Array<Record<string, unknown>> {
+  // Mescla duplicatas por data: preserva valor não-nulo mais recente para cada campo
+  const merged = new Map<string, Record<string, unknown>>()
+  for (const c of (checkins ?? []).filter(c => !!c.date)) {
+    const row: Record<string, unknown> = {
+      date:               c.date,
+      weight_kg:          c.weightKg,
+      waist_cm:           c.waistCm,
+      bf_pct:             c.bfPct,
+      bmr:                c.bmr,
+      tdee:               c.tdee,
+      kcal_target:        c.kcalTarget,
+      goal_type:          c.goalType,
+      training_sessions:  c.trainingSessions,
+      avg_training_kcal:  c.avgTrainingKcal,
+      activity_type:      c.activityType,
+      avg_consumed:       c.avgConsumed,
+      adherence_pct:      c.adherencePct,
+      note:               c.note ?? undefined,
+    }
+    const existing = merged.get(c.date)
+    if (!existing) {
+      merged.set(c.date, row)
+    } else {
+      // Mescla: novo valor só substitui se o existente for nulo/undefined
+      for (const key of Object.keys(row)) {
+        if (existing[key] == null && row[key] != null) {
+          existing[key] = row[key]
+        }
+      }
+    }
+  }
+  return Array.from(merged.values())
+}
+
 export function transformCustomFoods(foods: ExportCustomFood[]): CustomFoodRow[] {
   return (foods ?? []).map(f => ({
     nome:     f.nome,
@@ -393,5 +450,6 @@ export function transformAll(data: FullExport): TransformResult {
     body:            transformBody(data.body ?? {}),
     habits:          transformHabits(data.habits ?? {}),
     customFoods:     transformCustomFoods(data.customFoods ?? []),
+    checkins:        transformCheckins(data.checkins ?? []),
   }
 }

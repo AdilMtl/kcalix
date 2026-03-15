@@ -182,6 +182,12 @@ export function useCheckins(): UseCheckinsReturn {
     if (!user) return
     const period = await buildCheckinPeriod(user.id, settings.kcalTarget ?? 0)
     const today = todayISO()
+    // Auto-calcular BF via JP7 se não foi inserido manualmente e skinfolds estão disponíveis
+    let bfPct = fields.bfPct ?? null
+    if (bfPct == null) {
+      const { bf } = calcProfileMetrics(settings)
+      if (bf != null) bfPct = Math.round(bf * 10) / 10
+    }
     const { error } = await supabase
       .from('checkins')
       .upsert({
@@ -189,7 +195,7 @@ export function useCheckins(): UseCheckinsReturn {
         date:       today,
         weight_kg:  fields.weightKg ?? null,
         waist_cm:   fields.waistCm  ?? null,
-        bf_pct:     fields.bfPct    ?? null,
+        bf_pct:     bfPct,
         note:       fields.note     ?? null,
         bmr:        settings.bmr         ?? null,
         tdee:       settings.tdee        ?? null,

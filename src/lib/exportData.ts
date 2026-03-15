@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { supabase } from './supabase'
-import type { FullExport, ExportSettings, ExportWorkoutDay, ExportTemplate, ExportCustomExercise, ExportBodyDay, ExportHabitDay, ExportCustomFood } from './migrationTransform'
+import type { FullExport, ExportSettings, ExportWorkoutDay, ExportTemplate, ExportCustomExercise, ExportBodyDay, ExportHabitDay, ExportCustomFood, ExportCheckin } from './migrationTransform'
 import type { DiaryData } from '../hooks/useDiary'
 import type { WorkoutDayData, WorkoutTemplate, CustomExercise } from '../types/workout'
 import type { BodyMeasurement } from '../types/body'
@@ -22,6 +22,7 @@ export async function exportAll(userId: string): Promise<FullExport> {
     bodyRes,
     habitsRes,
     customFoodsRes,
+    checkinsRes,
   ] = await Promise.all([
     supabase.from('user_settings').select('data').eq('user_id', userId).maybeSingle(),
     supabase.from('diary_entries').select('date, data').eq('user_id', userId),
@@ -31,6 +32,7 @@ export async function exportAll(userId: string): Promise<FullExport> {
     supabase.from('body_measurements').select('date, data').eq('user_id', userId),
     supabase.from('habits').select('date, dieta, log, treino, cardio, medidas').eq('user_id', userId),
     supabase.from('custom_foods').select('id, nome, porcao, porcao_g, p, c, g, kcal').eq('user_id', userId),
+    supabase.from('checkins').select('date, weight_kg, waist_cm, bf_pct, bmr, tdee, kcal_target, goal_type, training_sessions, avg_training_kcal, activity_type, avg_consumed, adherence_pct, note').eq('user_id', userId).order('date'),
   ])
 
   // ── settings ─────────────────────────────────────────────────────────────
@@ -126,6 +128,24 @@ export async function exportAll(userId: string): Promise<FullExport> {
     }
   }
 
+  // ── checkins ─────────────────────────────────────────────────────────────
+  const checkins: ExportCheckin[] = (checkinsRes.data ?? []).map((r: Record<string, unknown>) => ({
+    date:             r.date             as string,
+    weightKg:         r.weight_kg        != null ? Number(r.weight_kg)        : undefined,
+    waistCm:          r.waist_cm         != null ? Number(r.waist_cm)         : undefined,
+    bfPct:            r.bf_pct           != null ? Number(r.bf_pct)           : undefined,
+    bmr:              r.bmr              != null ? Number(r.bmr)              : undefined,
+    tdee:             r.tdee             != null ? Number(r.tdee)             : undefined,
+    kcalTarget:       r.kcal_target      != null ? Number(r.kcal_target)      : undefined,
+    goalType:         r.goal_type        as string | undefined,
+    trainingSessions: r.training_sessions != null ? Number(r.training_sessions) : undefined,
+    avgTrainingKcal:  r.avg_training_kcal != null ? Number(r.avg_training_kcal) : undefined,
+    activityType:     r.activity_type    as string | undefined,
+    avgConsumed:      r.avg_consumed     != null ? Number(r.avg_consumed)     : undefined,
+    adherencePct:     r.adherence_pct    != null ? Number(r.adherence_pct)    : undefined,
+    note:             r.note             as string | undefined,
+  }))
+
   // ── customFoods ──────────────────────────────────────────────────────────
   const customFoods: ExportCustomFood[] = (customFoodsRes.data ?? []).map((f: {
     id: string; nome: string; porcao: string; porcao_g: number
@@ -153,5 +173,6 @@ export async function exportAll(userId: string): Promise<FullExport> {
     body,
     habits,
     customFoods,
+    checkins,
   }
 }

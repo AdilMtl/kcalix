@@ -138,7 +138,7 @@ supabase/migrations/
 | 2 | Home e Diario | CONCLUIDA (2026-03-08) |
 | 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
-| 5 | Ferramenta de migracao | Em andamento (5A+5C+export v0.23.0 concluidos, 5D pendente: skinfolds+checkins) |
+| 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6 | PWA e polish | Planejado |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
@@ -523,6 +523,36 @@ Funcionalidades do app original portadas parcialmente ou ainda nao portadas.
 - [x] **Nome exibido como ID** — CORRIGIDO: `migrationImport.ts` v0.21.0 agora constroi `customIdMap` (idOriginal → UUID Supabase) e reescreve os `exercicioId` nos workouts antes de inserir. Dados ja importados foram corrigidos manualmente no Supabase.
 - [x] **Grupo/subgrupo nao exibido** — CORRIGIDO: mesmo fix acima resolve.
 - [x] **Volume muscular nao contabilizado** — CORRIGIDO: IDs agora resolvem corretamente.
+
+---
+
+## MELHORIAS FUTURAS — Composicao Corporal (Fase 6+)
+
+> Contexto: hoje as dobras cutaneas (skinfolds) ficam salvas apenas em `user_settings` — um unico registro global.
+> Isso impede calcular BF% historico com os valores de dobras daquela epoca.
+
+### 1. Historico de dobras cutaneas por data (PRIORITARIO)
+- Salvar skinfolds com timestamp em `body_measurements` (ja tem a tabela, campo `skinfolds` existe no schema)
+- Ao abrir CorpoPage, carregar as dobras do dia selecionado (nao so as atuais do settings)
+- Ao salvar dobras na CorpoPage, persistir em `body_measurements.skinfolds` alem de `user_settings.skinfolds`
+- Beneficio: BF% JP7 historico real — cada checkin calcularia com as dobras daquele dia
+
+### 2. BF% automatico no checkin com dobras do dia
+- Hoje: auto-calcula BF% usando dobras atuais do settings (implementado v0.24.0)
+- Futuro: buscar dobras da data mais proxima ao checkin em `body_measurements` para calculo mais fiel
+
+### 3. Historico de peso corporal por data em body_measurements
+- Hoje: peso fica em `user_settings` (um valor global) e em `checkins` (quando o usuario faz checkin)
+- Melhorar CorpoPage para registrar peso diario em `body_measurements` separadamente das dobras
+- Exibir grafico de peso ao longo do tempo (nao so nos checkins)
+
+### 4. Metricas derivadas no checkin
+- `leanKg` (massa magra) calculado e salvo junto com `bf_pct` no saveCheckin
+- `fatKg` (massa gorda) como campo calculado visivel no ProfileCheckinModal
+
+### 5. Alertas de progresso
+- Notificar quando BF% muda mais de X% entre checkins consecutivos (sinal de retencao hidrica ou erro de medicao)
+- Sugerir novo checkin se passou mais de 14 dias sem registro
 
 ---
 

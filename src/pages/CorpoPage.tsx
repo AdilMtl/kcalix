@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { useDateStore } from '../store/dateStore'
 import { useBody } from '../hooks/useBody'
+import { useSettings } from '../hooks/useSettings'
 import type { BodyMeasurement, BodyRow } from '../types/body'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ const inputStyle: React.CSSProperties = {
 export default function CorpoPage() {
   const { selectedDate } = useDateStore()
   const { measurement, loading, saveMeasurement, clearMeasurement, getAllBodyRows } = useBody(selectedDate)
+  const { settings, saveSettings } = useSettings()
 
   // form state — inputs do dia
   const [weight, setWeight]   = useState('')
@@ -205,6 +207,9 @@ export default function CorpoPage() {
       ...(anySF ? { skinfolds: sf } : {}),
     }
     saveMeasurement(data)
+    if (anySF && settings) {
+      saveSettings({ ...settings, skinfolds: sf }).catch(console.error)
+    }
     getAllBodyRows().then(setRows)
     showToast('Medição salva 📏')
   }
