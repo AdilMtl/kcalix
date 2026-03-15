@@ -2,6 +2,23 @@
 
 ---
 
+## [0.26.0] — 2026-03-15
+
+### Adicionado
+- [feat] Onboarding automático: `CalcWizardModal` abre na primeira visita quando `user_settings` está vazio (`settings === null`). Usuários que já migraram dados não são afetados.
+- [feat] Tela final "Tudo pronto!" no wizard (step `done`): cards com Objetivo, BMR/TDEE/Meta diária e Macros (P/C/G). Botão "Começar a usar o Kcalix →" confirma e salva.
+- [feat] Proteção de dismiss: fechar o wizard sem salvar grava `kcalix_onboarding_dismissed` no localStorage por 7 dias — wizard não reaparece em recarregamentos acidentais.
+
+### Corrigido
+- [fix] `pendingResult` agora é resetado ao reabrir o wizard (`setPendingResult(null)` no useEffect de reset), evitando dados stale no step `done`.
+
+### Notas
+- Sessão 6B iniciada (Fase 6 — Qualidade e Robustez). Item 1 (Onboarding) concluído.
+- Próximos itens da 6B: Error Boundary global, Vitest (testes calculators + migrationTransform), CI/CD.
+- Diagnóstico técnico completo documentado em `memory/ROADMAP.md` seção FASE 6B.
+
+---
+
 ## [0.25.0] — 2026-03-15
 
 ### Adicionado

@@ -419,6 +419,7 @@ export default function HomePage() {
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
   const [profileOpen, setProfileOpen]       = useState(false)
   const [wizardOpen, setWizardOpen]         = useState(false)
+  const [autoWizardOpen, setAutoWizardOpen] = useState(false)
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
@@ -428,6 +429,17 @@ export default function HomePage() {
   useEffect(() => {
     getWeekKcal(weekDays.map(d => d.iso)).then(setWeekKcal)
   }, [])
+
+  // Onboarding automático: abre wizard na primeira visita
+  // Condições: settings carregou (loadingSettings=false) + perfil nunca configurado (settings===null)
+  // + usuário não dismissou sem salvar antes (localStorage)
+  useEffect(() => {
+    if (loadingSettings) return
+    const dismissed = localStorage.getItem('kcalix_onboarding_dismissed')
+    if (settings === null && !dismissed) {
+      setAutoWizardOpen(true)
+    }
+  }, [loadingSettings, settings])
 
   // Carrega kcal de treino por data ao abrir o modal (lazy)
   const handleOpenWeeklyModal = useMemo(() => async () => {
@@ -551,6 +563,18 @@ export default function HomePage() {
         initialData={settings}
         onSave={async (result) => { await saveSettings(result); setWizardOpen(false); setProfileOpen(true) }}
         onClose={() => setWizardOpen(false)}
+      />
+
+      {/* Onboarding automático — abre só na primeira visita (settings===null) */}
+      <CalcWizardModal
+        open={autoWizardOpen}
+        isNewUser={true}
+        initialData={null}
+        onSave={async (result) => { await saveSettings(result); setAutoWizardOpen(false) }}
+        onClose={() => {
+          localStorage.setItem('kcalix_onboarding_dismissed', '1')
+          setAutoWizardOpen(false)
+        }}
       />
 
       {/* Modal histórico semanal de kcal */}

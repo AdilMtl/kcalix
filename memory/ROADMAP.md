@@ -139,7 +139,11 @@ supabase/migrations/
 | 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
-| 6 | PWA e polish | Em andamento (6A concluída — 2026-03-15) |
+| 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
+| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (item 1 concluído — 2026-03-15) |
+| 6C | SW Update Toast + Code Splitting | Planejada |
+| 6D | Vitest — testes calculators + migrationTransform | Planejada |
+| 6E | CI/CD + Loading states + OG Tags | Planejada |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
 
@@ -576,6 +580,288 @@ Funcionalidades do app original portadas parcialmente ou ainda nao portadas.
 - [ ] Testar comportamento offline (navegação sem internet)
 - [ ] Notificações push fim do timer treino (Notification API + SW)
 - [ ] Timer — long-press preset para editar valor (original L6841-6858)
+
+---
+
+## FASE 6B — Qualidade e Robustez (Próxima — pós-migração)
+
+> Diagnóstico técnico realizado em 2026-03-15 após conclusão das Fases 1–5 e início da Fase 6A (PWA).
+> Objetivo: elevar o app de "funcional" para "profissional", com foco em integridade de dados,
+> experiência de primeiro uso e segurança contra regressões.
+>
+> PRINCÍPIO CENTRAL: nenhuma dessas melhorias deve corromper dados existentes.
+> Toda mudança de schema usa migration versionada. Toda mudança de lógica preserva dados antigos.
+
+---
+
+### ITEM 2 — Onboarding automático na primeira entrada — CONCLUIDO (v0.26.0 — 2026-03-15)
+
+- [x] `src/pages/HomePage.tsx` — estado `autoWizardOpen` + `useEffect` que detecta `settings === null`
+- [x] `src/components/CalcWizardModal.tsx` — step `done` com tela final: cards Objetivo/BMR/TDEE/Macros
+- [x] Proteção: `kcalix_onboarding_dismissed` no localStorage evita reabrir se fechar sem salvar
+- [x] Proteção de dados: usuários com `settings.updatedAt` preenchido nunca veem o wizard automático
+
+---
+
+### ITEM 1 — Error Boundary global (🔴 PRIORIDADE MÁXIMA)
+
+**Problema:** qualquer exceção não tratada derruba a árvore React inteira — tela branca sem mensagem.
+O usuário não sabe o que aconteceu e abandona o app.
+
+**Implementação:**
+- Criar `src/components/ErrorBoundary.tsx` — class component (único caso aceitável de class no projeto)
+- Envolver `<App>` em `main.tsx` com `<ErrorBoundary>`
+- UI de fallback: fundo escuro com `--bg`, ícone ⚠️, mensagem "Algo deu errado", botão "Recarregar"
+- Capturar `error.message` + `error.stack` e exibir em modo dev (ocultar em produção)
+- (Futuro) integrar com Sentry: `Sentry.captureException(error)` no `componentDidCatch`
+
+**Proteção de dados:** nenhuma — só leitura de erro, nunca escreve.
+
+**Arquivos:**
+- `src/components/ErrorBoundary.tsx` (novo, ~60 linhas)
+- `src/main.tsx` (envolver App)
+
+**Critério de feito:** tela branca nunca mais aparece; usuário sempre vê opção de recarregar.
+
+---
+
+### ITEM 2 — Onboarding automático na primeira entrada (🔴 PRIORIDADE ALTA)
+
+**Problema:** usuário novo entra no app e vê BMR/TDEE como `--`, macros zeradas, sem nenhuma
+orientação. Não sabe que precisa ir em `/mais` para configurar o perfil.
+
+**Implementação:**
+- Em `HomePage.tsx`: checar `settings.updatedAt == null` após o hook carregar
+- Se nulo E `!loading`: abrir `CalcWizardModal` automaticamente (estado `autoWizardOpen`)
+- Após fechar o wizard (onSave): marcar em `localStorage` `kcalix_onboarded = "1"` para não
+  abrir de novo se o usuário fechar sem salvar acidentalmente
+- Adicionar tela final no wizard: "✅ Perfil configurado! Suas metas:" + resumo BMR/macros
+
+**Proteção de dados:**
+- Wizard só escreve em `user_settings` via `saveSettings()` que já existe
+- Se o usuário já tem `updatedAt` (migrou dados do app antigo), o wizard NÃO abre — dados preservados
+- `ignoreDuplicates: false` no wizard — sobrescreve intencionalmente pois é ação do usuário
+
+**Arquivos:**
+- `src/pages/HomePage.tsx` (lógica autoWizardOpen)
+- `src/components/CalcWizardModal.tsx` (tela final de resumo)
+
+**Critério de feito:** usuário novo vê wizard na primeira visita; usuário que migrou não vê.
+
+---
+
+### ITEM 3 — SW Update Toast (🟡 MÉDIA — já temos o plugin)
+
+**Problema:** quando nova versão é publicada, usuário com app instalado fica na versão antiga
+indefinidamente. Nunca sabe que há atualização disponível.
+
+**Implementação:**
+- Usar `useRegisterSW` do `virtual:pwa-register/react` (já incluído no vite-plugin-pwa)
+- Criar `src/components/UpdateToast.tsx` — banner fixo no topo: "🔄 Nova versão disponível"
+  + botão "Atualizar" que chama `updateServiceWorker(true)` + recarrega a página
+- Montar em `App.tsx` ao lado do `<InstallPrompt />`
+
+**Proteção de dados:**
+- `updateServiceWorker(true)` apenas substitui os assets cacheados — nunca toca o banco Supabase
+- Dados do usuário vivem no Supabase, não no cache do SW
+
+**Arquivos:**
+- `src/components/UpdateToast.tsx` (novo, ~40 linhas)
+- `src/App.tsx` (montar UpdateToast)
+
+**Critério de feito:** após deploy de nova versão, usuário com app instalado vê o toast em até 1min.
+
+---
+
+### ITEM 4 — Code Splitting por rota (🟡 MÉDIA — performance)
+
+**Problema:** bundle único de 662KB. Carregamento inicial lento (~3–5s em 4G).
+Todas as páginas e modais carregam mesmo que o usuário nunca as acesse.
+
+**Implementação:**
+- Converter imports de páginas em `src/App.tsx` para `React.lazy()`:
+  ```ts
+  const TreinoPage = lazy(() => import('./pages/TreinoPage'))
+  const CorpoPage  = lazy(() => import('./pages/CorpoPage'))
+  // etc.
+  ```
+- Envolver rotas com `<Suspense fallback={<Spinner />}>`
+- Modais pesados (`TemplateHistoryModal`, `CoachGuideModal`, `ExerciseSelector`) podem virar
+  lazy também se necessário
+
+**Proteção de dados:** nenhuma — só mudança de como o JS é carregado, não afeta dados.
+
+**Arquivos:**
+- `src/App.tsx` (lazy imports + Suspense)
+
+**Estimativa de impacto:** bundle inicial de 662KB → ~120–150KB. Resto carrega sob demanda.
+
+**Critério de feito:** Lighthouse Performance Score >= 85 em mobile.
+
+---
+
+### ITEM 5 — Testes automatizados com Vitest (🔴 ALTA — integridade de dados)
+
+**Problema:** zero testes. Um refactor silencioso pode quebrar os cálculos de BMR/TDEE/JP7
+de todos os usuários sem que ninguém perceba.
+
+**O que testar (por prioridade):**
+
+**5A — Calculators (crítico):**
+- `bmrMifflin`: valores conhecidos homem/mulher vs resultado esperado
+- `bmrKatch`: leanKg → BMR
+- `bodyDensityJP7 + bfSiri`: soma das 7 dobras → BF% esperado (comparar com tabela JP7)
+- `calcFromProfile`: perfil completo → todos os campos do CalcResult
+
+**5B — migrationTransform (crítico para dados de usuário):**
+- JSON completo do app antigo → output deve ter N diary_entries, M workouts, etc.
+- JSON com campos ausentes (edge cases) → não deve explodir
+- JSON com customExercises → IDs devem ser preservados e referenciados corretamente
+- Import duplicado → `ignoreDuplicates: true` não deve sobrescrever
+
+**5C — Hooks (médio):**
+- `useDiary`: mock do Supabase, testar optimistic update
+
+**Setup:**
+```bash
+npm install -D vitest @vitest/coverage-v8
+```
+Adicionar em `vite.config.ts`:
+```ts
+test: { globals: true, environment: 'jsdom' }
+```
+
+**Arquivos a criar:**
+- `src/lib/__tests__/calculators.test.ts`
+- `src/lib/__tests__/migrationTransform.test.ts`
+
+**Critério de feito:** `npm run test` passa; calculators com 100% cobertura; transform com >= 80%.
+
+---
+
+### ITEM 6 — CI/CD com GitHub Actions (🟡 MÉDIA)
+
+**Problema:** push vai direto para Vercel sem verificação. Um erro de TypeScript poderia ir ao ar
+(Vercel não roda `tsc -b` por padrão, só o build).
+
+**Implementação:**
+Criar `.github/workflows/ci.yml`:
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run build          # tsc -b + vite build
+      - run: npx vitest run          # testes
+```
+
+**Proteção de dados:** CI só lê código, nunca acessa Supabase de produção.
+Variáveis `VITE_SUPABASE_*` não precisam estar no CI (build usa placeholders).
+
+**Arquivos:**
+- `.github/workflows/ci.yml` (novo)
+
+**Critério de feito:** PR com erro de TS bloqueia merge automaticamente.
+
+---
+
+### ITEM 7 — Proteção de integridade de dados entre versões (🔴 CRÍTICO CONTÍNUO)
+
+> Este não é um item pontual — é um protocolo permanente para todas as sessões futuras.
+
+**Problema:** o schema do Supabase usa JSONB em várias tabelas (`user_settings.data`,
+`diary_entries.data`, `workouts.data`). Mudanças nos tipos TypeScript não quebram o banco
+mas podem quebrar a leitura silenciosamente — o dado existe mas o campo novo retorna `undefined`.
+
+**Regras obrigatórias para toda migration futura:**
+
+1. **Nunca remover campo de JSONB** — apenas adicionar. Se um campo for obsoleto, ignorar na leitura mas não deletar do banco.
+2. **Sempre usar fallback defensivo ao ler JSONB:**
+   ```ts
+   const kcal = data.kcalTarget ?? data.kcal ?? 0  // compatibilidade com dados antigos
+   ```
+3. **Toda migration versionada** — arquivo SQL em `supabase/migrations/` com número sequencial.
+   Nunca executar SQL ad-hoc no painel sem criar o arquivo.
+4. **Migration de rollback documentada** — para cada migration que altera estrutura, comentar
+   o SQL de reversão no próprio arquivo.
+5. **Checklist pré-deploy quando há migration:**
+   - [ ] Migration testada em ambiente de desenvolvimento (dados de teste)
+   - [ ] Usuários existentes têm os dados preservados (checar com SELECT antes do ALTER)
+   - [ ] Código lê campo novo com fallback para valor padrão
+
+**Alerta de corrupção — o que monitorar:**
+- Se `user_settings.data` retornar `null` após update: hook `useSettings` deve mostrar banner
+  "Erro ao carregar perfil — entre em contato" em vez de crashar
+- Se `diary_entries.data` tiver estrutura inválida: `useDiary` deve retornar dia vazio, não crash
+- Se `workouts.data` tiver exercício com `exercicioId` não resolvível: mostrar nome como
+  "Exercício removido" em vez de `undefined`
+
+**Arquivos a melhorar (defensividade):**
+- `src/hooks/useSettings.ts` — adicionar validação do shape do JSONB retornado
+- `src/hooks/useDiary.ts` — já tem fix defensivo (v0.14.0); revisar se cobre todos os campos
+- `src/hooks/useWorkout.ts` — validar que exercicioId existe antes de calcular volume
+
+---
+
+### ITEM 8 — Loading states consistentes (🟡 MÉDIA — polish)
+
+**Problema:** cards mostram `0 kcal` ou lista vazia por 300–500ms enquanto o hook carrega.
+Parece bug para o usuário.
+
+**Padrão a adotar:**
+- Enquanto `loading === true`: mostrar `--` em vez de `0` para números, skeleton em vez de lista vazia
+- Criar componente `<Skeleton />` simples: div cinza animado com `animate-pulse`
+- Aplicar em: EnergyCard (HomePage), KpiCard (DiarioPage), cards do CorpoPage
+
+**Arquivos:**
+- `src/components/Skeleton.tsx` (novo, ~15 linhas)
+- `src/pages/HomePage.tsx`, `DiarioPage.tsx`, `CorpoPage.tsx` (usar Skeleton)
+
+---
+
+### ITEM 9 — OG Tags e meta description (🟢 BAIXA — quick win 20min)
+
+**Problema:** link compartilhado no WhatsApp/iMessage aparece sem preview.
+
+**Implementação:** adicionar em `index.html`:
+```html
+<meta name="description" content="Rastreie nutrição e treino com precisão. App gratuito." />
+<meta property="og:title" content="Kcalix" />
+<meta property="og:description" content="Nutrição e treino num só app." />
+<meta property="og:image" content="/icon-512.png" />
+<meta property="og:url" content="https://kcalix.vercel.app" />
+<meta property="og:type" content="website" />
+```
+
+---
+
+### Scorecard e Ordem de Execução
+
+| # | Item | Prioridade | Esforço | Risco de dados |
+|---|---|---|---|---|
+| 1 | Error Boundary | 🔴 Alta | 30min | Nenhum |
+| 2 | Onboarding automático | 🔴 Alta | 1h | Baixo (só lê updatedAt) |
+| 3 | SW Update Toast | 🟡 Média | 30min | Nenhum |
+| 4 | Code Splitting | 🟡 Média | 1h | Nenhum |
+| 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) |
+| 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum |
+| 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção |
+| 8 | Loading states | 🟡 Média | 1–2h | Nenhum |
+| 9 | OG Tags | 🟢 Baixa | 20min | Nenhum |
+
+**Ordem recomendada de sessões:**
+```
+Sessão 6B: Error Boundary + Onboarding automático  (impacto máximo, baixo risco)
+Sessão 6C: SW Update Toast + Code Splitting          (performance + PWA completo)
+Sessão 6D: Vitest — calculators + migrationTransform (segurança de regressão)
+Sessão 6E: CI/CD + OG Tags + Loading states          (polish e automação)
+```
 
 ---
 

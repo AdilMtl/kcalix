@@ -12,7 +12,7 @@ interface Props {
   onClose: () => void
 }
 
-type Step = 'welcome' | 'summary' | 1 | 2 | 3 | 4
+type Step = 'welcome' | 'summary' | 'done' | 1 | 2 | 3 | 4
 
 const GOAL_ICONS: Record<GoalType, string> = {
   maintain: '🟡',
@@ -25,6 +25,7 @@ const ACTIVITY_OPTIONS = Object.entries(WZ_ACTIVITY_LABELS) as [string, string][
 
 export default function CalcWizardModal({ open, isNewUser, initialData, onSave, onClose }: Props) {
   const [step, setStep] = useState<Step>(isNewUser ? 'welcome' : 'summary')
+  const [pendingResult, setPendingResult] = useState<UserSettingsData | null>(null)
 
   // Step 1 — Dados básicos
   const [sex, setSex] = useState<'male' | 'female'>(initialData?.sex ?? 'male')
@@ -73,6 +74,7 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
   useEffect(() => {
     if (!open) return
     setStep(isNewUser ? 'welcome' : 'summary')
+    setPendingResult(null)
     setSex(initialData?.sex ?? 'male')
     setAge(String(initialData?.age ?? ''))
     setWeight(String(initialData?.weightKg ?? ''))
@@ -131,7 +133,12 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
       gTarget: result.gTarget,
     }
 
-    onSave(newSettings)
+    if (isNewUser) {
+      setPendingResult(newSettings)
+      setStep('done')
+    } else {
+      onSave(newSettings)
+    }
   }
 
   // ── Conteúdo por step ────────────────────────────────────────────────────
@@ -386,6 +393,109 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
     )
   }
 
+  function renderDone() {
+    const r = pendingResult
+    if (!r) return null
+    const goalLabel = WZ_GOAL_LABELS[r.goal] ?? r.goal
+    const GOAL_COLORS: Record<string, string> = { cut: '#f87171', bulk: '#60a5fa', recomp: '#34d399', maintain: '#fbbf24' }
+    const goalColor = GOAL_COLORS[r.goal] ?? 'var(--accent)'
+    return (
+      <>
+        <div className="wz-step-content" style={{ alignItems: 'center', textAlign: 'center', gap: 20 }}>
+          <div style={{ fontSize: 56, lineHeight: 1 }}>🎉</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>Perfil configurado!</div>
+          <div style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.5 }}>
+            Suas metas foram calculadas com base no seu perfil.<br />
+            Você pode ajustá-las a qualquer momento em <b>Mais → Perfil Nutricional</b>.
+          </div>
+
+          {/* Cards de resultado */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+            {/* Objetivo */}
+            <div style={{
+              background: 'var(--surface2)',
+              borderRadius: 12,
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span style={{ color: 'var(--text2)', fontSize: 13 }}>Objetivo</span>
+              <span style={{ fontWeight: 700, color: goalColor }}>{GOAL_ICONS[r.goal]} {goalLabel}</span>
+            </div>
+
+            {/* BMR / TDEE */}
+            <div style={{
+              background: 'var(--surface2)',
+              borderRadius: 12,
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--text3)', fontSize: 11, marginBottom: 2 }}>BMR</div>
+                <div style={{ fontWeight: 700, color: '#fff' }}>{Math.round(r.bmr)} kcal</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--text3)', fontSize: 11, marginBottom: 2 }}>TDEE</div>
+                <div style={{ fontWeight: 700, color: '#fff' }}>{Math.round(r.tdee)} kcal</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--text3)', fontSize: 11, marginBottom: 2 }}>Meta</div>
+                <div style={{ fontWeight: 700, color: 'var(--accent2)' }}>{r.kcalTarget} kcal</div>
+              </div>
+            </div>
+
+            {/* Macros */}
+            <div style={{
+              background: 'var(--surface2)',
+              borderRadius: 12,
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-around',
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--pColor)', fontSize: 11, marginBottom: 2 }}>Proteína</div>
+                <div style={{ fontWeight: 700, color: '#fff' }}>{r.pTarget}g</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--cColor)', fontSize: 11, marginBottom: 2 }}>Carboidrato</div>
+                <div style={{ fontWeight: 700, color: '#fff' }}>{r.cTarget}g</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--gColor)', fontSize: 11, marginBottom: 2 }}>Gordura</div>
+                <div style={{ fontWeight: 700, color: '#fff' }}>{r.gTarget}g</div>
+              </div>
+            </div>
+
+            {/* BF% se tiver */}
+            {r.skinfolds && (
+              <div style={{
+                background: 'var(--surface2)',
+                borderRadius: 12,
+                padding: '10px 16px',
+                color: 'var(--text2)',
+                fontSize: 13,
+                textAlign: 'center',
+              }}>
+                Dobras JP7 configuradas · BF% calculado
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="calc-wizard-footer">
+          <button
+            className="btn primary"
+            style={{ width: '100%' }}
+            onClick={() => pendingResult && onSave(pendingResult)}
+          >
+            Começar a usar o Kcalix →
+          </button>
+        </div>
+      </>
+    )
+  }
+
   return (
     <div className="calc-wizard open" style={{ zIndex: 315 }}>
       {/* Header */}
@@ -393,9 +503,12 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
         <div className="calc-wizard-title">
           {step === 'welcome' ? 'Bem-vindo ao Kcalix' :
            step === 'summary' ? 'Perfil configurado' :
+           step === 'done'    ? 'Tudo pronto!' :
            `Passo ${step} de 4`}
         </div>
-        <button className="calc-wizard-close" onClick={onClose}>✕</button>
+        {step !== 'done' && (
+          <button className="calc-wizard-close" onClick={onClose}>✕</button>
+        )}
       </div>
 
       {/* Progress dots — só em steps 1-4 */}
@@ -417,6 +530,7 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
       {step === 2 && renderStep2()}
       {step === 3 && renderStep3()}
       {step === 4 && renderStep4()}
+      {step === 'done' && renderDone()}
     </div>
   )
 }
