@@ -139,7 +139,7 @@ supabase/migrations/
 | 3 | Treino | CONCLUIDA (3A–3E — 2026-03-08) |
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
-| 6 | PWA e polish | Planejado |
+| 6 | PWA e polish | Em andamento (6A concluída — 2026-03-15) |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
 
@@ -556,10 +556,26 @@ Funcionalidades do app original portadas parcialmente ou ainda nao portadas.
 
 ---
 
-## FASE 6 — PWA e Polish (Planejado)
+## FASE 6 — PWA e Polish (Em andamento — Sessão 6A concluída 2026-03-15)
 
-- `manifest.json`, `vite-plugin-pwa`, service worker
-- Testar instalacao Android e iOS, comportamento offline
+### Sessao 6A — PWA base + Fix 404 SPA — CONCLUIDA (2026-03-15)
+
+- [x] `public/manifest.webmanifest` — manifest PWA completo
+- [x] `public/icon-192.png`, `icon-512.png`, `icon-180px.png`, `favicon.svg` — ícones
+- [x] `index.html` — meta tags iOS/PWA, apple-touch-icon, theme-color, lang pt-BR
+- [x] `vite.config.ts` — vite-plugin-pwa (Workbox GenerateSW, precache shell)
+- [x] `src/components/InstallPrompt.tsx` — banner Android + instrução iOS, dismiss 7 dias
+- [x] `src/App.tsx` — InstallPrompt montado
+- [x] `vercel.json` — rewrite SPA corrige 404 em /home, /treino, /corpo, etc.
+
+### Pendencias Fase 6 (proximas sessoes)
+
+- [ ] Toast "Atualização disponível" quando SW detecta nova versão (useRegisterSW)
+- [ ] Splash screen customizada no iOS (apple-splash-screen meta tags)
+- [ ] Testar instalação Android real (Chrome) e iOS real (Safari)
+- [ ] Testar comportamento offline (navegação sem internet)
+- [ ] Notificações push fim do timer treino (Notification API + SW)
+- [ ] Timer — long-press preset para editar valor (original L6841-6858)
 
 ---
 

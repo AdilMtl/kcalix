@@ -2,6 +2,27 @@
 
 ---
 
+## [0.25.0] — 2026-03-15
+
+### Adicionado
+- [feat] `public/manifest.webmanifest` — manifest PWA: nome, cores (#0a0e18 / #7c5cff), ícones 192/512, display standalone
+- [feat] `src/components/InstallPrompt.tsx` — banner de instalação: Android (beforeinstallprompt nativo) + iOS (instrução compartilhar); dismiss por 7 dias via localStorage
+- [feat] `vercel.json` — rewrite SPA (`/*` → `/index.html`); corrige erro 404 ao dar refresh em qualquer rota (/home, /treino, /corpo, etc.)
+- [feat] Service worker automático via Workbox (vite-plugin-pwa GenerateSW) — precache do shell, app funciona offline
+
+### Melhorado
+- [improve] `index.html` — meta tags PWA completas: `apple-mobile-web-app-capable`, `apple-touch-icon` (icon-180px.png), `theme-color`, `lang="pt-BR"`
+- [improve] `vite.config.ts` — vite-plugin-pwa configurado com navigateFallback e denylist para /kcx-studio
+
+### Corrigido
+- [fix] `src/lib/migrationTransform.ts` — import `CheckinRow` não utilizado removido (erro TS6133)
+
+### Notas
+- Fase 6 iniciada — PWA base implementado; polish restante (splash screen customizada, notificações push, atualização de SW com toast) ficam para próxima sessão
+- ícones adicionados: icon-192.png, icon-512.png, icon-180px.png, favicon.svg (pasta public/)
+
+---
+
 ## [0.22.0] — 2026-03-14
 
 ### Adicionado

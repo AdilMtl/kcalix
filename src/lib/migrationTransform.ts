@@ -5,7 +5,6 @@
 
 import type { DiaryData, DiaryMeals, FoodEntry } from '../hooks/useDiary'
 import type { UserSettingsData } from '../hooks/useSettings'
-import type { CheckinRow } from '../hooks/useCheckins'
 import type { BodyMeasurement } from '../types/body'
 import type { HabitRow } from '../types/habit'
 import type { WorkoutDayData, WorkoutTemplate, CustomExercise } from '../types/workout'

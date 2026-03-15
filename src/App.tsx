@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { useAuthStore } from './store/authStore'
 import Nav from './components/Nav'
 import DateNavBar from './components/DateNavBar'
+import { InstallPrompt } from './components/InstallPrompt'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
@@ -67,6 +68,7 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <Routes>
         {/* Rotas públicas */}
         <Route
