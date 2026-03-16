@@ -127,7 +127,7 @@ Auditoria completa da arquitetura realizada em 2026-03-16. 6 fragilidades identi
   2. Customizar template **"Invite user"**: assunto, corpo em português, logo, instrução clara ("Clique para criar sua senha")
   3. Customizar template **"Reset password"**: assunto, corpo em português, instrução clara
   4. Futuro (com domínio próprio): configurar SMTP customizado via Resend para emails `@kcalix.app`
-- **Status:** [ ] Pendente
+- **Status:** [x] CONCLUÍDO (2026-03-16) — templates HTML com branding Kcalix aplicados no Supabase Dashboard
 
 #### 🟢 MÉDIA — sessionStorage para flag "desativado"
 - **Arquivo:** `src/pages/LoginPage.tsx`
