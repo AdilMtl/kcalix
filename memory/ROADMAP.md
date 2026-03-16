@@ -895,7 +895,7 @@ valida que o chamador é o admin, e executa o invite com a service_role no servi
 | 3 | SW Update Toast | 🟡 Média | 30min | Nenhum | ✅ v0.27.0 |
 | 4 | Code Splitting | 🟡 Média | 1h | Nenhum | ✅ v0.27.0 |
 | 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) | ✅ v0.28.0 |
-| 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum | |
+| 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum | ✅ v0.28.2 |
 | 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção | |
 | 8 | Loading states | 🟡 Média | 1–2h | Nenhum | |
 | 9 | OG Tags | 🟢 Baixa | 20min | Nenhum | ✅ v0.28.1 |

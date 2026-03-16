@@ -2,6 +2,13 @@
 
 ---
 
+## [0.28.2] — 2026-03-16
+
+### Adicionado
+- [feat] `.github/workflows/ci.yml` — GitHub Actions: `npm ci` → `npm run build` → `npm run test` em todo push/PR para main. Bloqueia merge com erro de TS ou teste quebrado.
+
+---
+
 ## [0.28.1] — 2026-03-16
 
 ### Adicionado
