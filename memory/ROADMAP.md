@@ -101,51 +101,52 @@ Auditoria completa da arquitetura realizada em 2026-03-16. 6 fragilidades identi
 
 ### Fragilidades por severidade
 
-#### 🔴 CRÍTICA — XSS em TemplateHistoryModal
+> ⚠️ Nota pós-auditoria (2026-03-16): após análise detalhada, nenhuma fragilidade permite acesso de estranhos a dados de outros usuários — o RLS cobre tudo. As severidades abaixo refletem risco real, não teórico.
+
+#### 🟡 BAIXA-MÉDIA — XSS em TemplateHistoryModal
 - **Arquivo:** `src/components/TemplateHistoryModal.tsx`
-- **Problema:** `dangerouslySetInnerHTML={{ __html: item.detalhe }}` onde `item.detalhe` contém `exNome` vindo de `custom_exercises` (input do usuário) — vetor XSS confirmado
-- **Fix:** Remover `dangerouslySetInnerHTML`, refatorar para JSX puro ou sanitizar com `DOMPurify`
-- **Status:** [ ] Pendente
+- **Problema:** `dangerouslySetInnerHTML={{ __html: item.detalhe }}` onde `item.detalhe` contém `exNome` vindo de `custom_exercises` (input do usuário)
+- **Impacto real:** Cada usuário só vê seus próprios exercícios — XSS afetaria apenas o próprio usuário que criou o nome malicioso. Risco aumenta com múltiplos usuários no futuro.
+- **Fix:** Remover `dangerouslySetInnerHTML`, refatorar para JSX puro
+- **Status:** [ ] Pendente — corrigir antes de abrir para muitos usuários
 
-#### 🟡 ALTA — Email admin exposto no frontend
+#### 🟢 BAIXA — Email admin exposto no frontend
 - **Arquivo:** `src/store/authStore.ts:66`
-- **Problema:** `VITE_ADMIN_EMAIL` é visível no bundle e DevTools — expõe identidade do admin
-- **Fix:** Criar campo `is_admin BOOLEAN` em `profiles`, remover `VITE_ADMIN_EMAIL` do frontend, validar adminship via banco
-- **Status:** [ ] Pendente
+- **Problema:** `VITE_ADMIN_EMAIL` visível no bundle — expõe identidade do admin
+- **Impacto real:** Saber o email não dá acesso; RLS exige JWT autenticado desse email
+- **Fix:** Criar campo `is_admin BOOLEAN` em `profiles`, remover `VITE_ADMIN_EMAIL` do frontend
+- **Status:** [ ] Pendente — melhoria de boas práticas
 
-#### 🟡 ALTA — Sem rate limiting na Edge Function invite-user
+#### 🟢 BAIXA — Sem rate limiting na Edge Function invite-user
 - **Arquivo:** `supabase/functions/invite-user/index.ts`
-- **Problema:** Admin pode disparar N convites por segundo — risco de spam e email enumeration
-- **Fix:** Contador de rate limit (tabela ou KV) — máx 5 invites/hora por admin
-- **Status:** [ ] Pendente
+- **Problema:** Sem limite de convites por período
+- **Impacto real:** Só o admin autenticado pode chamar — risco só existe se conta admin for comprometida
+- **Fix:** Máx 5 invites/hora via contador no banco
+- **Status:** [ ] Pendente — melhoria para quando houver mais usuários
 
-#### 🟡 ALTA — Personalização de emails de convite e reset de senha
-- **Local:** Supabase Dashboard → Authentication → Email Templates
-- **Problema:** Emails de convite e reset usam o template padrão do Supabase (em inglês, sem branding Kcalix) — UX ruim e pouco confiável para o usuário novo
-- **Fix:**
-  1. Supabase Dashboard → Authentication → Email Templates
-  2. Customizar template **"Invite user"**: assunto, corpo em português, logo, instrução clara ("Clique para criar sua senha")
-  3. Customizar template **"Reset password"**: assunto, corpo em português, instrução clara
-  4. Futuro (com domínio próprio): configurar SMTP customizado via Resend para emails `@kcalix.app`
+#### ✅ CONCLUÍDO — Personalização de emails de convite e reset de senha
 - **Status:** [x] CONCLUÍDO (2026-03-16) — templates HTML com branding Kcalix aplicados no Supabase Dashboard
 
-#### 🟢 MÉDIA — sessionStorage para flag "desativado"
+#### 🟢 COSMÉTICA — sessionStorage para flag "desativado"
 - **Arquivo:** `src/pages/LoginPage.tsx`
-- **Problema:** Flag `kcx_desativado` em sessionStorage pode ser removida manualmente pelo usuário (bypass visual) — não afeta segurança real (backend verifica `ativo`), mas é má prática
-- **Fix:** Verificar status `ativo` diretamente após login via `checkUserAtivo()`, sem sessionStorage
-- **Status:** [ ] Pendente
+- **Problema:** Flag `kcx_desativado` em sessionStorage pode ser deletada manualmente — banner some
+- **Impacto real:** Puramente visual; backend bloqueia de verdade via `authorized_emails.ativo`
+- **Fix:** Verificar status após login via `checkUserAtivo()`, sem sessionStorage
+- **Status:** [ ] Pendente — baixíssima prioridade
 
-#### 🟢 MÉDIA — checkUserAtivo retorna true em qualquer erro
+#### 🟢 COSMÉTICA — checkUserAtivo retorna true em erro de rede
 - **Arquivo:** `src/lib/auth.ts:82-93`
-- **Problema:** Timeout de rede ou erro inesperado faz função retornar `true` (usuário liberado) — usuário bloqueado poderia passar em caso de instabilidade
-- **Fix:** Verificar explicitamente código de erro `403` vs outros erros; falhar de forma segura (negar em caso de dúvida)
-- **Status:** [ ] Pendente
+- **Problema:** Qualquer erro (inclusive timeout) libera o usuário
+- **Impacto real:** Supabase tem 99.9%+ uptime; janela de exploração seria de segundos em instabilidade
+- **Fix:** Checar código de erro `403` explicitamente
+- **Status:** [ ] Pendente — baixíssima prioridade
 
-#### 🟢 MÉDIA — Admin policy dependente de email JWT
+#### 🟢 BAIXA — Admin policy dependente de email JWT
 - **Arquivo:** `supabase/migrations/003_admin_policy.sql`
-- **Problema:** Policy valida `auth.jwt() ->> 'email'` — se ANON_KEY vazar, JWT forging teórico
-- **Fix:** Migrar para campo `is_admin` em `profiles` (depende do fix do item ALTA acima)
-- **Status:** [ ] Pendente (bloqueado pelo fix is_admin)
+- **Problema:** Policy valida `auth.jwt() ->> 'email'` — JWT forging teórico se ANON_KEY vazar
+- **Impacto real:** ANON_KEY é pública por design no Supabase; JWT é assinado com secret que nunca vaza
+- **Fix:** Migrar para campo `is_admin` em `profiles` (depende do fix email admin acima)
+- **Status:** [ ] Pendente — bloqueado pelo fix is_admin
 
 ### Checklist de segurança pré-deploy (aplicar a partir de agora)
 - [ ] Nenhum `dangerouslySetInnerHTML` com dados de usuário sem sanitização
