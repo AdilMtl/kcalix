@@ -690,7 +690,7 @@ Todas as páginas e modais carregam mesmo que o usuário nunca as acesse.
 
 ---
 
-### ITEM 5 — Testes automatizados com Vitest (🔴 ALTA — integridade de dados)
+### ITEM 5 — Testes automatizados com Vitest — CONCLUÍDO (v0.28.0 — 2026-03-16)
 
 **Problema:** zero testes. Um refactor silencioso pode quebrar os cálculos de BMR/TDEE/JP7
 de todos os usuários sem que ninguém perceba.
@@ -894,7 +894,7 @@ valida que o chamador é o admin, e executa o invite com a service_role no servi
 | 2 | Onboarding automático | 🔴 Alta | 1h | Baixo | ✅ v0.26.0 |
 | 3 | SW Update Toast | 🟡 Média | 30min | Nenhum | ✅ v0.27.0 |
 | 4 | Code Splitting | 🟡 Média | 1h | Nenhum | ✅ v0.27.0 |
-| 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) | |
+| 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) | ✅ v0.28.0 |
 | 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum | |
 | 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção | |
 | 8 | Loading states | 🟡 Média | 1–2h | Nenhum | |

@@ -2,6 +2,22 @@
 
 ---
 
+## [0.28.0] — 2026-03-16
+
+### Adicionado
+- [feat] Setup Vitest: `vitest` + `@vitest/coverage-v8` instalados; scripts `npm run test` e `npm run test:coverage` adicionados ao `package.json`
+- [feat] `src/lib/__tests__/calculators.test.ts` — 12 testes cobrindo `bmrMifflin`, `bmrKatch`, `bodyDensityJP7`, `bfSiri` e `calcFromProfile` (100% funções, 90.7% statements)
+- [feat] `src/lib/__tests__/migrationTransform.test.ts` — 26 testes cobrindo `validateExport`, `buildPreview`, `transformDiary`, `transformCustomExercises`, `transformCheckins` e `transformAll` (100% funções, 96.7% statements)
+
+### Notas
+- 38 testes, 0 falhas. `npm run test` passa em ~440ms.
+- `environment: 'node'` (não jsdom) — funções puras sem DOM.
+- `vite.config.ts` migrado de `defineConfig from 'vite'` para `defineConfig from 'vitest/config'` — build de produção não é afetado.
+- Achado: goal `'cutting'` inexistente detectado nos fixtures — correto é `'cut'`. Código de produção nunca usou o valor errado.
+- 5C (testes de hooks com mock Supabase) adiado — custo/benefício baixo no MVP.
+
+---
+
 ## [0.26.0] — 2026-03-15
 
 ### Adicionado
