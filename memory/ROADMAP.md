@@ -898,7 +898,7 @@ valida que o chamador é o admin, e executa o invite com a service_role no servi
 | 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum | |
 | 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção | |
 | 8 | Loading states | 🟡 Média | 1–2h | Nenhum | |
-| 9 | OG Tags | 🟢 Baixa | 20min | Nenhum | |
+| 9 | OG Tags | 🟢 Baixa | 20min | Nenhum | ✅ v0.28.1 |
 | 10 | AdminPage: convite direto sem painel Supabase | 🟡 Média | 2–3h | Baixo | |
 | 11 | Diagnóstico de lentidão no carregamento | 🔴 Alta | 1h | Nenhum | |
 

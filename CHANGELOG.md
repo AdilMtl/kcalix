@@ -2,6 +2,13 @@
 
 ---
 
+## [0.28.1] — 2026-03-16
+
+### Adicionado
+- [feat] OG Tags em `index.html`: `description`, `og:title`, `og:description`, `og:image`, `og:url`, `og:type` — link compartilhado no WhatsApp/iMessage agora exibe preview
+
+---
+
 ## [0.28.0] — 2026-03-16
 
 ### Adicionado
