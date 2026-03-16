@@ -77,10 +77,89 @@ Reset de senha: "Esqueci minha senha" -> email de reset do Supabase
 |---|---|
 | Rota admin ofuscada | `/kcx-studio` — nao obvia para bots |
 | Guard de rota | So acessa logado + email == VITE_ADMIN_EMAIL |
-| RLS no banco | `authorized_emails` so acessivel via service_role |
+| RLS no banco | Habilitado em 100% das tabelas — policies FOR ALL com USING + WITH CHECK |
+| Admin policy | `auth.jwt() ->> 'email'` — sem acesso a auth.users (corrigido 2026-03-16) |
 | Mensagem generica | Erro de login nao revela se email existe |
-| Env protegido | `VITE_ADMIN_EMAIL` nunca vai para o Git |
+| Env protegido | `VITE_ADMIN_EMAIL` e chaves nunca vao para o Git |
+| Edge Function | invite-user valida JWT + email admin antes de executar; service_role key apenas no servidor |
 | Supabase rate limit | Bloqueia forca bruta automaticamente |
+
+---
+
+## Auditoria de Segurança — Fragilidades mapeadas (2026-03-16)
+
+Auditoria completa da arquitetura realizada em 2026-03-16. 6 fragilidades identificadas.
+
+### Forças confirmadas (não mudar)
+- ✅ RLS habilitado em 100% das tabelas (profiles, user_settings, diary_entries, workouts, workout_templates, body_measurements, habits, checkins, custom_exercises, custom_foods, authorized_emails)
+- ✅ Policies `FOR ALL` com `USING` + `WITH CHECK` em todas as tabelas
+- ✅ Convites via Supabase Auth nativo
+- ✅ Edge Function com validação de admin (JWT + email)
+- ✅ service_role key nunca exposta ao frontend
+- ✅ Guards de rota React (PrivateRoute, AdminRoute, PublicRoute)
+- ✅ Tokens gerenciados pelo Supabase SDK (sem localStorage manual)
+
+### Fragilidades por severidade
+
+#### 🔴 CRÍTICA — XSS em TemplateHistoryModal
+- **Arquivo:** `src/components/TemplateHistoryModal.tsx`
+- **Problema:** `dangerouslySetInnerHTML={{ __html: item.detalhe }}` onde `item.detalhe` contém `exNome` vindo de `custom_exercises` (input do usuário) — vetor XSS confirmado
+- **Fix:** Remover `dangerouslySetInnerHTML`, refatorar para JSX puro ou sanitizar com `DOMPurify`
+- **Status:** [ ] Pendente
+
+#### 🟡 ALTA — Email admin exposto no frontend
+- **Arquivo:** `src/store/authStore.ts:66`
+- **Problema:** `VITE_ADMIN_EMAIL` é visível no bundle e DevTools — expõe identidade do admin
+- **Fix:** Criar campo `is_admin BOOLEAN` em `profiles`, remover `VITE_ADMIN_EMAIL` do frontend, validar adminship via banco
+- **Status:** [ ] Pendente
+
+#### 🟡 ALTA — Sem rate limiting na Edge Function invite-user
+- **Arquivo:** `supabase/functions/invite-user/index.ts`
+- **Problema:** Admin pode disparar N convites por segundo — risco de spam e email enumeration
+- **Fix:** Contador de rate limit (tabela ou KV) — máx 5 invites/hora por admin
+- **Status:** [ ] Pendente
+
+#### 🟡 ALTA — Personalização de emails de convite e reset de senha
+- **Local:** Supabase Dashboard → Authentication → Email Templates
+- **Problema:** Emails de convite e reset usam o template padrão do Supabase (em inglês, sem branding Kcalix) — UX ruim e pouco confiável para o usuário novo
+- **Fix:**
+  1. Supabase Dashboard → Authentication → Email Templates
+  2. Customizar template **"Invite user"**: assunto, corpo em português, logo, instrução clara ("Clique para criar sua senha")
+  3. Customizar template **"Reset password"**: assunto, corpo em português, instrução clara
+  4. Futuro (com domínio próprio): configurar SMTP customizado via Resend para emails `@kcalix.app`
+- **Status:** [ ] Pendente
+
+#### 🟢 MÉDIA — sessionStorage para flag "desativado"
+- **Arquivo:** `src/pages/LoginPage.tsx`
+- **Problema:** Flag `kcx_desativado` em sessionStorage pode ser removida manualmente pelo usuário (bypass visual) — não afeta segurança real (backend verifica `ativo`), mas é má prática
+- **Fix:** Verificar status `ativo` diretamente após login via `checkUserAtivo()`, sem sessionStorage
+- **Status:** [ ] Pendente
+
+#### 🟢 MÉDIA — checkUserAtivo retorna true em qualquer erro
+- **Arquivo:** `src/lib/auth.ts:82-93`
+- **Problema:** Timeout de rede ou erro inesperado faz função retornar `true` (usuário liberado) — usuário bloqueado poderia passar em caso de instabilidade
+- **Fix:** Verificar explicitamente código de erro `403` vs outros erros; falhar de forma segura (negar em caso de dúvida)
+- **Status:** [ ] Pendente
+
+#### 🟢 MÉDIA — Admin policy dependente de email JWT
+- **Arquivo:** `supabase/migrations/003_admin_policy.sql`
+- **Problema:** Policy valida `auth.jwt() ->> 'email'` — se ANON_KEY vazar, JWT forging teórico
+- **Fix:** Migrar para campo `is_admin` em `profiles` (depende do fix do item ALTA acima)
+- **Status:** [ ] Pendente (bloqueado pelo fix is_admin)
+
+### Checklist de segurança pré-deploy (aplicar a partir de agora)
+- [ ] Nenhum `dangerouslySetInnerHTML` com dados de usuário sem sanitização
+- [ ] Nenhuma chave sensível em código fonte (service_role, SMTP, etc.)
+- [ ] Toda nova tabela tem RLS habilitado + policy `user_owns_data`
+- [ ] Edge Functions novas validam JWT antes de executar
+- [ ] Inputs de usuário não interpolados diretamente em HTML
+
+### Checklist de segurança periódica (trimestral)
+- [ ] Revisar usuários ativos — desativar contas inativas > 90 dias sem uso
+- [ ] Auditar Edge Functions deployadas — remover funções obsoletas
+- [ ] Verificar dependências com vulnerabilidades: `npm audit`
+- [ ] Revisar variáveis de ambiente no Vercel — remover variáveis obsoletas
+- [ ] Testar fluxo de convite e reset de senha end-to-end
 
 ---
 
