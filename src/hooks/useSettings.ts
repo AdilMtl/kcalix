@@ -3,6 +3,37 @@ import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import type { GoalType } from '../data/goalPresets'
 
+const VALID_GOALS: GoalType[] = ['maintain', 'cut', 'recomp', 'bulk']
+
+function sanitizeSettings(raw: unknown): UserSettingsData | null {
+  if (!raw || typeof raw !== 'object') return null
+  const d = raw as Record<string, unknown>
+  if (!d.sex || !d.weightKg || !d.heightCm) return null
+  return {
+    sex:            d.sex === 'female' ? 'female' : 'male',
+    age:            Number(d.age)            || 25,
+    weightKg:       Number(d.weightKg)       || 70,
+    heightCm:       Number(d.heightCm)       || 170,
+    goal:           VALID_GOALS.includes(d.goal as GoalType) ? d.goal as GoalType : 'maintain',
+    activityFactor: Number(d.activityFactor) || 1.55,
+    bmr:            Number(d.bmr)            || 0,
+    tdee:           Number(d.tdee)           || 0,
+    kcalTarget:     Number(d.kcalTarget)     || 0,
+    pTarget:        Number(d.pTarget)        || 0,
+    cTarget:        Number(d.cTarget)        || 0,
+    gTarget:        Number(d.gTarget)        || 0,
+    skinfolds:      d.skinfolds as UserSettingsData['skinfolds'],
+    fixedKcal:      d.fixedKcal   != null ? Number(d.fixedKcal)   : undefined,
+    updatedAt:      typeof d.updatedAt === 'string' ? d.updatedAt : undefined,
+    pKg:            d.pKg      != null ? Number(d.pKg)      : undefined,
+    cKg:            d.cKg      != null ? Number(d.cKg)      : undefined,
+    minFatKg:       d.minFatKg != null ? Number(d.minFatKg) : undefined,
+    def:            d.def      != null ? Number(d.def)      : undefined,
+    blocks:         d.blocks         as UserSettingsData['blocks'],
+    kcalPerBlock:   d.kcalPerBlock   as UserSettingsData['kcalPerBlock'],
+  }
+}
+
 export interface UserSettingsData {
   sex: 'male' | 'female'
   age: number
@@ -65,7 +96,7 @@ export function useSettings(): UseSettingsReturn {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('useSettings fetch:', error)
-        setSettings(data?.data ?? null)
+        setSettings(sanitizeSettings(data?.data))
         setLoading(false)
       })
   }, [user?.id])

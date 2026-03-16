@@ -28,6 +28,25 @@ function calcWorkoutKcal(state: WorkoutState): number {
   return Math.round(fromSets + fromCardio)
 }
 
+function sanitizeExercicio(ex: unknown): WorkoutExercise | null {
+  if (!ex || typeof ex !== 'object') return null
+  const e = ex as Record<string, unknown>
+  if (!e.exercicioId || typeof e.exercicioId !== 'string') return null
+  const rawSeries = Array.isArray(e.series) ? e.series : []
+  return {
+    exercicioId: e.exercicioId,
+    series: rawSeries.length > 0
+      ? rawSeries.map(s => {
+          const set = (s && typeof s === 'object') ? s as Record<string, unknown> : {}
+          return {
+            reps:  typeof set.reps  === 'string' ? set.reps  : '',
+            carga: typeof set.carga === 'string' ? set.carga : '',
+          }
+        })
+      : [{ reps: '', carga: '' }, { reps: '', carga: '' }, { reps: '', carga: '' }],
+  }
+}
+
 const EMPTY_STATE: WorkoutState = {
   templateId: null,
   exercicios: [],
@@ -117,7 +136,7 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
         const d = workoutRes.data.data as WorkoutDayData
         setState({
           templateId: d.templateId,
-          exercicios: d.exercicios ?? [],
+          exercicios: (d.exercicios ?? []).map(sanitizeExercicio).filter((e): e is WorkoutExercise => e !== null),
           cardio:     d.cardio ?? [],
           nota:       d.nota ?? '',
         })

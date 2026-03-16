@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useDateStore } from '../store/dateStore'
 import { useBody } from '../hooks/useBody'
 import { useSettings } from '../hooks/useSettings'
+import Skeleton from '../components/Skeleton'
 import type { BodyMeasurement, BodyRow } from '../types/body'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -322,6 +323,14 @@ export default function CorpoPage() {
         {/* Card body */}
         <div style={{ padding: '14px 16px 16px' }}>
 
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Skeleton height="52px" />
+              <Skeleton height="52px" />
+              <Skeleton height="52px" />
+            </div>
+          ) : <>
+
           {/* Accordion 1 — Inputs do dia */}
           <Accordion id="accMeasureInput" title="1) Inputs do dia" defaultOpen>
             <div
@@ -541,6 +550,8 @@ export default function CorpoPage() {
             </div>
 
           </Accordion>
+
+          </>}
 
         </div>
       </div>

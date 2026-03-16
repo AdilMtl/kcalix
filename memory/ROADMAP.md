@@ -761,7 +761,7 @@ Variáveis `VITE_SUPABASE_*` não precisam estar no CI (build usa placeholders).
 
 ---
 
-### ITEM 7 — Proteção de integridade de dados entre versões (🔴 CRÍTICO CONTÍNUO)
+### ITEM 7 — Proteção de integridade de dados entre versões — CONCLUÍDO (v0.29.0 — 2026-03-16)
 
 > Este não é um item pontual — é um protocolo permanente para todas as sessões futuras.
 
@@ -799,7 +799,7 @@ mas podem quebrar a leitura silenciosamente — o dado existe mas o campo novo r
 
 ---
 
-### ITEM 8 — Loading states consistentes (🟡 MÉDIA — polish)
+### ITEM 8 — Loading states consistentes — CONCLUÍDO (v0.29.0 — 2026-03-16)
 
 **Problema:** cards mostram `0 kcal` ou lista vazia por 300–500ms enquanto o hook carrega.
 Parece bug para o usuário.

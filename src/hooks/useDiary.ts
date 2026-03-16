@@ -110,7 +110,21 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
       .then(({ data, error }) => {
         if (error) console.error('useDiary fetch:', error)
         const raw = data?.data as DiaryData | undefined
-        setDiary(raw ? { ...EMPTY_DIARY, ...raw, totals: raw.totals ?? recalcTotals(raw.meals ?? EMPTY_MEALS) } : EMPTY_DIARY)
+        if (raw) {
+          const safeMeals: DiaryMeals = raw.meals
+            ? {
+                cafe:    Array.isArray(raw.meals.cafe)    ? raw.meals.cafe    : [],
+                lanche1: Array.isArray(raw.meals.lanche1) ? raw.meals.lanche1 : [],
+                almoco:  Array.isArray(raw.meals.almoco)  ? raw.meals.almoco  : [],
+                lanche2: Array.isArray(raw.meals.lanche2) ? raw.meals.lanche2 : [],
+                jantar:  Array.isArray(raw.meals.jantar)  ? raw.meals.jantar  : [],
+                ceia:    Array.isArray(raw.meals.ceia)    ? raw.meals.ceia    : [],
+              }
+            : EMPTY_MEALS
+          setDiary({ ...EMPTY_DIARY, ...raw, meals: safeMeals, totals: raw.totals ?? recalcTotals(safeMeals) })
+        } else {
+          setDiary(EMPTY_DIARY)
+        }
         setLoading(false)
       })
   }, [user?.id, date])

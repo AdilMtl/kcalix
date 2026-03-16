@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { FOOD_DB } from '../data/foodDb'
 import { useDiary } from '../hooks/useDiary'
+import { useCustomFoods } from '../hooks/useCustomFoods'
 import FoodPortionModal from './FoodPortionModal'
 import CustomFoodModal from './CustomFoodModal'
 import type { FoodItem } from '../data/foodDb'
@@ -15,11 +16,11 @@ const CATEGORIES = Object.keys(FOOD_DB)
 
 export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
   const { getRecentFoods } = useDiary()
+  const { customFoods, saveCustomFood } = useCustomFoods()
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
   const [recentFoods, setRecentFoods] = useState<FoodItem[]>([])
-  const [customFoods, setCustomFoods] = useState<FoodItem[]>([])
   const [showCustomModal, setShowCustomModal] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -163,8 +164,8 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
       {/* CustomFoodModal */}
       {showCustomModal && (
         <CustomFoodModal
-          onSave={food => {
-            setCustomFoods(prev => [food, ...prev])
+          onSave={async food => {
+            await saveCustomFood(food)
             setActiveTab('__custom__')
             setShowCustomModal(false)
           }}

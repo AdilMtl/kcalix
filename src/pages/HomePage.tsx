@@ -12,6 +12,7 @@ import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
 import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
+import Skeleton from '../components/Skeleton'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -90,14 +91,29 @@ function Card({ children, onClick, style }: {
 function ProgressCard({
   kcalConsumed, kcalTarget,
   p, pTarget, c, cTarget, g, gTarget,
-  onClick,
+  onClick, loading,
 }: {
   kcalConsumed: number; kcalTarget: number
   p: number; pTarget: number
   c: number; cTarget: number
   g: number; gTarget: number
   onClick: () => void
+  loading: boolean
 }) {
+  if (loading) {
+    return (
+      <Card onClick={onClick}>
+        <Skeleton height="38px" style={{ marginBottom: '12px' }} />
+        <Skeleton height="8px" borderRadius="999px" style={{ marginBottom: '14px' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+          <Skeleton height="38px" />
+          <Skeleton height="38px" />
+          <Skeleton height="38px" />
+        </div>
+      </Card>
+    )
+  }
+
   const kcalPct = pct(kcalConsumed, kcalTarget)
   const pPct    = pct(p, pTarget)
   const cPct    = pct(c, cTarget)
@@ -152,14 +168,30 @@ function ProgressCard({
 
 // ── Card ⚡ Energia Hoje ──────────────────────────────────────────────────────
 function EnergyCard({
-  consumed, bmr, tdee, kcalTreino, kcalTarget,
+  consumed, bmr, tdee, kcalTreino, kcalTarget, loading,
 }: {
   consumed: number
   bmr: number | undefined
   tdee: number | undefined
   kcalTreino: number
   kcalTarget: number
+  loading: boolean
 }) {
+  if (loading) {
+    return (
+      <Card>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text2)', marginBottom: '8px' }}>⚡ Energia Hoje</div>
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '10px' }}>
+          <Skeleton height="42px" style={{ flex: 1 }} />
+          <Skeleton height="42px" style={{ flex: 1 }} />
+          <Skeleton height="42px" style={{ flex: 1 }} />
+          <Skeleton height="42px" style={{ flex: 1 }} />
+        </div>
+        <Skeleton height="10px" borderRadius="999px" />
+      </Card>
+    )
+  }
+
   const hasBmr = bmr != null && bmr > 0
   const saldo  = hasBmr ? Math.round(consumed - (bmr + kcalTreino)) : null
   const balTxt = saldo != null ? (saldo > 0 ? `+${saldo}` : `${saldo}`) : '—'
@@ -455,17 +487,7 @@ export default function HomePage() {
     setWeeklyModalOpen(true)
   }, [user, workoutKcalByDate])
 
-  if (loadingSettings || loadingDiary) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div
-          className="h-7 w-7 animate-spin rounded-full border-2 border-transparent"
-          style={{ borderTopColor: 'var(--accent)' }}
-        />
-      </div>
-    )
-  }
-
+  const loading = loadingSettings || loadingDiary
   const { kcalTarget = 0, pTarget = 0, cTarget = 0, gTarget = 0, bmr, tdee } = settings ?? {}
   const { totals, kcalTreino } = diary
 
@@ -503,6 +525,7 @@ export default function HomePage() {
         c={totals.c} cTarget={cTarget}
         g={totals.g} gTarget={gTarget}
         onClick={() => navigate('/diario')}
+        loading={loading}
       />
 
       {/* Card ⚡ Energia Hoje */}
@@ -512,6 +535,7 @@ export default function HomePage() {
         tdee={tdee}
         kcalTreino={kcalTreino}
         kcalTarget={kcalTarget}
+        loading={loading}
       />
 
       {/* Card 📅 Últimos 7 dias */}

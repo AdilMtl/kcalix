@@ -2,6 +2,32 @@
 
 ---
 
+## [0.29.0] — 2026-03-16
+
+### Adicionado
+- [feat] `src/hooks/useCustomFoods.ts` — CRUD Supabase para `custom_foods`; alimentos personalizados agora persistem entre sessões
+- [feat] `src/components/Skeleton.tsx` — componente de loading skeleton com `animate-pulse`
+
+### Melhorado
+- [improve] `useSettings.ts` — `sanitizeSettings()`: valida shape JSONB, aplica fallbacks numéricos, corrige `goal` inválido para `'maintain'`
+- [improve] `useWorkout.ts` — `sanitizeExercicio()`: descarta exercícios com `exercicioId` ausente/inválido ao carregar do Supabase
+- [improve] `useDiary.ts` — `safeMeals`: garante que cada refeição é array antes de `.map()`/`.filter()`
+- [improve] `HomePage.tsx` — spinner de tela inteira removido; `ProgressCard` e `EnergyCard` recebem `loading` e renderizam skeletons internamente
+- [improve] `DiarioPage.tsx` — spinner de tela inteira removido; skeletons no KPI grid e lista de refeições durante carregamento
+- [improve] `CorpoPage.tsx` — skeletons sobre o formulário durante loading
+- [improve] `CustomFoodModal.tsx` + `FoodDrawer.tsx` — integrados com `useCustomFoods`; `onSave` agora async com feedback "Salvando..."
+
+### Corrigido
+- [fix] Alimentos personalizados sumiam ao fechar o drawer ou recarregar a página — `customFoods` era estado local, agora persiste no Supabase via `useCustomFoods`
+
+### Notas
+- ITEM 7 (defensividade dos hooks) concluído — nenhum hook retorna mais `NaN` ou `undefined` em campos numéricos
+- ITEM 8 (loading states) concluído — nenhuma página exibe spinner de tela inteira
+- Fix custom foods não estava no roadmap mas foi diagnosticado e corrigido nesta sessão
+- Fase 6B ainda pendente: ITEM 10 (AdminPage convite direto) e ITEM 11 (diagnóstico lentidão)
+
+---
+
 ## [0.28.2] — 2026-03-16
 
 ### Adicionado

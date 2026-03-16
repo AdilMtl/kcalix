@@ -56,8 +56,33 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 2: CONCLUÍDA (2026-03-08) — Sessões 2A–2E completas
 - Fase 3: CONCLUÍDA (2026-03-09) — Sessões 3A–3E completas
 - Fase 4: CONCLUÍDA (2026-03-09) — Sessões 4A–4E completas
-- Fase 5: CONCLUÍDA (2026-03-09) — Sessão 5A (importador) concluída; 5B adiada
-- Fases 6–8: Planejadas
+- Fase 5: CONCLUÍDA (2026-03-14) — import/export completo validado com dados reais
+- Fase 6A: CONCLUÍDA (2026-03-15) — PWA base + Fix 404 SPA (v0.25.0)
+- Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam 10 e 11
+
+## Itens 6B concluídos
+- ITEM 1 — Error Boundary (v0.27.0)
+- ITEM 2 — Onboarding automático (v0.26.0)
+- ITEM 3 — SW Update Toast (v0.27.0)
+- ITEM 4 — Code Splitting (v0.27.0)
+- ITEM 5 — Testes Vitest: 38 testes (v0.28.0)
+- ITEM 6 — CI/CD GitHub Actions (v0.28.2)
+- ITEM 9 — OG Tags (v0.28.1)
+- ITEM 7 — Defensividade dos hooks: sanitizeSettings, sanitizeExercicio, safeMeals (v0.29.0)
+- ITEM 8 — Loading states / Skeleton: Skeleton.tsx, sem spinners de tela inteira (v0.29.0)
+- FIX — custom_foods: useCustomFoods.ts + integração FoodDrawer/CustomFoodModal (v0.29.0)
+
+## Próximo passo
+Fase 6B: implementar ITEM 10 e ITEM 11.
+Ver detalhes em memory/ROADMAP.md seção "FASE 6B".
+
+## Padrões adicionados na Sessão 6B (v0.29.0)
+- **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local
+- **Skeleton.tsx:** `src/components/Skeleton.tsx` — `animate-pulse`, props `width/height/borderRadius/style`
+- **sanitizeSettings(raw):** valida shape JSONB antes de setar estado; fallbacks numéricos; goal inválido → `'maintain'`
+- **sanitizeExercicio(ex):** descarta exercícios com `exercicioId` ausente/inválido ao carregar workout do Supabase
+- **safeMeals pattern:** ao carregar diary, cada refeição é guardada com `Array.isArray()` antes de usar
+- **Loading sem spinner:** nunca usar `if (loading) return <spinner tela inteira>` — renderizar página com skeletons inline nos cards
 
 ## Padrões adicionados na Sessão 2E
 - **dateStore (Zustand):** `src/store/dateStore.ts` — selectedDate global, goToPrev/goToNext/goToToday/isToday
@@ -113,10 +138,3 @@ Ambient glow já adicionado em `body::before/::after`.
 - **useDiary fix defensivo:** ao carregar do Supabase: `{ ...EMPTY_DIARY, ...raw, totals: raw.totals ?? recalcTotals(raw.meals) }` — protege contra dados antigos sem campo `totals`.
 - **kpi-grid correto:** usar `.kpi > .kpi-label + .kpi-value > .num + .den` — nunca inventar classes `kpi-cell`/`kpi-val`.
 
-## Próximo passo
-Ports pendentes. Ver seção "PORTS PENDENTES" no ROADMAP. Pendências prioritárias:
-1. ProfileCheckinModal "Atualizar →": após salvar o wizard, reabrir o perfil (setProfileOpen(true) no onSave)
-2. updatedAt em UserSettingsData: adicionar campo + salvar no wizard
-3. Checkins no migrationTransform (Sessão 5C)
-4. Bug exercícios custom importados (Sessão 5C): workouts referenciam `custom_177xxxx` (ID antigo), mas `custom_exercises` no Supabase tem UUIDs novos. Fix em `migrationImport.ts`: mapear id_antigo→id_novo ao inserir, reescrever exercicioId dos workouts antes de inserir.
-5. custom_foods: sem tabela ainda — planejar para Sessão 5C

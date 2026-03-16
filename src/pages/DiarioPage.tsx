@@ -3,6 +3,7 @@ import { useDiary, MEAL_LABELS } from '../hooks/useDiary'
 import { useSettings } from '../hooks/useSettings'
 import { useDateStore } from '../store/dateStore'
 import FoodDrawer from '../components/FoodDrawer'
+import Skeleton from '../components/Skeleton'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
 function round1(n: number) { return Math.round(n * 10) / 10 }
@@ -310,18 +311,6 @@ export default function DiarioPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100dvh', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{
-          width: '28px', height: '28px', borderRadius: '50%',
-          border: '2px solid transparent', borderTopColor: 'var(--accent)',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-      </div>
-    )
-  }
-
   return (
     <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 16px 140px' }}>
 
@@ -330,11 +319,19 @@ export default function DiarioPage() {
         <div style={{ padding: '14px 16px 16px' }}>
 
           {/* KPI grid — 3 cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-            <KpiCard label="Proteína" value={totals.p} target={pTarget} colorVar="var(--pColor)" kpiClass="kpi-p" />
-            <KpiCard label="Carbo"    value={totals.c} target={cTarget} colorVar="var(--cColor)" kpiClass="kpi-c" />
-            <KpiCard label="Gordura"  value={totals.g} target={gTarget} colorVar="var(--gColor)" kpiClass="kpi-g" />
-          </div>
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              <Skeleton height="64px" />
+              <Skeleton height="64px" />
+              <Skeleton height="64px" />
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              <KpiCard label="Proteína" value={totals.p} target={pTarget} colorVar="var(--pColor)" kpiClass="kpi-p" />
+              <KpiCard label="Carbo"    value={totals.c} target={cTarget} colorVar="var(--cColor)" kpiClass="kpi-c" />
+              <KpiCard label="Gordura"  value={totals.g} target={gTarget} colorVar="var(--gColor)" kpiClass="kpi-g" />
+            </div>
+          )}
 
           {/* Linha de kcal com gradient text */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
@@ -344,7 +341,7 @@ export default function DiarioPage() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              {Math.round(totals.kcal)}
+              {loading ? '--' : Math.round(totals.kcal)}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600 }}>
               kcal{kcalTarget > 0 ? ` de ${kcalTarget}` : ''}
@@ -352,7 +349,7 @@ export default function DiarioPage() {
           </div>
 
           {/* Status pills — só mostrar se há metas configuradas */}
-          {(pTarget > 0 || cTarget > 0 || gTarget > 0) && (
+          {!loading && (pTarget > 0 || cTarget > 0 || gTarget > 0) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
               {pTarget > 0 && <StatusPill label="P" value={totals.p} target={pTarget} />}
               {cTarget > 0 && <StatusPill label="C" value={totals.c} target={cTarget} />}
@@ -380,7 +377,13 @@ export default function DiarioPage() {
       </div>
 
       {/* ── Refeições (accordion) ── */}
-      {(Object.keys(MEAL_LABELS) as MealKey[]).map(meal => (
+      {loading ? (
+        <>
+          <Skeleton height="52px" borderRadius="var(--radius)" />
+          <Skeleton height="52px" borderRadius="var(--radius)" />
+          <Skeleton height="52px" borderRadius="var(--radius)" />
+        </>
+      ) : (Object.keys(MEAL_LABELS) as MealKey[]).map(meal => (
         <MealAccordion
           key={meal}
           meal={meal}
