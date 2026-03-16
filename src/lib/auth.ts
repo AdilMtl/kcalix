@@ -60,8 +60,12 @@ export async function markAsInvited(email: string) {
 }
 
 export async function inviteUser(email: string): Promise<{ ok: boolean; error?: string }> {
+  const { data: { session } } = await supabase.auth.getSession()
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: { email },
+    headers: session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : undefined,
   })
   if (error) return { ok: false, error: error.message }
   if (data?.error) return { ok: false, error: data.error }

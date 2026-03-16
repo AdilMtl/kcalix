@@ -2,6 +2,27 @@
 
 ---
 
+## [0.31.0] — 2026-03-16
+
+### Melhorado
+- [improve] `AdminPage.tsx` — redesign completo: KPIs (Total/Ativos/Convidados/Pendentes), UserCards com avatar inicial + badge de status colorido, footer de ações, confirmação de remoção em dois passos, loading skeleton
+- [improve] `LoginPage.tsx` — redesign com polish profissional: logo real (icon-192.png), card com gradiente escuro, inputs com foco roxo + glow, banner informativo no modo "Esqueci minha senha" explicando fluxo de convite
+- [improve] `SetPasswordPage.tsx` — mesmo padrão visual da LoginPage; detecta `type=invite` na URL e exibe mensagens contextuais ("Ativar acesso" vs "Nova senha")
+- [improve] `src/index.css` — `@keyframes spin` adicionado ao CSS global
+
+### Corrigido
+- [fix] RLS policy `admin_only` em `authorized_emails` — substituída `SELECT FROM auth.users` (sem permissão para role `authenticated`) por `auth.jwt() ->> 'email'`; fix em `supabase/migrations/003_admin_policy.sql`
+- [fix] Edge Function `invite-user` — redeploy com `--no-verify-jwt`; JWT agora passado explicitamente no header da chamada (`src/lib/auth.ts`)
+- [fix] `accepted_at` não era preenchido ao aceitar convite — trigger `on_user_confirmed` criado em `supabase/migrations/013_accepted_at_trigger.sql`
+
+### Notas
+- Migration 013 deve ser executada no SQL Editor do Supabase para novos projetos
+- Edge Function `invite-user` requer `ADMIN_EMAIL` nas env vars do Supabase (já configurado)
+- Pendências ITEM 10: toggle Free/Assinante (`profiles.plano`)
+- ITEM 11 (diagnóstico de lentidão) ainda não iniciado
+
+---
+
 ## [0.29.0] — 2026-03-16
 
 ### Adicionado

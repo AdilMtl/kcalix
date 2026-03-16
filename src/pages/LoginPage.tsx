@@ -3,29 +3,92 @@ import { signInWithEmail, resetPassword } from '../lib/auth'
 
 type Mode = 'login' | 'reset'
 
+// ── Logo ─────────────────────────────────────────────────────────────────────
+
+function KcalixLogo() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <img
+        src="/icon-192.png"
+        alt="Kcalix"
+        style={{
+          width: 72, height: 72, borderRadius: 20,
+          boxShadow: '0 8px 32px rgba(124,92,255,.35)',
+        }}
+      />
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1 }}>
+          Kcalix
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
+          Nutrição · Treino · Evolução
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Input estilizado ──────────────────────────────────────────────────────────
+
+function Field({
+  id, label, type, value, onChange, placeholder, autoComplete,
+}: {
+  id: string; label: string; type: string; value: string
+  onChange: (v: string) => void; placeholder: string; autoComplete?: string
+}) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        required
+        autoComplete={autoComplete}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder}
+        style={{
+          background: 'var(--surface2)',
+          border: `1.5px solid ${focused ? 'var(--accent)' : 'var(--line)'}`,
+          borderRadius: 12,
+          color: 'var(--text)',
+          padding: '12px 14px',
+          fontSize: 15,
+          outline: 'none',
+          fontFamily: 'var(--font)',
+          transition: 'border-color .15s',
+          width: '100%',
+          boxShadow: focused ? '0 0 0 3px rgba(124,92,255,.12)' : 'none',
+        }}
+      />
+    </div>
+  )
+}
+
+// ── LoginPage ─────────────────────────────────────────────────────────────────
+
 export default function LoginPage() {
   const desativado = sessionStorage.getItem('kcx_desativado') === '1'
   if (desativado) sessionStorage.removeItem('kcx_desativado')
 
-  const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('')
+  const [mode, setMode]       = useState<Mode>('login')
+  const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]     = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
     const { error } = await signInWithEmail(email, password)
-
-    if (error) {
-      // Mensagem generica — nao revela se email existe ou nao
-      setError('Email ou senha incorretos. Verifique seus dados.')
-    }
-
+    if (error) setError('Email ou senha incorretos. Verifique seus dados.')
     setLoading(false)
   }
 
@@ -33,190 +96,172 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
     const { error } = await resetPassword(email)
-
     if (error) {
-      setError('Nao foi possivel enviar o email. Tente novamente.')
+      setError('Não foi possível enviar o email. Tente novamente.')
     } else {
-      setSuccess('Email enviado! Verifique sua caixa de entrada.')
+      setSuccess('Email enviado! Verifique sua caixa de entrada e clique no link para criar sua senha.')
     }
-
     setLoading(false)
   }
 
   return (
-    <div
-      className="flex min-h-dvh items-center justify-center p-4"
-      style={{ background: 'var(--bg)' }}
-    >
-      <div className="w-full max-w-sm">
+    <div style={{
+      minHeight: '100dvh',
+      background: 'var(--bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px 16px',
+    }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <h1
-            className="text-3xl font-bold tracking-tight"
-            style={{ color: 'var(--accent)' }}
-          >
-            Kcalix
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text3)' }}>
-            {mode === 'login' ? 'Acesse sua conta' : 'Recuperar senha'}
-          </p>
+        <div style={{ marginBottom: 32 }}>
+          <KcalixLogo />
         </div>
 
         {/* Banner: conta desativada */}
         {desativado && (
-          <div
-            className="mb-4 rounded-xl p-3 text-center text-sm"
-            style={{ background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.3)', color: 'var(--bad)' }}
-          >
-            Sua conta foi desativada. Entre em contato com o administrador.
+          <div style={{
+            marginBottom: 16, padding: '10px 14px', borderRadius: 12, textAlign: 'center',
+            fontSize: 13, fontWeight: 500,
+            background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.25)',
+            color: 'var(--bad)',
+          }}>
+            🚫 Sua conta foi desativada. Entre em contato com o administrador.
           </div>
         )}
 
         {/* Card */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}
-        >
-          {mode === 'login' ? (
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="email"
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--text2)' }}
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--line)',
-                    color: 'var(--text)',
-                  }}
-                  placeholder="seu@email.com"
-                />
-              </div>
+        <div style={{
+          background: 'linear-gradient(180deg, rgba(18,24,38,.95), rgba(14,20,34,.95))',
+          border: '1px solid var(--line)',
+          borderRadius: 20,
+          padding: 24,
+          boxShadow: '0 16px 48px rgba(0,0,0,.5)',
+        }}>
 
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="password"
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--text2)' }}
-                >
-                  Senha
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--line)',
-                    color: 'var(--text)',
-                  }}
-                  placeholder="••••••••"
-                />
-              </div>
+          {/* Título do modo */}
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+              {mode === 'login' ? 'Entrar na conta' : 'Recuperar acesso'}
+            </h2>
+            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
+              {mode === 'login'
+                ? 'Acesso restrito — somente convidados'
+                : 'Enviaremos um link para criar sua senha'}
+            </p>
+          </div>
+
+          {mode === 'login' ? (
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Field
+                id="email" label="Email" type="email"
+                autoComplete="email" value={email}
+                onChange={setEmail} placeholder="seu@email.com"
+              />
+              <Field
+                id="password" label="Senha" type="password"
+                autoComplete="current-password" value={password}
+                onChange={setPassword} placeholder="••••••••"
+              />
 
               {error && (
-                <p className="text-sm" style={{ color: 'var(--bad)' }}>
-                  {error}
-                </p>
+                <div style={{
+                  padding: '9px 12px', borderRadius: 10, fontSize: 13,
+                  background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.2)',
+                  color: 'var(--bad)',
+                }}>
+                  ❌ {error}
+                </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-1 w-full rounded-xl py-3 text-sm font-semibold transition-opacity disabled:opacity-50"
-                style={{ background: 'var(--accent)', color: '#fff' }}
+                className="btn primary"
+                style={{ width: '100%', marginTop: 4, fontSize: 14, minHeight: 48 }}
               >
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? '⏳ Entrando…' : 'Entrar'}
               </button>
 
               <button
                 type="button"
                 onClick={() => { setMode('reset'); setError(null) }}
-                className="text-center text-xs transition-opacity hover:opacity-70"
-                style={{ color: 'var(--text3)' }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font)',
+                  textAlign: 'center', padding: '4px 0',
+                }}
               >
-                Esqueci minha senha
+                Esqueci minha senha →
               </button>
             </form>
           ) : (
-            <form onSubmit={handleReset} className="flex flex-col gap-4">
-              <p className="text-sm" style={{ color: 'var(--text2)' }}>
-                Digite seu email e enviaremos um link para redefinir sua senha.
-              </p>
-
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="reset-email"
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--text2)' }}
-                >
-                  Email
-                </label>
-                <input
-                  id="reset-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{
-                    background: 'var(--surface2)',
-                    border: '1px solid var(--line)',
-                    color: 'var(--text)',
-                  }}
-                  placeholder="seu@email.com"
-                />
+            <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{
+                padding: '10px 12px', borderRadius: 10, fontSize: 12, lineHeight: 1.6,
+                background: 'rgba(124,92,255,.08)', border: '1px solid rgba(124,92,255,.2)',
+                color: 'var(--text2)',
+              }}>
+                💡 Se você foi convidado, use esta opção para criar sua senha e ativar o acesso.
               </div>
 
+              <Field
+                id="reset-email" label="Email" type="email"
+                autoComplete="email" value={email}
+                onChange={setEmail} placeholder="seu@email.com"
+              />
+
               {error && (
-                <p className="text-sm" style={{ color: 'var(--bad)' }}>
-                  {error}
-                </p>
+                <div style={{
+                  padding: '9px 12px', borderRadius: 10, fontSize: 13,
+                  background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.2)',
+                  color: 'var(--bad)',
+                }}>
+                  ❌ {error}
+                </div>
               )}
+
               {success && (
-                <p className="text-sm" style={{ color: 'var(--good)' }}>
-                  {success}
-                </p>
+                <div style={{
+                  padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.6,
+                  background: 'rgba(52,211,153,.1)', border: '1px solid rgba(52,211,153,.2)',
+                  color: 'var(--good)',
+                }}>
+                  ✅ {success}
+                </div>
               )}
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full rounded-xl py-3 text-sm font-semibold transition-opacity disabled:opacity-50"
-                style={{ background: 'var(--accent)', color: '#fff' }}
+                disabled={loading || !!success}
+                className="btn primary"
+                style={{ width: '100%', fontSize: 14, minHeight: 48 }}
               >
-                {loading ? 'Enviando...' : 'Enviar link'}
+                {loading ? '⏳ Enviando…' : 'Enviar link'}
               </button>
 
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(null); setSuccess(null) }}
-                className="text-center text-xs transition-opacity hover:opacity-70"
-                style={{ color: 'var(--text3)' }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font)',
+                  textAlign: 'center', padding: '4px 0',
+                }}
               >
-                Voltar ao login
+                ← Voltar ao login
               </button>
             </form>
           )}
         </div>
+
+        {/* Rodapé */}
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 20 }}>
+          Acesso por convite · Kcalix © 2026
+        </p>
       </div>
     </div>
   )
