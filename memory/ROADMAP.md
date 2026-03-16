@@ -831,7 +831,7 @@ Parece bug para o usuário.
 
 ---
 
-### ITEM 10 — AdminPage: envio de convite direto (🟡 MÉDIA — UX admin)
+### ITEM 10 — AdminPage: CRUD completo (🟡 MÉDIA) — PARCIALMENTE CONCLUÍDO (v0.30.0 — 2026-03-16)
 
 **Problema:** o fluxo atual de convite exige sair do app e ir ao painel do Supabase manualmente:
 1. `/kcx-studio`: adiciona email + clica "Copiar e convidar"

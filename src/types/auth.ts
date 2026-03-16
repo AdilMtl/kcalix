@@ -16,6 +16,7 @@ export interface AuthorizedEmail {
   invited_at: string | null
   accepted_at: string | null
   created_at: string
+  ativo: boolean
 }
 
 export interface AuthState {

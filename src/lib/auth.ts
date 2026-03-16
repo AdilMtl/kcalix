@@ -53,10 +53,37 @@ export async function removeAuthorizedEmail(id: string) {
 }
 
 export async function markAsInvited(email: string) {
-  // Marca o email como convidado na tabela (o convite real e enviado
-  // manualmente pelo painel do Supabase: Authentication > Users > Invite user)
   return supabase
     .from('authorized_emails')
     .update({ invited_at: new Date().toISOString() })
     .eq('email', email.toLowerCase().trim())
+}
+
+export async function inviteUser(email: string): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.functions.invoke('invite-user', {
+    body: { email },
+  })
+  if (error) return { ok: false, error: error.message }
+  if (data?.error) return { ok: false, error: data.error }
+  return { ok: true }
+}
+
+export async function setUserAtivo(email: string, ativo: boolean) {
+  return supabase
+    .from('authorized_emails')
+    .update({ ativo })
+    .eq('email', email.toLowerCase().trim())
+}
+
+export async function checkUserAtivo(email: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('authorized_emails')
+    .select('ativo')
+    .eq('email', email.toLowerCase().trim())
+    .single()
+  // 403 = usuário normal sem acesso à tabela (RLS admin_only) — tratar como ativo
+  // Só bloqueamos quando conseguimos ler e o campo é explicitamente false
+  if (error) return true
+  if (!data) return true
+  return data.ativo !== false
 }

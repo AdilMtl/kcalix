@@ -83,7 +83,7 @@ export default function MaisPage() {
   const [migrateOpen, setMigrateOpen] = useState(false)
 
   // Export
-  const { user } = useAuthStore()
+  const { user, isAdmin } = useAuthStore()
   const [exporting, setExporting] = useState(false)
   const handleExport = async () => {
     if (!user) return
@@ -642,6 +642,27 @@ export default function MaisPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Card admin — visível só para o admin ── */}
+      {isAdmin && (
+        <div className="card">
+          <div className="card-header">
+            <div className="ch-info">
+              <b>⚙️ Painel admin</b>
+              <span>Gerenciar usuários e acessos.</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <a
+              href="/kcx-studio"
+              className="btn primary"
+              style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
+            >
+              Abrir painel admin →
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ── MigrateModal ── */}
       <MigrateModal open={migrateOpen} onClose={() => setMigrateOpen(false)} />

@@ -1,5 +1,25 @@
 # Kcalix — CHANGELOG
 
+## [v0.30.0] — 2026-03-16
+
+### Adicionado
+- [feat] `supabase/functions/invite-user/index.ts` — Edge Function que envia convite Supabase diretamente do app; valida JWT admin + chama `supabase.auth.admin.inviteUserByEmail()` com service_role no servidor
+- [feat] `supabase/migrations/012_admin_features.sql` — `ADD COLUMN ativo BOOLEAN DEFAULT true` em `authorized_emails`; permite desativar/reativar acesso por usuário
+- [feat] `src/pages/AdminPage.tsx` — painel CRUD completo redesenhado: cards com status (⏳ Pendente / 📨 Convidado / 🟢 Ativo / 🔴 Desativado), botões Enviar convite, Reenviar, Desativar/Reativar, Remover, feedback inline por card
+- [feat] `src/lib/auth.ts` — `inviteUser(email)`, `setUserAtivo(email, ativo)`, `checkUserAtivo(email)`
+- [feat] `src/types/auth.ts` — campo `ativo: boolean` em `AuthorizedEmail`
+- [feat] `src/pages/MaisPage.tsx` — card "⚙️ Painel admin" visível exclusivamente para `isAdmin`; link direto para `/kcx-studio`
+
+### Corrigido
+- [fix] `src/App.tsx` — eliminado loop infinito de 403 no `PrivateRoute`; `checkUserAtivo` retorna `true` em erro de RLS (usuários normais sem acesso à tabela)
+- [fix] `src/pages/LoginPage.tsx` — banner vermelho "Sua conta foi desativada" exibido via `sessionStorage` ao ser bloqueado pelo admin
+
+### Notas
+- Edge Function deployada: `invite-user` no projeto Supabase `klvqyczfqxrbybgljnhe`
+- Secret `ADMIN_EMAIL` configurado nas variáveis de ambiente da Edge Function
+- **Pendente para produção:** adicionar `VITE_ADMIN_EMAIL=adilson.matioli@gmail.com` nas env vars do Vercel
+- Commit local apenas — push na próxima sessão após refinamentos
+
 ## [v0.27.1] — 2026-03-15
 
 ### Corrigido

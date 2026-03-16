@@ -4,6 +4,9 @@ import { signInWithEmail, resetPassword } from '../lib/auth'
 type Mode = 'login' | 'reset'
 
 export default function LoginPage() {
+  const desativado = sessionStorage.getItem('kcx_desativado') === '1'
+  if (desativado) sessionStorage.removeItem('kcx_desativado')
+
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,6 +63,16 @@ export default function LoginPage() {
             {mode === 'login' ? 'Acesse sua conta' : 'Recuperar senha'}
           </p>
         </div>
+
+        {/* Banner: conta desativada */}
+        {desativado && (
+          <div
+            className="mb-4 rounded-xl p-3 text-center text-sm"
+            style={{ background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.3)', color: 'var(--bad)' }}
+          >
+            Sua conta foi desativada. Entre em contato com o administrador.
+          </div>
+        )}
 
         {/* Card */}
         <div
