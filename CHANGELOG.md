@@ -2,6 +2,26 @@
 
 ---
 
+## [0.32.0] — 2026-03-16
+
+### Adicionado
+- [feat] `supabase/email-templates/invite-user.html` — template HTML com branding Kcalix para email de convite: logo, passos numerados, botão CTA roxo, instruções em português
+- [feat] `supabase/email-templates/reset-password.html` — template HTML para reset de senha: mesmo padrão visual, info box para usuários convidados
+- [feat] `supabase/email-templates/README.md` — instruções de aplicação no Supabase Dashboard
+
+### Documentação
+- [docs] Auditoria de segurança completa adicionada ao ROADMAP — 6 fragilidades mapeadas com severidade, impacto e status
+- [docs] Checklist de segurança pré-deploy e periódico (trimestral) adicionado ao ROADMAP
+- [docs] Seção de camadas de segurança implementadas atualizada no ROADMAP
+
+### Notas
+- Templates aplicados manualmente no Supabase Dashboard → Authentication → Email Templates
+- Logo usa `https://kcalix.vercel.app/icon-192.png` — atualizar se domínio mudar
+- Fragilidade XSS em `TemplateHistoryModal.tsx` é a próxima correção crítica
+- Futuro: SMTP customizado via Resend quando houver domínio próprio (`@kcalix.app`)
+
+---
+
 ## [0.31.0] — 2026-03-16
 
 ### Melhorado
