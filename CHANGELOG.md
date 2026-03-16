@@ -23,6 +23,19 @@
 
 ---
 
+## [0.30.0] — 2026-03-16
+
+### Adicionado
+- [feat] `AdminPage.tsx` — convite direto via Edge Function `invite-user`; botões Desativar/Reativar usuário
+- [feat] `MaisPage.tsx` — atalho "⚙️ Painel admin" visível só para o admin (`isAdmin`)
+- [feat] `src/lib/auth.ts` — funções `inviteUser()`, `setUserAtivo()`, `checkUserAtivo()`
+- [feat] `supabase/migrations/012_admin_features.sql` — coluna `ativo BOOLEAN DEFAULT true` em `authorized_emails`
+
+### Notas
+- `VITE_ADMIN_EMAIL` adicionado nas env vars do Vercel em 2026-03-16 para o menu admin aparecer em produção
+
+---
+
 ## [0.29.0] — 2026-03-16
 
 ### Adicionado

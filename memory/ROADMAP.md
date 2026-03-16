@@ -831,7 +831,7 @@ Parece bug para o usuário.
 
 ---
 
-### ITEM 10 — AdminPage: CRUD completo (🟡 MÉDIA) — PARCIALMENTE CONCLUÍDO (v0.30.0 — 2026-03-16)
+### ITEM 10 — AdminPage: CRUD completo (🟡 MÉDIA) — PARCIALMENTE CONCLUÍDO (v0.30.0 + v0.31.0 — 2026-03-16)
 
 **Problema:** o fluxo atual de convite exige sair do app e ir ao painel do Supabase manualmente:
 1. `/kcx-studio`: adiciona email + clica "Copiar e convidar"
@@ -879,10 +879,16 @@ valida que o chamador é o admin, e executa o invite com a service_role no servi
 **Pré-requisito:** Supabase CLI instalado localmente para fazer `supabase functions deploy invite-user`
 
 **Critério de feito:**
-- [ ] Clicar "Enviar convite" no `/kcx-studio` dispara email de convite do Supabase
-- [ ] `invited_at` marcado automaticamente na lista
-- [ ] Usuário recebe email e consegue definir senha
-- [ ] Sem nenhuma chave service_role no frontend ou no Git
+- [x] Clicar "Enviar convite" no `/kcx-studio` dispara email de convite do Supabase
+- [x] `invited_at` marcado automaticamente na lista
+- [x] Usuário recebe email e consegue definir senha
+- [x] Sem nenhuma chave service_role no frontend ou no Git
+- [x] AdminPage redesenhada com KPIs, UserCards, confirmação remoção, skeletons (v0.31.0)
+- [x] LoginPage + SetPasswordPage polidas com logo real e fluxo de convite claro (v0.31.0)
+- [x] RLS policy corrigida — auth.jwt() em vez de SELECT FROM auth.users (v0.31.0)
+- [x] trigger on_user_confirmed preenche accepted_at automaticamente (migration 013, v0.31.0)
+- [x] VITE_ADMIN_EMAIL configurado no Vercel — menu admin visível em produção (2026-03-16)
+- [ ] Toggle Free/Assinante no painel admin (profiles.plano)
 
 ---
 
