@@ -890,25 +890,54 @@ valida que o chamador é o admin, e executa o invite com a service_role no servi
 
 | # | Item | Prioridade | Esforço | Risco de dados |
 |---|---|---|---|---|
-| 1 | Error Boundary | 🔴 Alta | 30min | Nenhum |
-| 2 | Onboarding automático | 🔴 Alta | 1h | Baixo (só lê updatedAt) |
-| 3 | SW Update Toast | 🟡 Média | 30min | Nenhum |
-| 4 | Code Splitting | 🟡 Média | 1h | Nenhum |
-| 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) |
-| 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum |
-| 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção |
-| 8 | Loading states | 🟡 Média | 1–2h | Nenhum |
-| 9 | OG Tags | 🟢 Baixa | 20min | Nenhum |
-| 10 | AdminPage: convite direto sem painel Supabase | 🟡 Média | 2–3h | Baixo |
+| 1 | Error Boundary | 🔴 Alta | 30min | Nenhum | ✅ v0.27.0 |
+| 2 | Onboarding automático | 🔴 Alta | 1h | Baixo | ✅ v0.26.0 |
+| 3 | SW Update Toast | 🟡 Média | 30min | Nenhum | ✅ v0.27.0 |
+| 4 | Code Splitting | 🟡 Média | 1h | Nenhum | ✅ v0.27.0 |
+| 5 | Testes Vitest | 🔴 Alta | 2–3h | Nenhum (só lê código) | |
+| 6 | CI/CD GitHub Actions | 🟡 Média | 1h | Nenhum | |
+| 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção | |
+| 8 | Loading states | 🟡 Média | 1–2h | Nenhum | |
+| 9 | OG Tags | 🟢 Baixa | 20min | Nenhum | |
+| 10 | AdminPage: convite direto sem painel Supabase | 🟡 Média | 2–3h | Baixo | |
+| 11 | Diagnóstico de lentidão no carregamento | 🔴 Alta | 1h | Nenhum | |
 
 **Ordem recomendada de sessões:**
 ```
 Sessão 6B: Error Boundary + Onboarding automático  (impacto máximo, baixo risco) ← FEITO (v0.26.0)
 Sessão 6C: SW Update Toast + Code Splitting          (performance + PWA completo) ← FEITO (v0.27.0)
-Sessão 6D: Vitest — calculators + migrationTransform (segurança de regressão)
+Sessão 6D: Diagnóstico de lentidão (Item 11) + Vitest calculators (Item 5)
 Sessão 6E: CI/CD + OG Tags + Loading states          (polish e automação)
 Sessão 6F: AdminPage — convite direto (UX admin)
 ```
+
+---
+
+### ITEM 11 — Diagnóstico de lentidão no carregamento (🔴 ALTA — UX crítico)
+
+**Problema:** app demora para abrir e carregar dados — usuário precisa fechar e reabrir.
+Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado).
+
+**Causas suspeitas (investigar nesta ordem):**
+
+1. **Service Worker travado** — SW antigo em "waiting to activate" conflitando com chunks novos.
+   Verificar: DevTools → Application → Service Workers → status "waiting"?
+   Fix: adicionar `skipWaiting: true` no workbox config do `vite.config.ts`.
+
+2. **Queries Supabase em paralelo no mount** — settings + diary + habits disparam juntos.
+   Verificar: DevTools → Network → filtrar XHR — qual query demora mais?
+   Fix: loading states (Item 8) para o usuário ver progresso em vez de tela travada.
+
+3. **Bundle principal ainda grande (430KB)** — lento em 4G fraco.
+   Verificar: DevTools → Network → tempo de download do `index-xxx.js`.
+   Fix: lazy de modais pesados (TemplateHistoryModal, CoachGuideModal, ExerciseSelector).
+
+**Como diagnosticar na próxima sessão:**
+- Abrir DevTools → Network → recarregar app → anotar tempos
+- Abrir DevTools → Application → Service Workers → verificar status
+- Testar em aba anônima (sem cache) vs. normal
+
+**Critério de feito:** app carrega em < 2s em 4G sem precisar reabrir.
 
 ---
 
