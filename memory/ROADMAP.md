@@ -140,7 +140,7 @@ supabase/migrations/
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
-| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (item 1 concluído — 2026-03-15) |
+| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (itens 1, 2, 3, 4 concluídos — 2026-03-15) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
 | 6E | CI/CD + Loading states + OG Tags | Planejada |
@@ -183,6 +183,21 @@ supabase/migrations/
 - [x] /kcx-studio acessivel so com email admin
 - [ ] Testar reset de senha por email (rate limit atingido em 2026-03-07 — testar na proxima sessao)
 - [ ] Testar no celular real (375px, toque, teclado virtual)
+
+### Melhoria planejada — AdminPage: envio de convite direto (sem ir ao painel Supabase)
+
+> Registrado em 2026-03-15. Ver spec completa na seção FASE 6B ITEM 10 abaixo.
+
+**Problema atual:** o fluxo de convite exige 3 passos manuais fora do app:
+1. Adicionar email no `/kcx-studio`
+2. Ir ao Supabase Dashboard → Authentication → Users → Invite user
+3. Colar o email manualmente
+
+**O que muda:** botão "Enviar convite" diretamente no `/kcx-studio` que chama
+`supabase.auth.admin.inviteUserByEmail()` via Edge Function (ou service_role key protegida),
+dispara o email de convite do Supabase e marca `invited_at` automaticamente — tudo sem sair do app.
+
+---
 
 ### Pendencias para proxima sessao
 - Testar fluxo de reset de senha por email
@@ -625,31 +640,6 @@ O usuário não sabe o que aconteceu e abandona o app.
 
 ---
 
-### ITEM 2 — Onboarding automático na primeira entrada (🔴 PRIORIDADE ALTA)
-
-**Problema:** usuário novo entra no app e vê BMR/TDEE como `--`, macros zeradas, sem nenhuma
-orientação. Não sabe que precisa ir em `/mais` para configurar o perfil.
-
-**Implementação:**
-- Em `HomePage.tsx`: checar `settings.updatedAt == null` após o hook carregar
-- Se nulo E `!loading`: abrir `CalcWizardModal` automaticamente (estado `autoWizardOpen`)
-- Após fechar o wizard (onSave): marcar em `localStorage` `kcalix_onboarded = "1"` para não
-  abrir de novo se o usuário fechar sem salvar acidentalmente
-- Adicionar tela final no wizard: "✅ Perfil configurado! Suas metas:" + resumo BMR/macros
-
-**Proteção de dados:**
-- Wizard só escreve em `user_settings` via `saveSettings()` que já existe
-- Se o usuário já tem `updatedAt` (migrou dados do app antigo), o wizard NÃO abre — dados preservados
-- `ignoreDuplicates: false` no wizard — sobrescreve intencionalmente pois é ação do usuário
-
-**Arquivos:**
-- `src/pages/HomePage.tsx` (lógica autoWizardOpen)
-- `src/components/CalcWizardModal.tsx` (tela final de resumo)
-
-**Critério de feito:** usuário novo vê wizard na primeira visita; usuário que migrou não vê.
-
----
-
 ### ITEM 3 — SW Update Toast (🟡 MÉDIA — já temos o plugin)
 
 **Problema:** quando nova versão é publicada, usuário com app instalado fica na versão antiga
@@ -841,6 +831,61 @@ Parece bug para o usuário.
 
 ---
 
+### ITEM 10 — AdminPage: envio de convite direto (🟡 MÉDIA — UX admin)
+
+**Problema:** o fluxo atual de convite exige sair do app e ir ao painel do Supabase manualmente:
+1. `/kcx-studio`: adiciona email + clica "Copiar e convidar"
+2. Supabase Dashboard → Authentication → Users → Invite user → cola email
+3. Volta ao app
+
+Com 1 usuário é tolerável. Com 10+ usuários fica impraticável.
+
+**Solução: Edge Function + botão "Enviar convite" no AdminPage**
+
+A `supabase.auth.admin.inviteUserByEmail()` requer a `service_role` key — que NUNCA pode ir
+para o frontend. A solução correta é uma **Supabase Edge Function** que recebe o email,
+valida que o chamador é o admin, e executa o invite com a service_role no servidor.
+
+**Implementação:**
+
+1. **Edge Function** `supabase/functions/invite-user/index.ts`:
+   - Recebe `{ email: string }` no body
+   - Valida JWT do usuário chamador (deve ser o admin via `ADMIN_EMAIL` env var)
+   - Chama `supabase.auth.admin.inviteUserByEmail(email)`
+   - Retorna `{ ok: true }` ou `{ error: string }`
+
+2. **`src/lib/auth.ts`** — adicionar `inviteUser(email)`:
+   - Chama a Edge Function via `supabase.functions.invoke('invite-user', { body: { email } })`
+   - Retorna resultado tipado
+
+3. **`src/pages/AdminPage.tsx`** — substituir o card de instrução manual:
+   - Botão "Enviar convite" por email (em vez de "Copiar e convidar")
+   - Loading state durante o envio
+   - Feedback: "✅ Convite enviado para email@..." ou "❌ Erro: ..."
+   - Ao sucesso: `markAsInvited(email)` chamado automaticamente + reload da lista
+
+**Proteção de dados:**
+- A service_role key fica apenas na Edge Function (variável de ambiente do Supabase, não exposta)
+- A Edge Function valida o JWT — só o admin autenticado pode chamar
+- Nenhuma tabela de dados de usuário é alterada — só `authorized_emails.invited_at`
+
+**Arquivos a criar:**
+- `supabase/functions/invite-user/index.ts` (Edge Function, ~40 linhas)
+
+**Arquivos a modificar:**
+- `src/lib/auth.ts` — adicionar `inviteUser(email)`
+- `src/pages/AdminPage.tsx` — trocar botão "Copiar e convidar" por "Enviar convite"
+
+**Pré-requisito:** Supabase CLI instalado localmente para fazer `supabase functions deploy invite-user`
+
+**Critério de feito:**
+- [ ] Clicar "Enviar convite" no `/kcx-studio` dispara email de convite do Supabase
+- [ ] `invited_at` marcado automaticamente na lista
+- [ ] Usuário recebe email e consegue definir senha
+- [ ] Sem nenhuma chave service_role no frontend ou no Git
+
+---
+
 ### Scorecard e Ordem de Execução
 
 | # | Item | Prioridade | Esforço | Risco de dados |
@@ -854,13 +899,15 @@ Parece bug para o usuário.
 | 7 | Protocolo integridade dados | 🔴 Contínuo | Permanente | É a proteção |
 | 8 | Loading states | 🟡 Média | 1–2h | Nenhum |
 | 9 | OG Tags | 🟢 Baixa | 20min | Nenhum |
+| 10 | AdminPage: convite direto sem painel Supabase | 🟡 Média | 2–3h | Baixo |
 
 **Ordem recomendada de sessões:**
 ```
-Sessão 6B: Error Boundary + Onboarding automático  (impacto máximo, baixo risco)
-Sessão 6C: SW Update Toast + Code Splitting          (performance + PWA completo)
+Sessão 6B: Error Boundary + Onboarding automático  (impacto máximo, baixo risco) ← FEITO (v0.26.0)
+Sessão 6C: SW Update Toast + Code Splitting          (performance + PWA completo) ← FEITO (v0.27.0)
 Sessão 6D: Vitest — calculators + migrationTransform (segurança de regressão)
 Sessão 6E: CI/CD + OG Tags + Loading states          (polish e automação)
+Sessão 6F: AdminPage — convite direto (UX admin)
 ```
 
 ---

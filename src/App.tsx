@@ -1,16 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 import Nav from './components/Nav'
 import DateNavBar from './components/DateNavBar'
 import { InstallPrompt } from './components/InstallPrompt'
+import { UpdateToast } from './components/UpdateToast'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
-import HomePage from './pages/HomePage'
-import DiarioPage from './pages/DiarioPage'
-import TreinoPage from './pages/TreinoPage'
-import CorpoPage from './pages/CorpoPage'
-import MaisPage from './pages/MaisPage'
+
+// Páginas carregadas sob demanda (code splitting por rota)
+const HomePage   = lazy(() => import('./pages/HomePage'))
+const DiarioPage = lazy(() => import('./pages/DiarioPage'))
+const TreinoPage = lazy(() => import('./pages/TreinoPage'))
+const CorpoPage  = lazy(() => import('./pages/CorpoPage'))
+const MaisPage   = lazy(() => import('./pages/MaisPage'))
 
 function Spinner() {
   return (
@@ -58,7 +62,9 @@ function AppLayout() {
       <DateNavBar />
       {/* Conteúdo da página — padding-bottom para não ficar atrás do Nav */}
       <main className="flex-1 overflow-y-auto pb-20">
-        <Outlet />
+        <Suspense fallback={<Spinner />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Nav />
     </div>
@@ -68,6 +74,7 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <UpdateToast />
       <InstallPrompt />
       <Routes>
         {/* Rotas públicas */}

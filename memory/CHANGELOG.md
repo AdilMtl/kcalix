@@ -1,5 +1,22 @@
 # Kcalix — CHANGELOG
 
+## [v0.27.0] — 2026-03-15
+
+### Adicionado
+- [feat] `src/components/ErrorBoundary.tsx` — Error Boundary global: captura erros React não tratados e exibe tela de fallback ⚠️ "Algo deu errado" com botão "Recarregar"; mensagem técnica visível apenas em dev
+- [feat] `src/components/UpdateToast.tsx` — banner fixo "🔄 Nova versão disponível" ao detectar Service Worker atualizado; botão "Atualizar" força ativação imediata da nova versão
+- [feat] Code Splitting por rota — 5 páginas (Home, Diário, Treino, Corpo, Mais) convertidas para `React.lazy()` com `Suspense`; bundle inicial reduzido de 666KB → 430KB
+
+### Melhorado
+- [improve] `src/App.tsx` — imports lazy + `<Suspense>` no AppLayout
+- [improve] `src/main.tsx` — `<ErrorBoundary>` envolvendo `<App>`
+- [improve] `tsconfig.app.json` — tipo `vite-plugin-pwa/client` adicionado
+
+### Notas
+- Fase 6B parcialmente concluída: itens 1 (Error Boundary), 3 (SW Update Toast) e 4 (Code Splitting) feitos
+- Pendentes na Fase 6B: Item 5 (Vitest), Item 6 (CI/CD), Item 8 (Loading states), Item 9 (OG Tags), Item 10 (AdminPage convite direto)
+- UpdateToast não testável em localhost (SW desabilitado em dev) — validar após deploy
+
 ## [v0.24.0] — 2026-03-14
 
 ### Adicionado
