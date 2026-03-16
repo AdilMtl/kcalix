@@ -10,10 +10,7 @@ import type { GoalType } from '../data/goalPresets'
 import type { UserSettingsData } from '../hooks/useSettings'
 import CalcWizardModal from '../components/CalcWizardModal'
 import MigrateModal from '../components/MigrateModal'
-
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+import { todayISO } from '../lib/dateUtils'
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import { DEFAULT_TEMPLATES } from '../data/exerciseDb'
+import { todayISO } from '../lib/dateUtils'
 import type {
   WorkoutState,
   WorkoutDayData,
@@ -11,10 +12,6 @@ import type {
 } from '../types/workout'
 
 // ── helpers ───────────────────────────────────────────────────
-
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 // Kcal estimada por série — fiel ao original (L6127)
 // Ex: 12 reps × 80kg → ~8.4 kcal; 0 reps → 0

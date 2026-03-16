@@ -6,6 +6,7 @@
 // z-index: overlay 324, sheet 325
 
 import { useState, useEffect, useCallback } from 'react'
+import { todayISO } from '../lib/dateUtils'
 import { HABITS_DEF, type HabitsMap } from '../types/habit'
 
 // ── Utilitário: data local ISO (fiel ao original L8268)
@@ -108,7 +109,7 @@ export function HabitHistoryModal({ open, onClose, getAllHabits }: Props) {
   const [loaded, setLoaded] = useState(false)
   const [tooltip, setTooltip] = useState<string | null>(null)
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = todayISO()
 
   // ── Carrega dados ao abrir (lazy) — fiel ao padrão workoutRows
   useEffect(() => {

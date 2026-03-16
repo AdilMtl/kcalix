@@ -6,6 +6,7 @@ import { fetchAllWorkoutRows } from '../hooks/useWorkout'
 import { useAuthStore } from '../store/authStore'
 import { useDateStore } from '../store/dateStore'
 import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
+import { todayISO } from '../lib/dateUtils'
 import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
@@ -42,7 +43,7 @@ function balanceColor(saldo: number): string {
 
 // ── Calcula os 7 dias da semana atual (Seg → Dom) ────────────────────────────
 function getWeekDates(): { iso: string; label: string; isFuture: boolean; isToday: boolean }[] {
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = todayISO()
   const todayDate = new Date(todayStr + 'T12:00:00')
   const dow = todayDate.getDay()
   const diffToMon = dow === 0 ? -6 : 1 - dow
@@ -423,7 +424,7 @@ export default function HomePage() {
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const weekDays = getWeekDates()
-  const todayIso = new Date().toISOString().slice(0, 10)
+  const todayIso = todayISO()
   const habitWeekDates = getHabitWeekDates(todayIso)
 
   useEffect(() => {

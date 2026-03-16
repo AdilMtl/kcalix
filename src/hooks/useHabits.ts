@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import { type HabitRow, type HabitKey, type HabitsMap, HABITS_DEF } from '../types/habit'
+import { todayISO } from '../lib/dateUtils'
 
 // ── Utilitário: semana a partir de uma data ISO — fiel ao original L8126–8136
 export function getWeekDates(isoDate: string): string[] {
@@ -54,7 +55,8 @@ export function useHabits() {
       setLoading(true)
       const since = new Date()
       since.setDate(since.getDate() - 30)
-      const sinceISO = since.toISOString().slice(0, 10)
+      const tzOff = since.getTimezoneOffset()
+      const sinceISO = new Date(since.getTime() - tzOff * 60000).toISOString().slice(0, 10)
 
       const { data, error } = await supabase
         .from('habits')
@@ -112,7 +114,7 @@ export function useHabits() {
   // Fiel ao original L8224–8234: só marca; não desmarca se já estiver checked
   const autoCheckHabit = useCallback((key: HabitKey) => {
     if (!user) return
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = todayISO()
 
     setHabits(prev => {
       const row = prev[todayStr] ?? emptyRow(todayStr)
@@ -142,7 +144,8 @@ export function useHabits() {
     if (!user) return {}
     const since = new Date()
     since.setDate(since.getDate() - 365)
-    const sinceISO = since.toISOString().slice(0, 10)
+    const tzOff = since.getTimezoneOffset()
+    const sinceISO = new Date(since.getTime() - tzOff * 60000).toISOString().slice(0, 10)
 
     const { data, error } = await supabase
       .from('habits')

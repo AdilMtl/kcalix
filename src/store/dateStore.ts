@@ -1,8 +1,5 @@
 import { create } from 'zustand'
-
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+import { todayISO } from '../lib/dateUtils'
 
 interface DateState {
   selectedDate: string
@@ -18,7 +15,8 @@ export const useDateStore = create<DateState>((set, get) => ({
   goToPrev: () => {
     const d = new Date(get().selectedDate + 'T12:00:00')
     d.setDate(d.getDate() - 1)
-    set({ selectedDate: d.toISOString().slice(0, 10) })
+    const tzOff = d.getTimezoneOffset()
+    set({ selectedDate: new Date(d.getTime() - tzOff * 60000).toISOString().slice(0, 10) })
   },
 
   goToNext: () => {
@@ -28,7 +26,8 @@ export const useDateStore = create<DateState>((set, get) => ({
     if (cur >= today) return
     const d = new Date(cur + 'T12:00:00')
     d.setDate(d.getDate() + 1)
-    set({ selectedDate: d.toISOString().slice(0, 10) })
+    const tzOff = d.getTimezoneOffset()
+    set({ selectedDate: new Date(d.getTime() - tzOff * 60000).toISOString().slice(0, 10) })
   },
 
   goToToday: () => {

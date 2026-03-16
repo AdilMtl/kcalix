@@ -65,9 +65,7 @@ function shiftDateStr(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+import { todayISO } from '../lib/dateUtils'
 
 /** Resolve grupo primário de um exercício (built-in ou custom) */
 export function resolvePrimaryGroup(

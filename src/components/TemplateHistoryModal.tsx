@@ -4,6 +4,7 @@
 // z-index: overlay 320, modal 321
 
 import { useState, useEffect } from 'react'
+import { todayISO } from '../lib/dateUtils'
 import {
   getAllTmplSessions,
   getAllExSessions,
@@ -20,9 +21,6 @@ import type { CustomExercise, WorkoutDayData, WorkoutTemplate } from '../types/w
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function shiftDateStr(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T00:00:00')

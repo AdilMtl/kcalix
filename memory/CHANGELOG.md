@@ -1,5 +1,15 @@
 # Kcalix — CHANGELOG
 
+## [v0.27.1] — 2026-03-15
+
+### Corrigido
+- [fix] `src/lib/dateUtils.ts` (novo) — `todayISO()` centralizada com compensação de fuso horário (fiel ao original L3711). `new Date().toISOString()` retorna UTC — no Brasil (UTC-3) o app virava o dia às 21h local
+- [fix] Todas as ocorrências de `todayISO()` inline substituídas pelo utilitário centralizado: `useDiary`, `useWorkout`, `useHabits`, `useMuscleVolume`, `useCheckins`, `dateStore`, `HomePage`, `MaisPage`, `WeeklyKcalModal`, `HabitHistoryModal`, `TemplateHistoryModal`
+
+### Notas
+- Bug detectado às 22h43 BRT — app já mostrava segunda-feira enquanto ainda era domingo
+- Dados já gravados com data errada no Supabase não foram alterados (impacto mínimo — só o dia do bug)
+
 ## [v0.27.0] — 2026-03-15
 
 ### Adicionado

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { todayISO } from '../lib/dateUtils'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -27,7 +28,6 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
 
 const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 

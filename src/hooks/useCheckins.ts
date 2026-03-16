@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import type { UserSettingsData } from './useSettings'
 import { fetchAllWorkoutRows } from './useWorkout'
 import { GOAL_PRESETS } from '../data/goalPresets'
+import { todayISO } from '../lib/dateUtils'
 
 export interface CheckinRow {
   id: string
@@ -48,22 +49,18 @@ export const WZ_ACTIVITY_LABELS: Record<string, string> = {
   '1.9':   'Muito ativo',
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
 // Calcula resumo dos últimos N dias com base em dados já carregados
 export async function buildCheckinPeriod(
   userId: string,
   kcalTarget: number,
   days = 7,
 ): Promise<CheckinPeriod> {
-  const today = new Date()
   const dateRange: string[] = []
   for (let i = 0; i < days; i++) {
-    const d = new Date(today)
+    const d = new Date()
     d.setDate(d.getDate() - i)
-    dateRange.push(d.toISOString().slice(0, 10))
+    const tzOff = d.getTimezoneOffset()
+    dateRange.push(new Date(d.getTime() - tzOff * 60000).toISOString().slice(0, 10))
   }
 
   // kcal de treino por data

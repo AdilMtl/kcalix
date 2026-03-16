@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import { buildFoodLookup } from '../data/foodDb'
+import { todayISO } from '../lib/dateUtils'
 
 export interface FoodEntry {
   foodId: string
@@ -72,10 +73,6 @@ function recalcTotals(meals: DiaryMeals): DiaryTotals {
     }),
     { p: 0, c: 0, g: 0, kcal: 0 }
   )
-}
-
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
 }
 
 import type { FoodItem } from '../data/foodDb'
