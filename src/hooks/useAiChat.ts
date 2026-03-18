@@ -18,12 +18,9 @@ export function useAiChat() {
     setError(null)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Sessão expirada')
-
+      // O SDK do Supabase injeta o Authorization automaticamente
       const res = await supabase.functions.invoke('ai-chat', {
         body: { messages: newMessages },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       })
 
       if (res.error) throw new Error(res.error.message)
