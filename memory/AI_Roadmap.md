@@ -1,6 +1,6 @@
 # Kcal Coach IA — Roadmap Técnico Completo
 **Criado:** 2026-03-17
-**Última atualização:** 2026-03-17
+**Última atualização:** 2026-03-18
 
 ---
 
@@ -13,8 +13,9 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 **Fases planejadas:**
 | Fase | Nome | Status |
 |---|---|---|
-| 7A-1 | Edge Function ai-chat (backend) | ⏳ Próxima sessão |
-| 7A-2 | UI do chat (frontend) | ⏳ Após 7A-1 |
+| 7A-1 | Edge Function ai-chat (backend) | ✅ Concluída (2026-03-18) |
+| 7A-2 | UI do chat (frontend) | ✅ Concluída (2026-03-18) |
+| 7A-3 | Coach adaptativo por modo/intenção | 🔵 Planejada |
 | 7B | Log por linguagem natural | 🔵 Planejada |
 | 7C | Foto para macros | 🔵 Planejada |
 
@@ -275,11 +276,70 @@ Tabela `security_events (user_id, event, metadata, created_at)` + RLS só-escrit
 
 ---
 
+## Fase 7A-3 — Coach adaptativo por modo e intenção
+
+**Status:** 🔵 Planejada
+**Motivação:** hoje o coach sempre responde com o diagnóstico completo padrão (macros + volume + progressão + alertas), independente do que o usuário perguntou. Com muitos dados, a resposta fica longa e genérica mesmo quando o usuário quer algo pontual.
+
+**O que muda:**
+O sistema prompt vai detectar a **intenção** da mensagem e adaptar o comportamento — profundidade, foco e tom.
+
+### Modos de intenção (detectados automaticamente pelo modelo)
+
+| Intenção | Gatilhos típicos | Comportamento esperado |
+|---|---|---|
+| **Diagnóstico completo** | "analise meus dados", "como estou", "resumo da semana" | Formato padrão atual: 6 seções completas |
+| **Nutrição** | "como estão meus macros", "atingi a proteína", "comi bem hoje" | Foco em aderência P/C/G, padrão por refeição, ajuste pontual |
+| **Treino** | "como está meu volume", "evoluí no supino", "tô em platô" | Foco em volume por grupo, progressão, MEV/MAV/MRV |
+| **Composição corporal** | "perdi gordura", "meu peso", "bf%", "cintura" | Foco em tendência de peso, taxa semanal, BF% se houver checkins |
+| **Pergunta direta** | "posso comer X?", "quantas proteínas preciso?", "o que é MEV?" | Resposta curta e direta — sem diagnóstico, sem seções |
+| **Check-in emocional** | "tô me sentindo mal", "tive uma semana ruim", "não tô conseguindo" | Tom empático, 1-2 ajustes simples, sem pressão de métricas |
+
+### Implementação
+
+**Opção A (simples — sem código novo):** adicionar ao system prompt uma seção de instrução de modo:
+```
+## DETECÇÃO DE INTENÇÃO
+Antes de responder, identifique a intenção principal da mensagem do usuário.
+- Se for diagnóstico geral → use o formato completo de 6 seções
+- Se for pergunta sobre nutrição → responda só com análise de macros/aderência (2-3 parágrafos)
+- Se for pergunta sobre treino → responda só com volume/progressão (2-3 parágrafos)
+- Se for pergunta direta/simples → responda em 1-3 frases, sem seções
+- Se houver tom emocional → responda com empatia primeiro, depois 1 ajuste concreto
+Nunca force o formato completo quando a pergunta é pontual.
+```
+
+**Opção B (avançada — futura):** chips de modo na UI — usuário seleciona explicitamente "🍽 Nutrição", "💪 Treino", "⚖️ Corpo", "💬 Conversa livre" antes de digitar. O chip vira um prefixo invisível no payload.
+
+**Recomendação:** implementar Opção A primeiro (mudança só no system prompt, zero código novo). Avaliar se resolve. Opção B fica para 7A-4 se necessário.
+
+### Chips de ação rápida atualizados (UI)
+
+Substituir os 3 chips atuais por chips com contexto de modo:
+- "🍽 Como estão meus macros esta semana?"
+- "💪 Como está meu volume muscular?"
+- "⚖️ Como está minha evolução de peso?"
+- "🔍 Analise tudo dos últimos 30 dias"
+
+### Arquivos a modificar
+- `supabase/functions/ai-chat/index.ts` — adicionar seção de detecção de intenção no `SYSTEM_PROMPT`
+- `src/components/AiChatModal.tsx` — atualizar chips com emojis de contexto
+
+### Critérios de feito
+- [ ] Pergunta sobre macros → resposta focada em nutrição (sem seção de treino)
+- [ ] Pergunta sobre treino → resposta focada em volume/progressão (sem seção de macros)
+- [ ] Pergunta direta simples → resposta em 1-3 frases
+- [ ] Diagnóstico completo ainda funciona quando solicitado
+- [ ] `npm run build` sem erros
+
+---
+
 ## Specs por sessão
 
 | Sessão | Arquivo de spec | Status |
 |---|---|---|
-| 7A-1 | `memory/spec-fase-7A-1-ai-chat.md` | ✅ Escrita — aguardando implementação |
-| 7A-2 | a criar na sessão seguinte | ⏳ |
-| 7B | a criar quando 7A estiver pronta | ⏳ |
+| 7A-1 | `memory/spec-fase-7A-1-ai-chat.md` | ✅ Concluída (2026-03-18) |
+| 7A-2 | UI do chat | ✅ Concluída (2026-03-18) |
+| 7A-3 | Coach adaptativo por intenção | 🔵 Planejada — spec inline acima |
+| 7B | a criar quando 7A-3 estiver pronta | ⏳ |
 | 7C | a criar quando 7B estiver pronta | ⏳ |

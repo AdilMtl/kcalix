@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useAiChat } from '../hooks/useAiChat'
 
 const CHIPS = [
-  'Como estão meus macros esta semana?',
-  'Como está meu volume muscular?',
-  'O que devo ajustar agora?',
+  '🍽 Como estão meus macros esta semana?',
+  '💪 Como está meu volume muscular?',
+  '⚖️ Como está minha evolução de peso?',
+  '🔍 Analise tudo dos últimos 30 dias',
 ]
 
 interface Props {
