@@ -1,6 +1,6 @@
 # Kcal Coach IA — Roadmap Técnico Completo
 **Criado:** 2026-03-17
-**Última atualização:** 2026-03-18
+**Última atualização:** 2026-03-17
 
 ---
 
@@ -15,9 +15,9 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 |---|---|---|
 | 7A-1 | Edge Function ai-chat (backend) | ✅ Concluída (2026-03-18) |
 | 7A-2 | UI do chat (frontend) | ✅ Concluída (2026-03-18) |
-| 7A-3 | Coach adaptativo por modo/intenção | 🔵 Planejada |
-| 7B | Log por linguagem natural | 🔵 Planejada |
-| 7C | Foto para macros | 🔵 Planejada |
+| 7A-3 | Otimização de tokens — pré-proc + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
+| 7B | Log por linguagem natural | 🔵 Próximo — spec concluída (2026-03-17) |
+| 7C | Foto para macros | 🔵 Após 7B |
 
 ---
 
@@ -145,36 +145,51 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
 ---
 
 ## Fase 7B — Log por linguagem natural
-**Status:** 🔵 Planejada — após 7A completa
-**Dependência:** Fase 7A deployada
+**Status:** 🔵 Próximo — spec concluída (2026-03-17)
+**Dependência:** Fase 7A completa ✅
 
-**O que é:**
-O usuário digita (ou fala) "Comi 200g de frango com arroz" → a IA extrai os macros → abre modal de confirmação → usuário edita se necessário → salva no diário.
+**Jornada do usuário:**
+1. Usuário digita no chat: "almocei 200g de frango com arroz e feijão"
+2. `detectIntent()` detecta intenção de log → Edge Function entra em modo parse-food
+3. IA recebe texto + lista compacta de foodIds do banco → retorna JSON estruturado
+4. Modal de confirmação único exibe itens com gramas editáveis e totalizador em tempo real
+5. Refeição detectada automaticamente ("almocei" → almoço); se não → dropdown obrigatório
+6. Confirmar → custom foods criados → todos os itens salvos no diário → toast de confirmação
 
-**Como funciona:**
-- Novo `action: 'parse-food'` na **mesma** Edge Function `ai-chat` (não cria função nova)
-- Payload: `{ action: 'parse-food', text: "200g de frango com arroz" }`
-- IA retorna JSON estruturado:
-  ```json
-  {
-    "nome": "Frango grelhado + arroz branco",
-    "pG": 46, "cG": 52, "gG": 4, "kcal": 432,
-    "itens": [
-      { "nome": "Frango grelhado", "qty": 200, "pG": 46, "cG": 0, "gG": 4, "kcal": 228 },
-      { "nome": "Arroz branco cozido", "qty": 150, "pG": 3, "cG": 52, "gG": 0, "kcal": 204 }
-    ]
-  }
-  ```
-- Modal de confirmação: usuário vê o que a IA entendeu e pode editar gramas antes de salvar
-- Ao confirmar: chama `onAddFood` do `useDiary` (mesmo fluxo do `FoodPortionModal`)
+**JSON retornado pela IA:**
+```json
+{
+  "meal": "almoco",
+  "items": [
+    { "foodId": "frango_grelhado", "nome": "Frango grelhado", "grams": 200, "source": "db" },
+    { "foodId": "arroz_branco",    "nome": "Arroz branco",    "grams": 150, "source": "db" },
+    { "foodId": null, "nome": "Feijão carioca", "grams": 100, "source": "custom",
+      "p": 4.5, "c": 13.8, "g": 0.4, "kcal": 77 }
+  ]
+}
+```
+`meal=null` → frontend força seleção. `source:"db"` → usa FoodItem existente. `source:"custom"` → cria via `saveCustomFood()`.
 
-**Ponto de entrada no app:**
-- Botão "Registrar por texto" dentro do `FoodDrawer` (aba Diário)
-- Ou input no próprio chat: se o usuário digitar algo que parece uma refeição, chip "Adicionar ao diário?" aparece
+**Arquivos a criar/modificar:**
+- `supabase/functions/ai-chat/index.ts` — flag `isLogFood` no detectIntent + modo parse-food
+- `src/data/foodDb.ts` — nova função `getFoodIndex()` (lista compacta de IDs para o prompt)
+- `src/components/AiLogConfirmModal.tsx` — modal de confirmação (novo)
+- `src/hooks/useAiChat.ts` — estados `pendingLog`, `confirmLog()`, `cancelLog()`
+- `src/components/AiChatModal.tsx` — montar AiLogConfirmModal quando pendingLog != null
+- `src/pages/DiarioPage.tsx` — passar `onAddFood` via Context para o AiChatModal
 
-**Schema:** nenhuma tabela nova — salva nas `diary_entries` existentes.
+**Decisões técnicas:**
+| Decisão | Escolha | Motivo |
+|---|---|---|
+| Match no banco | IA recebe lista de IDs no prompt | Preciso, sem fuzzy search |
+| Confirmação | Modal único (não tela separada) | UX fluida, padrão MyFitnessPal |
+| Refeição não detectada | Dropdown obrigatório no modal | Evita pergunta de volta no chat |
+| Custom food | Cria automaticamente ao confirmar | Mesmo fluxo do CustomFoodModal |
+| onAddFood no AppLayout | Context mínimo | AiChatModal fica no AppLayout |
+| Custo parse | ~400 tokens (não busca Supabase) | Mais barato que mensagem de análise |
 
-**Atenção:** a IA erra gramas em ±20–30% — o modal de confirmação é obrigatório, nunca salvar direto.
+**Schema:** nenhuma tabela nova — usa `diary_entries` e `custom_foods` existentes.
+**Atenção:** IA erra gramas ±20-30% — modal de confirmação é obrigatório, nunca salvar direto.
 
 ---
 
@@ -340,6 +355,6 @@ Substituir os 3 chips atuais por chips com contexto de modo:
 |---|---|---|
 | 7A-1 | `memory/spec-fase-7A-1-ai-chat.md` | ✅ Concluída (2026-03-18) |
 | 7A-2 | UI do chat | ✅ Concluída (2026-03-18) |
-| 7A-3 | Coach adaptativo por intenção | 🔵 Planejada — spec inline acima |
-| 7B | a criar quando 7A-3 estiver pronta | ⏳ |
+| 7A-3 | Otimização de tokens (pré-proc + roteamento + prompt modular) | ✅ Concluída (2026-03-17) |
+| 7B | Log por linguagem natural | 🔵 Spec concluída (2026-03-17) — pronto para implementar |
 | 7C | a criar quando 7B estiver pronta | ⏳ |
