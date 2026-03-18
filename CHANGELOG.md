@@ -2,6 +2,19 @@
 
 ---
 
+## [0.34.2] — 2026-03-18
+
+### Melhorado
+- [improve] `supabase/functions/ai-chat/index.ts` — system prompt reescrito com detecção de intenção como Passo 1 obrigatório: 6 modos (pergunta direta, nutrição, treino, composição corporal, emocional, diagnóstico completo); formato estruturado de 6 seções agora só acionado no Modo F; resolve o problema de o coach sempre retornar diagnóstico completo independente da pergunta
+- [improve] `src/components/AiChatModal.tsx` — chips de ação rápida atualizados com emojis de contexto: 🍽 nutrição / 💪 treino / ⚖️ peso / 🔍 análise completa
+
+### Notas
+- Mudança só na Edge Function (sem alteração de schema ou frontend relevante)
+- Fase 7A-3 documentada em `memory/AI_Roadmap.md` como concluída
+- Próxima: Fase 7B — log por linguagem natural
+
+---
+
 ## [0.34.0] — 2026-03-18
 
 ### Adicionado
