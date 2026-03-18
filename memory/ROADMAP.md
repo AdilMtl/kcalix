@@ -1034,8 +1034,8 @@ Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado)
 
 | Sessão | Entrega | Status |
 |---|---|---|
-| 7A-1 | Edge Function `ai-chat` (backend) | ⏳ Próxima sessão |
-| 7A-2 | UI do chat — FAB + bottom sheet | 🔵 Após 7A-1 |
+| 7A-1 | Edge Function `ai-chat` (backend) | ✅ Concluída (2026-03-18) |
+| 7A-2 | UI do chat — FAB + bottom sheet | ✅ Concluída (2026-03-18) |
 | 7B | Log por linguagem natural — "comi 200g de frango..." | 🔵 Após 7A |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
 

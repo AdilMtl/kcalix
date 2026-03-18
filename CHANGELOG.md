@@ -2,6 +2,33 @@
 
 ---
 
+## [0.34.0] — 2026-03-18
+
+### Adicionado
+- [feat] `supabase/functions/ai-chat/index.ts` — Edge Function Kcal Coach: valida JWT, busca dados reais do usuário (diary + workouts + body + checkins + settings, 30 dias), monta system prompt com protocolos RP/Lucas Campos, chama gpt-4o-mini e retorna `{ reply }` em português
+- [feat] `src/hooks/useAiChat.ts` — estado da conversa (`messages[]`), chamada à Edge Function via `supabase.functions.invoke`, loading state e tratamento de erro
+- [feat] `src/components/AiChatModal.tsx` — bottom sheet completo: balões usuário/coach, chips de ação rápida ("Como estão meus macros?", "Como está meu volume?", "O que ajustar?"), loading animado (3 dots), textarea auto-expandível, envio por Enter
+- [feat] FAB 🤖 roxo em todas as abas — posicionado acima da Nav, abre o AiChatModal
+
+### Notas
+- Fase 7A concluída (7A-1 backend + 7A-2 frontend)
+- `OPENAI_API_KEY` configurada nos secrets do Supabase (Vault) — nunca entra no bundle
+- Conversa em memória: zerada ao fechar o modal (intencional no MVP)
+- Próximas fases: 7B (log por linguagem natural) e 7C (foto para macros)
+
+---
+
+## [0.33.0] — 2026-03-17
+
+### Corrigido
+- [fix] XSS em `TemplateHistoryModal.tsx` — `dangerouslySetInnerHTML` substituído por texto puro; `useMuscleVolume.ts` converteu 7 campos `detalhe` de HTML para string simples
+
+### Documentação
+- [docs] `memory/AI_Roadmap.md` — roadmap técnico completo da Fase 7 IA (arquitetura, decisões, segurança, specs por sessão)
+- [docs] `memory/spec-fase-7A-1-ai-chat.md` — spec detalhada da sessão 7A-1
+
+---
+
 ## [0.32.0] — 2026-03-16
 
 ### Adicionado

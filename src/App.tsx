@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useAuthStore } from './store/authStore'
 import Nav from './components/Nav'
 import DateNavBar from './components/DateNavBar'
 import { InstallPrompt } from './components/InstallPrompt'
 import { UpdateToast } from './components/UpdateToast'
+import { AiChatModal } from './components/AiChatModal'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
@@ -58,6 +59,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 // Layout com Nav inferior — usado em todas as rotas privadas com abas
 function AppLayout() {
+  const [chatOpen, setChatOpen] = useState(false)
+
   return (
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg)' }}>
       <DateNavBar />
@@ -68,6 +71,36 @@ function AppLayout() {
         </Suspense>
       </main>
       <Nav />
+
+      {/* FAB Kcal Coach */}
+      <button
+        onClick={() => setChatOpen(true)}
+        aria-label="Kcal Coach IA"
+        style={{
+          position: 'fixed',
+          bottom: 76,
+          right: 16,
+          zIndex: 200,
+          width: 50,
+          height: 50,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
+          boxShadow: '0 4px 20px rgba(124,92,255,0.5)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 22,
+          transition: 'transform 0.15s, box-shadow 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        🤖
+      </button>
+
+      <AiChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   )
 }
