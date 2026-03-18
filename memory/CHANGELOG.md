@@ -1,5 +1,21 @@
 # Kcalix — CHANGELOG
 
+## [v0.33.0] — 2026-03-17
+
+### Corrigido
+- [fix] `src/components/TemplateHistoryModal.tsx` — `dangerouslySetInnerHTML` removido; `item.detalhe` agora renderizado como texto puro via `{item.detalhe}`. Fecha vulnerabilidade XSS (OWASP A03) catalogada na auditoria de 2026-03-16.
+- [fix] `src/hooks/useMuscleVolume.ts` — 7 campos `detalhe` nos insights convertidos de HTML strings (`<b>`, `<br>`) para texto puro. `dangerouslySetInnerHTML` não existe mais em nenhum arquivo do projeto.
+
+### Documentação
+- [doc] `memory/AI_Roadmap.md` — roadmap técnico completo da Fase 7 (IA): arquitetura, decisões, specs de 4 sessões (7A-1, 7A-2, 7B, 7C), alternativas técnicas avaliadas, capítulo de segurança com pendências e código de implementação futura
+- [doc] `memory/spec-fase-7A-1-ai-chat.md` — spec detalhada da próxima sessão: Edge Function `ai-chat`, fluxo interno, critérios de feito, pré-requisitos externos
+
+### Notas
+- Auditoria OWASP realizada: 7/10 categorias cobertas; único item de severidade média (XSS) fechado nesta sessão; 4 itens baixa severidade documentados para implementação futura
+- Arquitetura da Fase 7 decidida: Supabase Edge Function (mesmo padrão do `invite-user`), GPT-4o mini, chat em memória no MVP
+- Cloudflare Workers avaliado e descartado: zero benefício concreto para o estágio atual
+- **Pré-requisito externo antes da sessão 7A-1:** configurar `OPENAI_API_KEY` no Supabase secrets e no Vercel (ver ROADMAP.md → Fase 7)
+
 ## [v0.30.0] — 2026-03-16
 
 ### Adicionado

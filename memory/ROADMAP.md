@@ -1027,10 +1027,50 @@ Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado)
 
 ---
 
-## FASE 7 — Freemium / Fase 8 — IA (Futuro)
+## FASE 7 — IA Integrada (Kcal Coach dentro do app)
 
-- Fase 7: Stripe -> pagamento autoriza acesso automaticamente
-- Fase 8: Chat com coach, insercao por foto, relatorios inteligentes
+> Planejamento completo em `memory/AI_Roadmap.md`
+> Spec da próxima sessão em `memory/spec-fase-7A-1-ai-chat.md`
+
+| Sessão | Entrega | Status |
+|---|---|---|
+| 7A-1 | Edge Function `ai-chat` (backend) | ⏳ Próxima sessão |
+| 7A-2 | UI do chat — FAB + bottom sheet | 🔵 Após 7A-1 |
+| 7B | Log por linguagem natural — "comi 200g de frango..." | 🔵 Após 7A |
+| 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
+
+### ⚠️ O que VOCÊ precisa fazer antes da sessão 7A-1 (fora do IDE)
+
+> Estas tarefas requerem acesso a painéis externos — não podem ser feitas pelo Claude Code.
+
+**1. Pegar sua chave OpenAI**
+- Acesse: https://platform.openai.com/api-keys
+- Crie uma nova chave (ou copie a existente)
+- Guarde o valor `sk-...` — você vai precisar nos passos abaixo
+
+**2. Registrar a chave no Supabase (secrets)**
+- Abra o terminal no VS Code (Ctrl+`)
+- Execute: `supabase secrets set OPENAI_API_KEY=sk-SUAKEY`
+- Confirme: `supabase secrets list` — deve aparecer `OPENAI_API_KEY` sem mostrar o valor
+
+**3. Registrar a chave no Vercel (produção)**
+- Acesse: https://vercel.com → seu projeto `kcalix` → Settings → Environment Variables
+- Adicione: `OPENAI_API_KEY` = `sk-SUAKEY`
+- Scope: Production + Preview
+- Salve — o Vercel vai usar essa chave quando a Edge Function for deployada
+
+**4. Confirmar que os créditos OpenAI estão ativos**
+- Acesse: https://platform.openai.com/usage
+- Verifique que há créditos disponíveis (o MVP vai gastar centavos)
+
+Depois de fazer isso, abra uma nova sessão com `/start` e avise que os segredos estão configurados.
+
+---
+
+## FASE 8 — Freemium (Stripe)
+
+- Stripe integrado → pagamento autoriza acesso automaticamente
+- Planejado após Fase 7 estável
 
 ---
 

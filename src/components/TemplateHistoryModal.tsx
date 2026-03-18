@@ -462,9 +462,9 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
                       marginTop: 6, paddingTop: 6,
                       borderTop: '1px solid rgba(255,255,255,.06)',
                       fontSize: 11, color: 'var(--text3)', lineHeight: 1.5,
-                    }}
-                      dangerouslySetInnerHTML={{ __html: item.detalhe }}
-                    />
+                    }}>
+                      {item.detalhe}
+                    </div>
                   )
                 })}
               </div>

@@ -285,8 +285,8 @@ function detectPlateaus(
     if (currentMax === 0 && historicalMax === 0) continue
     const exNome = resolveExName(exId, customExercises)
     const detalhe = level === 'iniciante'
-      ? `<b>${exNome}</b> parado há ${nWeeks} semanas — incomum para iniciantes.<br>Verifique: as séries estão chegando perto da falha? A dieta está adequada?<br>Carga atual: ${currentMax}kg | Melhor anterior: ${historicalMax}kg`
-      : `<b>${exNome}</b> sem progressão há ${nWeeks} semanas.<br>Considere: 3–4 séries/semana por 2 semanas, mantendo a carga (${currentMax}kg).`
+      ? `${exNome} parado há ${nWeeks} semanas — incomum para iniciantes. Verifique: as séries estão chegando perto da falha? A dieta está adequada? Carga atual: ${currentMax}kg | Melhor anterior: ${historicalMax}kg`
+      : `${exNome} sem progressão há ${nWeeks} semanas. Considere: 3–4 séries/semana por 2 semanas, mantendo a carga (${currentMax}kg).`
     insights.push({
       nivel:  'warning', icone: '⚠',
       titulo:  `${exNome} — sem progressão há ${nWeeks} sem.`,
@@ -326,7 +326,7 @@ function detectVolumeCyclingNeed(
         nivel: 'warning', icone: '⚠',
         titulo:  `${grupo} — volume alto por ${weeksAboveMav} semanas`,
         resumo:  `Acima do ideal por ${weeksAboveMav} semanas. Hora de parar no posto.`,
-        detalhe: `<b>${grupo}</b> acima do volume ideal por ${weeksAboveMav} semanas seguidas.<br>Sugestão: reduza para 3–4 séries/semana por 2 semanas. Mantenha a carga.`,
+        detalhe: `${grupo} acima do volume ideal por ${weeksAboveMav} semanas seguidas. Sugestão: reduza para 3–4 séries/semana por 2 semanas. Mantenha a carga.`,
         grupo,
       })
       continue
@@ -357,7 +357,7 @@ function detectVolumeCyclingNeed(
         nivel: 'warning', icone: '⚠',
         titulo:  `${grupo} — queda de força em ${dropCount} exercícios`,
         resumo:  'Sinal de fadiga acumulada. Semana de manutenção pode ajudar.',
-        detalhe: `Queda de força em ${dropCount} exercícios de <b>${grupo}</b> esta semana.<br>Considere uma semana de manutenção: 3–4 séries, carga alta, sem chegar na falha.`,
+        detalhe: `Queda de força em ${dropCount} exercícios de ${grupo} esta semana. Considere uma semana de manutenção: 3–4 séries, carga alta, sem chegar na falha.`,
         grupo,
       })
     }
@@ -398,7 +398,7 @@ function detectRepMonotony(
           nivel: 'info', icone: 'ℹ',
           titulo: `${exNome} — cargas pesadas por 6 sessões`,
           resumo: 'Reps sempre abaixo de 8. Considere uma fase com reps mais altas.',
-          detalhe: `<b>${exNome}</b> com cargas pesadas há 6 sessões.<br>Para proteger os tendões, considere uma fase com reps mais altas (12–15) por algumas semanas.`,
+          detalhe: `${exNome} com cargas pesadas há 6 sessões. Para proteger os tendões, considere uma fase com reps mais altas (12–15) por algumas semanas.`,
           grupo: resolvePrimaryGroup(exId, customExercises),
         })
         continue
@@ -412,7 +412,7 @@ function detectRepMonotony(
         nivel: 'info', icone: 'ℹ',
         titulo: `${exNome} — sempre ${minR}–${maxR} reps (${last4.length} sessões)`,
         resumo: 'Variar a faixa pode trazer novos estímulos e melhorar conforto articular.',
-        detalhe: `<b>${exNome}</b> sempre entre ${minR}–${maxR} reps há ${last4.length} sessões.<br>Variar a faixa pode trazer novos estímulos e melhorar o conforto articular.`,
+        detalhe: `${exNome} sempre entre ${minR}–${maxR} reps há ${last4.length} sessões. Variar a faixa pode trazer novos estímulos e melhorar o conforto articular.`,
         grupo: resolvePrimaryGroup(exId, customExercises),
       })
     }
@@ -452,7 +452,7 @@ function detectMuscleImbalance(
       nivel: 'warning', icone: '⚠',
       titulo: `${major} com volume ${ratio}x maior que ${minor}`,
       resumo: `${minor} abaixo do mínimo. Desequilíbrio pode afetar postura e progressão.`,
-      detalhe: `<b>${major}</b> com volume ${ratio}x maior que <b>${minor}</b> esta semana.<br><b>${minor}</b> abaixo do mínimo (${volMinor} de ${lmMinor.mev} séries) pode afetar postura e limitar o desenvolvimento de ${major}.`,
+      detalhe: `${major} com volume ${ratio}x maior que ${minor} esta semana. ${minor} abaixo do mínimo (${volMinor} de ${lmMinor.mev} séries) pode afetar postura e limitar o desenvolvimento de ${major}.`,
       grupo: minor,
     })
   }
@@ -491,7 +491,7 @@ function detectChronicLowVolume(
       nivel: 'warning', icone: '⚠',
       titulo: `${grupo} — abaixo do mínimo por ${weeksBelow} semanas`,
       resumo: `${weeksBelow} das últimas ${activeWeeks} semanas abaixo de ${lm.mev} séries. ${suggestion}`,
-      detalhe: `<b>${grupo}</b> abaixo do mínimo por ${weeksBelow} das últimas ${activeWeeks} semanas.<br>${suggestion}`,
+      detalhe: `${grupo} abaixo do mínimo por ${weeksBelow} das últimas ${activeWeeks} semanas. ${suggestion}`,
       grupo,
     })
   }
