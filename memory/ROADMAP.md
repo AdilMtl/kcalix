@@ -1036,8 +1036,22 @@ Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado)
 |---|---|---|
 | 7A-1 | Edge Function `ai-chat` (backend) | ✅ Concluída (2026-03-18) |
 | 7A-2 | UI do chat — FAB + bottom sheet | ✅ Concluída (2026-03-18) |
-| 7B | Log por linguagem natural — "comi 200g de frango..." | 🔵 Após 7A |
+| 7A-3 | Otimização de tokens — pré-processamento + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
+| 7B | Log por linguagem natural — "comi 200g de frango..." | 🔵 Próximo |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
+
+### Benchmark de tokens (2026-03-17) — referência para otimizações futuras
+
+| Versão | Pergunta | Tokens/msg | Custo/msg |
+|---|---|---|---|
+| v0.34.x (original) | qualquer | ~10,000-20,000 | ~$0.003 |
+| v0.35.0 (pré-proc + roteamento) | almoço + treino (chat vazio) | ~3,500 | ~$0.00108 |
+| v0.35.1 (prompt modular + max_tokens) | almoço + treino (chat vazio) | ~2,870 | ~$0.00064 |
+
+- Modelo: gpt-4o-mini ($0.15/1M input, $0.60/1M output)
+- Custo atual: ~0.064 centavos/msg → 1 centavo = ~15 mensagens
+- Perguntas de teste: "Como foi meu almoço hoje?" + "O que você achou do meu treino de ontem?"
+- Próxima otimização possível: limitar histórico da conversa (não implementado — preservar UX)
 
 ### ⚠️ O que VOCÊ precisa fazer antes da sessão 7A-1 (fora do IDE)
 
