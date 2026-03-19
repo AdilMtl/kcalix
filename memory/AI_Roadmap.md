@@ -1,6 +1,6 @@
 # Kcal Coach IA — Roadmap Técnico Completo
 **Criado:** 2026-03-17
-**Última atualização:** 2026-03-17
+**Última atualização:** 2026-03-19
 
 ---
 
@@ -16,7 +16,9 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 | 7A-1 | Edge Function ai-chat (backend) | ✅ Concluída (2026-03-18) |
 | 7A-2 | UI do chat (frontend) | ✅ Concluída (2026-03-18) |
 | 7A-3 | Otimização de tokens — pré-proc + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
-| 7B | Log por linguagem natural | 🔵 Próximo — spec concluída (2026-03-17) |
+| 7B-1 | Log por linguagem natural — Frontend + mock (Edge Function intocada) | 🔵 Próximo |
+| 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | 🔵 Após 7B-1 |
+| 7B-3 | Log por linguagem natural — Integração com DiarioPage | 🔵 Após 7B-2 |
 | 7C | Foto para macros | 🔵 Após 7B |
 
 ---
@@ -145,18 +147,31 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
 ---
 
 ## Fase 7B — Log por linguagem natural
-**Status:** 🔵 Próximo — spec concluída (2026-03-17)
+**Status:** 🔵 Próximo — spec revisada (2026-03-19)
 **Dependência:** Fase 7A completa ✅
 
-**Jornada do usuário:**
-1. Usuário digita no chat: "almocei 200g de frango com arroz e feijão"
-2. `detectIntent()` detecta intenção de log → Edge Function entra em modo parse-food
-3. IA recebe texto + lista compacta de foodIds do banco → retorna JSON estruturado
-4. Modal de confirmação único exibe itens com gramas editáveis e totalizador em tempo real
-5. Refeição detectada automaticamente ("almocei" → almoço); se não → dropdown obrigatório
-6. Confirmar → custom foods criados → todos os itens salvos no diário → toast de confirmação
+> ⚠️ **Lição aprendida:** a spec original alterava Edge Function + frontend ao mesmo tempo e quebrou dev e prod simultaneamente. A spec revisada divide em 3 sub-sessões independentes e seguras.
 
-**JSON retornado pela IA:**
+### Estratégia: 3 sub-sessões isoladas
+
+| Sub-sessão | O que muda | Edge Function tocada? | Risco |
+|---|---|---|---|
+| 7B-1 | Só frontend + mock | ❌ Não | Baixo |
+| 7B-2 | Só Edge Function | ✅ Sim (bloco isolado) | Médio — testável via curl antes de ligar no app |
+| 7B-3 | Integração final | Não | Baixo |
+
+---
+
+### Jornada do usuário (confirmada)
+1. Usuário digita no chat: "almocei 200g de frango com arroz e feijão"
+2. Frontend detecta intenção de log por palavras-chave (sem chamar IA)
+3. `getFoodIndex()` gera lista compacta (~200 tokens) dos alimentos do banco
+4. Edge Function `action:'parse-food'` recebe texto + índice → retorna JSON estruturado
+5. `AiLogConfirmModal` exibe itens com gramas editáveis e totalizador em tempo real
+6. Refeição detectada automaticamente ("almocei" → almoço); se não → dropdown obrigatório
+7. Confirmar → custom foods criados → itens salvos no diário → toast ✓
+
+### JSON retornado pela IA
 ```json
 {
   "meal": "almoco",
@@ -168,25 +183,118 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
   ]
 }
 ```
-`meal=null` → frontend força seleção. `source:"db"` → usa FoodItem existente. `source:"custom"` → cria via `saveCustomFood()`.
+`meal=null` → dropdown obrigatório no modal. `source:"db"` → usa FoodItem existente. `source:"custom"` → cria via `saveCustomFood()`.
+
+---
+
+### Sub-sessão 7B-1 — Frontend + mock (Edge Function intocada)
 
 **Arquivos a criar/modificar:**
-- `supabase/functions/ai-chat/index.ts` — flag `isLogFood` no detectIntent + modo parse-food
-- `src/data/foodDb.ts` — nova função `getFoodIndex()` (lista compacta de IDs para o prompt)
+- `src/data/foodDb.ts` — nova função `getFoodIndex()`: string compacta por categoria (~200 tokens, não 500 IDs soltos)
+- `src/hooks/useAiChat.ts` — estados `pendingLog`, `parseFood()` (mock offline), `confirmLog()`, `cancelLog()`
 - `src/components/AiLogConfirmModal.tsx` — modal de confirmação (novo)
-- `src/hooks/useAiChat.ts` — estados `pendingLog`, `confirmLog()`, `cancelLog()`
-- `src/components/AiChatModal.tsx` — montar AiLogConfirmModal quando pendingLog != null
-- `src/pages/DiarioPage.tsx` — passar `onAddFood` via Context para o AiChatModal
+- `src/components/AiChatModal.tsx` — detecta intenção de log no frontend + abre modal
 
-**Decisões técnicas:**
+**Detalhe — getFoodIndex() compacto:**
+```
+Carnes: frango_grelhado(Frango grelhado/100g), bife_grelhado(Bife alcatra/100g)...
+Cereais: arroz_branco(Arroz branco/50g), batata_doce(Batata doce/100g)...
+```
+→ ~200 tokens vs ~1.500 da spec anterior
+
+**Detalhe — mock para testar UI sem backend:**
+```typescript
+// Durante 7B-1: parseFood() retorna JSON hardcoded
+// Durante 7B-3: substituído pela chamada real à Edge Function
+```
+
+**Critérios de feito:**
+- [ ] Modal abre ao detectar log de refeição no chat
+- [ ] Itens exibidos com gramas editáveis e totalizador em tempo real
+- [ ] Refeição detectada ou dropdown obrigatório se não detectada
+- [ ] Confirmar/Cancelar funcionam (confirmação mostra toast por ora)
+- [ ] Build sem erros TypeScript
+- [ ] **Zero mudança na Edge Function**
+
+---
+
+### Sub-sessão 7B-2 — Edge Function (bloco isolado)
+
+**Arquivos a modificar:**
+- `supabase/functions/ai-chat/index.ts` — bloco `action:'parse-food'` **antes** do fluxo de chat existente
+
+**Isolamento do risco — padrão obrigatório:**
+```typescript
+// Bloco novo — completamente separado do chat existente
+if (body.action === 'parse-food') {
+  return await parseFoodHandler(req, body, user)
+}
+// Fluxo de chat existente — intocado abaixo ↓
+```
+
+**Características do parse-food:**
+- NÃO busca dados do usuário no Supabase (só parseia texto)
+- Recebe: `{ action: 'parse-food', text: string, foodIndex: string }`
+- Retorna: `{ meal, items[] }`
+- Custo: ~300-500 tokens
+
+**Curl de teste antes de ligar no app:**
+```bash
+curl -X POST https://klvqyczfqxrbybgljnhe.supabase.co/functions/v1/ai-chat \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"parse-food","text":"almocei 200g frango com arroz","foodIndex":"..."}'
+```
+
+**Critérios de feito:**
+- [ ] Curl retorna JSON estruturado correto
+- [ ] Curl sem `action` (chat normal) continua funcionando igual — **obrigatório verificar**
+- [ ] Curl sem JWT retorna 401
+- [ ] Deploy: `supabase functions deploy ai-chat --no-verify-jwt`
+
+---
+
+### Sub-sessão 7B-3 — Integração com DiarioPage
+
+**Arquivos a modificar:**
+- `src/hooks/useAiChat.ts` — substituir mock por chamada real à Edge Function
+- `src/components/AiChatModal.tsx` — recebe `onAddFood` como prop opcional
+- `src/App.tsx` / `AppLayout` — passa `onAddFood` do DiarioPage via prop
+- `src/pages/DiarioPage.tsx` — passa seu `onAddFood` do `useDiary` para o AppLayout
+
+**Padrão obrigatório — props, nunca Context:**
+```typescript
+// AppLayout
+interface AppLayoutProps { onAddFood?: (meal: string, item: FoodEntry) => void }
+// AiChatModal
+interface AiChatModalProps { onAddFood?: (meal: string, item: FoodEntry) => void }
+```
+→ Fiel ao padrão: `useDiary` instanciado só na DiarioPage; callbacks descem via props
+
+**Caso: usuário loga de outra aba:**
+→ Toast: "Alimentos adicionados ao diário de hoje ✓" (onAddFood ausente = salva direto via hook interno)
+
+**Critérios de feito:**
+- [ ] Alimento mencionado no chat aparece no diário correto
+- [ ] Item do banco: macros calculados por `porcaoG/qty` corretamente
+- [ ] Item custom: criado em `custom_foods` e inserido no diário
+- [ ] Funciona de qualquer aba
+- [ ] Build sem erros TypeScript
+- [ ] Funciona no celular (375px, teclado virtual não sobrepõe modal)
+
+---
+
+### Decisões técnicas (revisadas)
 | Decisão | Escolha | Motivo |
 |---|---|---|
-| Match no banco | IA recebe lista de IDs no prompt | Preciso, sem fuzzy search |
-| Confirmação | Modal único (não tela separada) | UX fluida, padrão MyFitnessPal |
+| Match no banco | IA recebe `getFoodIndex()` compacto (~200 tokens) | Preciso sem fuzzy search; muito mais barato que lista completa |
+| Confirmação | Modal único | UX fluida, padrão MyFitnessPal |
 | Refeição não detectada | Dropdown obrigatório no modal | Evita pergunta de volta no chat |
-| Custom food | Cria automaticamente ao confirmar | Mesmo fluxo do CustomFoodModal |
-| onAddFood no AppLayout | Context mínimo | AiChatModal fica no AppLayout |
-| Custo parse | ~400 tokens (não busca Supabase) | Mais barato que mensagem de análise |
+| Custom food | Cria ao confirmar via `saveCustomFood()` | Mesmo fluxo do CustomFoodModal |
+| onAddFood | Props (nunca Context) | Padrão arquitetural do projeto |
+| Isolamento Edge Function | Bloco `if (action==='parse-food')` separado | Chat existente nunca afetado |
+| Sub-sessões independentes | 3 deploys separados | Dev = prod no Supabase Free — risco controlado |
+| Custo parse | ~300-500 tokens | Não busca Supabase, só parseia texto |
 
 **Schema:** nenhuma tabela nova — usa `diary_entries` e `custom_foods` existentes.
 **Atenção:** IA erra gramas ±20-30% — modal de confirmação é obrigatório, nunca salvar direto.
