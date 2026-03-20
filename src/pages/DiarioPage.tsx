@@ -4,6 +4,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useDateStore } from '../store/dateStore'
 import FoodDrawer from '../components/FoodDrawer'
 import Skeleton from '../components/Skeleton'
+import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
 function round1(n: number) { return Math.round(n * 10) / 10 }
@@ -266,9 +267,10 @@ function MealAccordion({ meal, label, entries, isOpen, onToggle, onRemove, onQui
 // ─── DiarioPage ───────────────────────────────────────────────────────────────
 export default function DiarioPage() {
   const { selectedDate } = useDateStore()
-  const { diary, loading, removeFood, addFoodOptimistic } = useDiary(selectedDate)
+  const { diary, loading, removeFood, addFoodOptimistic, getAllDiaryRows } = useDiary(selectedDate)
   const { settings } = useSettings()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
   const [openMealId, setOpenMealId] = useState<MealKey | null>(null)
 
   const { totals } = diary
@@ -357,12 +359,12 @@ export default function DiarioPage() {
             </div>
           )}
 
-          {/* Botão único para adicionar alimentos */}
-          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
+          {/* Botões: adicionar alimentos + histórico */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)', display: 'flex', gap: 8 }}>
             <button
               onClick={() => setDrawerOpen(true)}
               style={{
-                width: '100%', padding: '10px 14px',
+                flex: 1, padding: '10px 14px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
                 background: 'var(--surface2)', color: 'var(--text)',
@@ -370,7 +372,20 @@ export default function DiarioPage() {
                 cursor: 'pointer', minHeight: '44px',
               }}
             >
-              🍽️ Adicionar alimentos
+              🍽️ Adicionar
+            </button>
+            <button
+              onClick={() => setHistOpen(true)}
+              style={{
+                flex: 1, padding: '10px 14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
+                background: 'var(--surface2)', color: 'var(--text)',
+                fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600,
+                cursor: 'pointer', minHeight: '44px',
+              }}
+            >
+              📋 Histórico
             </button>
           </div>
         </div>
@@ -403,6 +418,14 @@ export default function DiarioPage() {
           onAddFood={addFoodOptimistic}
         />
       )}
+
+      {/* DiaryHistoryModal */}
+      <DiaryHistoryModal
+        open={histOpen}
+        onClose={() => setHistOpen(false)}
+        getAllDiaryRows={getAllDiaryRows}
+        kcalTarget={kcalTarget}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ interface DateState {
   goToPrev: () => void
   goToNext: () => void
   goToToday: () => void
+  goToDate: (iso: string) => void
   isToday: () => boolean
 }
 
@@ -32,6 +33,10 @@ export const useDateStore = create<DateState>((set, get) => ({
 
   goToToday: () => {
     set({ selectedDate: todayISO() })
+  },
+
+  goToDate: (iso: string) => {
+    set({ selectedDate: iso })
   },
 
   isToday: () => get().selectedDate === todayISO(),

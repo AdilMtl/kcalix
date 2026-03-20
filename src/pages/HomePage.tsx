@@ -10,6 +10,7 @@ import { todayISO } from '../lib/dateUtils'
 import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
+import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
 import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
 import Skeleton from '../components/Skeleton'
@@ -91,13 +92,14 @@ function Card({ children, onClick, style }: {
 function ProgressCard({
   kcalConsumed, kcalTarget,
   p, pTarget, c, cTarget, g, gTarget,
-  onClick, loading,
+  onClick, onHistorico, loading,
 }: {
   kcalConsumed: number; kcalTarget: number
   p: number; pTarget: number
   c: number; cTarget: number
   g: number; gTarget: number
   onClick: () => void
+  onHistorico: () => void
   loading: boolean
 }) {
   if (loading) {
@@ -127,9 +129,24 @@ function ProgressCard({
           {Math.round(kcalConsumed)}
           <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--text3)', marginLeft: '3px' }}>kcal</span>
         </span>
-        <span style={{ fontSize: '12px', color: 'var(--text3)' }}>
-          meta: <b>{kcalTarget > 0 ? `${kcalTarget} kcal` : '—'}</b>
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>
+            meta: <b>{kcalTarget > 0 ? `${kcalTarget} kcal` : '—'}</b>
+          </span>
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onHistorico() }}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--line)',
+              borderRadius: '6px',
+              padding: '4px 8px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+          >📊</button>
+        </div>
       </div>
 
       {/* home-kcal-bar */}
@@ -446,9 +463,10 @@ export default function HomePage() {
   const { user } = useAuthStore()
   const { selectedDate } = useDateStore()
   const { settings, loading: loadingSettings, saveSettings } = useSettings()
-  const { diary, loading: loadingDiary, getWeekKcal } = useDiary(selectedDate)
+  const { diary, loading: loadingDiary, getWeekKcal, getAllDiaryRows } = useDiary(selectedDate)
   const { habits, toggleHabit, getAllHabits } = useHabits()
-  const [habitHistOpen, setHabitHistOpen]   = useState(false)
+  const [habitHistOpen, setHabitHistOpen]     = useState(false)
+  const [diaryHistOpen, setDiaryHistOpen]     = useState(false)
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
   const [profileOpen, setProfileOpen]       = useState(false)
   const [wizardOpen, setWizardOpen]         = useState(false)
@@ -525,6 +543,7 @@ export default function HomePage() {
         c={totals.c} cTarget={cTarget}
         g={totals.g} gTarget={gTarget}
         onClick={() => navigate('/diario')}
+        onHistorico={() => setDiaryHistOpen(true)}
         loading={loading}
       />
 
@@ -557,7 +576,7 @@ export default function HomePage() {
               fontFamily: 'var(--font)',
             }}
           >
-            📊 histórico
+            📊
           </button>
         </div>
         <WeeklyChart
@@ -600,6 +619,14 @@ export default function HomePage() {
           localStorage.setItem('kcalix_onboarding_dismissed', '1')
           setAutoWizardOpen(false)
         }}
+      />
+
+      {/* Modal histórico de dias do diário */}
+      <DiaryHistoryModal
+        open={diaryHistOpen}
+        onClose={() => setDiaryHistOpen(false)}
+        getAllDiaryRows={getAllDiaryRows}
+        kcalTarget={kcalTarget}
       />
 
       {/* Modal histórico semanal de kcal */}

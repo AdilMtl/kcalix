@@ -2,6 +2,23 @@
 
 ---
 
+## [0.37.0] — 2026-03-19
+
+### Adicionado
+- [feat] `src/components/DiaryHistoryModal.tsx` — histórico de dias do diário: lista lazy (365 dias), barra segmentada P/C/G proporcional ao kcal, chip de aderência ✅/⚠️/🔥, clique navega para o dia via dateStore
+- [feat] `src/hooks/useDiary.ts` — `getAllDiaryRows()` lazy (query 365 dias, só dias com macros > 0)
+- [feat] `src/store/dateStore.ts` — `goToDate(iso)` adicionado
+
+### Melhorado
+- [improve] `src/pages/DiarioPage.tsx` — botões [🍽️ Adicionar] e [📋 Histórico] lado a lado no card de totais
+- [improve] `src/pages/HomePage.tsx` — ícone 📊 no ProgressCard abre histórico do diário (com stopPropagation); "Últimos 7 dias" remove texto do botão, fica só ícone 📊
+
+### Notas
+- DiaryHistoryModal abre tanto do DiarioPage quanto do HomePage (ProgressCard)
+- Pendências: XSS em TemplateHistoryModal, toggle Free/Assinante, ITEM 11 (lentidão), Fase 7B
+
+---
+
 ## [0.36.0] — 2026-03-19
 
 ### Corrigido
