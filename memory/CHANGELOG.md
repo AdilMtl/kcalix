@@ -1,5 +1,20 @@
 # Kcalix — CHANGELOG
 
+## [v0.40.0] — 2026-03-20
+
+### Melhorado
+- [improve] `supabase/functions/ai-chat/index.ts` — 5 fixes de qualidade no agente Kcal Coach:
+  - **FIX 1 (crítico):** filtro de séries válidas corrigido — `s.reps > 0` (string vs number, sempre false) → `parseFloat(s.reps) > 0 || s.reps === 'falha'`; volume de treino passa a funcionar corretamente
+  - **FIX 2 (crítico):** mapa inline `EX_MAP` (90 exercícios) resolve `exercicioId → nome/grupo` no Deno runtime — `WorkoutExercise` não persiste nome/grupo no JSONB do banco, causava `undefined (undefined)` na análise de treino
+  - **FIX 3 (crítico):** data de hoje injetada no topo do contexto (`"Hoje: 2026-03-20 (quinta-feira)"`) — modelo agora sabe o que é "hoje" sem inferir pela data mais recente; janela de diário ampliada para 8 dias
+  - **FIX 4 (alto):** `detectIntent()` acumula flags de toda a conversa — antes analisava só a última mensagem; agora contexto de treino/diário persiste ao longo de conversas multi-turn
+  - **FIX 5 (médio):** `max_tokens` ampliado — 600/700/800/1000 conforme complexidade (antes 450/600/900)
+- Deploy: `supabase functions deploy ai-chat --no-verify-jwt` — ao vivo em 2026-03-20
+
+### Notas
+- Custo por mensagem mantido em ~2,800 tokens (~$0.00064) apesar dos fixes — sem regressão de eficiência
+- Benchmark registrado no ROADMAP.md → Fase 7A → Benchmark de tokens
+
 ## [v0.33.0] — 2026-03-17
 
 ### Corrigido

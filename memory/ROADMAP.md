@@ -1094,17 +1094,19 @@ body_measurements (
 | 7B | Log por linguagem natural — "comi 200g de frango..." | 🔵 Próximo |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
 
-### Benchmark de tokens (2026-03-17) — referência para otimizações futuras
+### Benchmark de tokens — referência para otimizações futuras
 
-| Versão | Pergunta | Tokens/msg | Custo/msg |
-|---|---|---|---|
-| v0.34.x (original) | qualquer | ~10,000-20,000 | ~$0.003 |
-| v0.35.0 (pré-proc + roteamento) | almoço + treino (chat vazio) | ~3,500 | ~$0.00108 |
-| v0.35.1 (prompt modular + max_tokens) | almoço + treino (chat vazio) | ~2,870 | ~$0.00064 |
+| Versão | Pergunta | Tokens/msg | Custo/msg | Data |
+|---|---|---|---|---|
+| v0.34.x (original) | qualquer | ~10,000-20,000 | ~$0.003 | 2026-03-17 |
+| v0.35.0 (pré-proc + roteamento) | almoço + treino (chat vazio) | ~3,500 | ~$0.00108 | 2026-03-17 |
+| v0.35.1 (prompt modular + max_tokens) | almoço + treino (chat vazio) | ~2,870 | ~$0.00064 | 2026-03-17 |
+| v0.40.0 (5 fixes qualidade) | alimentação hoje + treino ontem (conversa real) | ~2,800 | ~$0.00064 | 2026-03-20 |
 
 - Modelo: gpt-4o-mini ($0.15/1M input, $0.60/1M output)
 - Custo atual: ~0.064 centavos/msg → 1 centavo = ~15 mensagens
 - Perguntas de teste: "Como foi meu almoço hoje?" + "O que você achou do meu treino de ontem?"
+- **v0.40.0:** 5 fixes de qualidade (volume zerado, nome/grupo exercícios, data de hoje, intent multi-turn, max_tokens) sem aumento de custo por mensagem — manteve ~2,800 tokens/msg
 - Próxima otimização possível: limitar histórico da conversa (não implementado — preservar UX)
 
 ### ⚠️ O que VOCÊ precisa fazer antes da sessão 7A-1 (fora do IDE)
