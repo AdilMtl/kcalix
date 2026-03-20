@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { EXERCISE_DB } from '../data/exerciseDb'
+import { normalizeGroup } from '../lib/normalizeGroup'
 import type { CustomExercise } from '../types/workout'
 
 const CUSTOM_EX_GROUP = '⭐ Meus exercícios' // original L6135
@@ -14,6 +15,7 @@ const GROUPS = [...Object.keys(EXERCISE_DB), CUSTOM_EX_GROUP]
 type RenameState = {
   ex: CustomExercise;
   nome: string;
+  grupo: string;
   secundarios: string[];
 };
 
@@ -25,7 +27,7 @@ interface ExerciseSelectorProps {
   customExercises: CustomExercise[]
   onCreateCustom: () => void                                   // abre CustomExerciseModal por cima
   onDeleteCustom: (id: string) => void
-  onRenameCustom: (id: string, nome: string, secundarios: string[]) => void
+  onRenameCustom: (id: string, nome: string, grupo: string, secundarios: string[]) => void
   forceGroup?: string | null                                   // força aba ao reabrir (ex: após criar)
 }
 
@@ -54,14 +56,14 @@ export default function ExerciseSelector({
   const isCustomTab = selectedGroup === CUSTOM_EX_GROUP
 
   // Exercícios do grupo selecionado — inclui custom no grupo quando não é a aba "⭐ Meus" (L6489–6496)
+  // normalizeGroup() resolve dados migrados com grupo salvo sem emoji
   const exercises = selectedGroup
     ? isCustomTab
       ? customExercises
       : [
           ...(EXERCISE_DB[selectedGroup] ?? []),
           ...customExercises.filter(e =>
-            e.grupo === selectedGroup ||
-            (selectedGroup === '🦵 Quad' && e.grupo === '🦵 Pernas') // retrocompat L6492–6493
+            normalizeGroup(e.grupo) === selectedGroup
           ),
         ]
     : []
@@ -84,24 +86,36 @@ export default function ExerciseSelector({
 
   const openRename = (ex: CustomExercise, e: React.MouseEvent) => {
     e.stopPropagation()
-    setRenaming({ ex, nome: ex.nome, secundarios: ex.secundarios ?? [] })
+    setRenaming({ ex, nome: ex.nome, grupo: normalizeGroup(ex.grupo), secundarios: ex.secundarios ?? [] })
   }
 
   const confirmRename = () => {
     if (!renaming || !renaming.nome.trim()) return
-    onRenameCustom(renaming.ex.id, renaming.nome.trim(), renaming.secundarios)
+    onRenameCustom(renaming.ex.id, renaming.nome.trim(), renaming.grupo, renaming.secundarios)
     setRenaming(null)
   }
 
   // Chips de secundários para rename inline (original L6614–6633)
+  // Usa renaming.grupo (editável) em vez de renaming.ex.grupo (original imutável)
   const renameChipsDisponiveis = renaming
     ? Object.keys(EXERCISE_DB).filter(g => {
-        if (LEG_FAMILY.includes(renaming.ex.grupo)) return !LEG_FAMILY.includes(g)
-        return g !== renaming.ex.grupo
+        if (LEG_FAMILY.includes(renaming.grupo)) return !LEG_FAMILY.includes(g)
+        return g !== renaming.grupo
       })
     : []
 
-  const toggleRenameSec = (g: string) => {
+  // Ao mudar grupo principal no rename, limpa secundários incompatíveis
+  const handleRenameGrupoChange = (g: string) => {
+    if (!renaming) return
+    const excluded = LEG_FAMILY.includes(g) ? LEG_FAMILY : [g]
+    setRenaming(prev => prev
+      ? { ...prev, grupo: g, secundarios: prev.secundarios.filter(s => !excluded.includes(s)) }
+      : prev
+    )
+  }
+
+  const toggleRenameSec = (g: string, e: React.MouseEvent) => {
+    e.stopPropagation()
     if (!renaming) return
     setRenaming(prev => {
       if (!prev) return prev
@@ -224,13 +238,37 @@ export default function ExerciseSelector({
                 >✕</button>
               </div>
 
-              {/* grupo principal — só leitura (L6608–6612) */}
+              {/* grupo principal — editável (select) */}
               <div style={{ fontSize: 13, color: 'var(--text3)', margin: '10px 0 4px' }}>
-                Grupo principal: {renaming.ex.grupo || '—'}
+                Grupo principal:
               </div>
+              <select
+                value={renaming.grupo}
+                onChange={e => handleRenameGrupoChange(e.target.value)}
+                style={{
+                  width: '100%',
+                  border: '1px solid var(--line)',
+                  background: 'rgba(0,0,0,.15)',
+                  color: 'var(--text)',
+                  fontFamily: 'var(--font)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  padding: 8,
+                  borderRadius: 'var(--radius-xs)',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
+                  marginBottom: 8,
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                {Object.keys(EXERCISE_DB).map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
 
               {/* chips secundários editáveis (L6614–6633) */}
-              <div style={{ fontSize: 13, color: 'var(--text3)', margin: '8px 0 4px' }}>
+              <div style={{ fontSize: 13, color: 'var(--text3)', margin: '4px 0 4px' }}>
                 Grupos secundários:
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
@@ -238,7 +276,7 @@ export default function ExerciseSelector({
                   <button
                     key={g}
                     type="button"
-                    onClick={() => toggleRenameSec(g)}
+                    onClick={e => toggleRenameSec(g, e)}
                     style={{
                       padding: '4px 10px', borderRadius: 20,
                       border: renaming.secundarios.includes(g)

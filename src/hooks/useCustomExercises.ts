@@ -53,19 +53,20 @@ export function useCustomExercises() {
     }
   }, []);
 
-  // Rename + atualiza secundários (rename inline — original L6638–6650)
+  // Rename + atualiza grupo principal e secundários (rename inline — original L6638–6650)
   const renameCustomExercise = useCallback(async (
     id: string,
     nome: string,
+    grupo: string,
     secundarios: string[]
   ) => {
     // Optimistic
     setCustomExercises(prev =>
-      prev.map(e => e.id === id ? { ...e, nome, secundarios } : e)
+      prev.map(e => e.id === id ? { ...e, nome, grupo, secundarios } : e)
     );
     await supabase
       .from('custom_exercises')
-      .update({ nome, secundarios })
+      .update({ nome, grupo, secundarios })
       .eq('id', id);
   }, []);
 

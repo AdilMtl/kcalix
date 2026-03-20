@@ -2,6 +2,25 @@
 
 ---
 
+## [0.36.0] — 2026-03-19
+
+### Corrigido
+- [fix] `ExerciseSelector.tsx` — exercícios custom não apareciam nas abas de grupo; filtro agora usa `normalizeGroup()` que resolve grupos salvos sem emoji (dados migrados do app antigo)
+- [fix] `ExerciseSelector.tsx` — grupo principal agora editável no rename inline (`<select>` substituiu texto estático); mudar grupo limpa automaticamente secundários incompatíveis
+- [fix] `ExerciseSelector.tsx` — chips de grupos secundários no rename não respondiam ao toque; `e.stopPropagation()` adicionado para evitar captura pelo container pai
+- [fix] `useCustomExercises.ts` — `renameCustomExercise` agora persiste campo `grupo` no Supabase junto com `nome` e `secundarios`
+
+### Adicionado
+- [feat] `src/lib/normalizeGroup.ts` — helper puro que resolve grupo muscular com ou sem emoji; usado no ExerciseSelector e disponível para uso futuro
+- [feat] `supabase/migrations/012_normalize_custom_exercises_grupo.sql` — normaliza dados antigos no banco (9 variantes sem emoji → com emoji canônico)
+
+### Notas
+- Migration 012 já executada em produção (apenas UPDATE, sem alteração de schema)
+- Pendências 6B ainda abertas: XSS em TemplateHistoryModal, toggle Free/Assinante, ITEM 11 (lentidão)
+- Próxima sessão: continuar 6B ou avançar Fase 7B (log por linguagem natural)
+
+---
+
 ## [0.34.2] — 2026-03-18
 
 ### Melhorado
