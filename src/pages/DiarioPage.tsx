@@ -335,19 +335,37 @@ export default function DiarioPage() {
             </div>
           )}
 
-          {/* Linha de kcal com gradient text */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
-            <span style={{
-              fontSize: '20px', fontWeight: 800,
-              background: 'linear-gradient(135deg, var(--accent2), var(--good))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              {loading ? '--' : Math.round(totals.kcal)}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600 }}>
-              kcal{kcalTarget > 0 ? ` de ${kcalTarget}` : ''}
-            </span>
+          {/* Linha de kcal com gradient text + ícone histórico */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
+              <span style={{
+                fontSize: '20px', fontWeight: 800,
+                background: 'linear-gradient(135deg, var(--accent2), var(--good))',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
+                {loading ? '--' : Math.round(totals.kcal)}
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600 }}>
+                kcal{kcalTarget > 0 ? ` de ${kcalTarget}` : ''}
+              </span>
+            </div>
+            <button
+              onClick={() => setHistOpen(true)}
+              title="Histórico"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--line)',
+                borderRadius: 8,
+                padding: '5px 9px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                lineHeight: 1,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              📊
+            </button>
           </div>
 
           {/* Status pills — só mostrar se há metas configuradas */}
@@ -359,12 +377,12 @@ export default function DiarioPage() {
             </div>
           )}
 
-          {/* Botões: adicionar alimentos + histórico */}
-          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)', display: 'flex', gap: 8 }}>
+          {/* Botão: adicionar alimentos */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
             <button
               onClick={() => setDrawerOpen(true)}
               style={{
-                flex: 1, padding: '10px 14px',
+                width: '100%', padding: '10px 14px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
                 background: 'var(--surface2)', color: 'var(--text)',
@@ -372,20 +390,7 @@ export default function DiarioPage() {
                 cursor: 'pointer', minHeight: '44px',
               }}
             >
-              🍽️ Adicionar
-            </button>
-            <button
-              onClick={() => setHistOpen(true)}
-              style={{
-                flex: 1, padding: '10px 14px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
-                background: 'var(--surface2)', color: 'var(--text)',
-                fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600,
-                cursor: 'pointer', minHeight: '44px',
-              }}
-            >
-              📋 Histórico
+              🍽️ Adicionar alimento
             </button>
           </div>
         </div>

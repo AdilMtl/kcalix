@@ -1027,6 +1027,60 @@ Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado)
 
 ---
 
+## DÉBITO TÉCNICO — Schema de body_measurements (registrado 2026-03-19)
+
+**Problema atual:** todos os campos de medição corporal vivem dentro de um único `data JSONB`:
+`{ weightKg, waistCm, bfPct, bmr, note, skinfolds }`.
+
+**Consequência futura:** queries de agregação, ordenação e análise ficam verbosas e sem índice eficiente. O Supabase client não consegue inferir os tipos automaticamente.
+
+**Schema ideal (a migrar antes de análises avançadas):**
+```sql
+body_measurements (
+  user_id    UUID,
+  date       DATE,
+  weight_kg  NUMERIC,
+  waist_cm   NUMERIC,
+  bf_pct     NUMERIC,
+  bmr        INTEGER,
+  note       TEXT,
+  skinfolds  JSONB   -- só as dobras ficam em JSONB (7 campos opcionais, raramente agregados)
+)
+```
+
+**O que a migração exige:**
+1. `ALTER TABLE` com as novas colunas
+2. `UPDATE` migrando dados do `data JSONB` para as colunas
+3. Atualizar `useBody.ts`, `types/body.ts`, queries SELECT/INSERT
+4. Remover o campo `data JSONB` após validar
+
+**Quando fazer:** antes de implementar análises avançadas (evolução de BF%, correlação peso/treino, IA com dados históricos). Enquanto a base de usuários é pequena, a migração de dados é trivial.
+
+**Status:** [ ] Pendente — executar antes da Fase de análises corporais avançadas
+
+---
+
+## ITEM 6B-12 — BMR Diário por Medição (planejado — 2026-03-19)
+
+> Spec completa em `memory/spec-bmr-diario.md`
+
+**Problema:** gráfico de 7 dias usa BMR atual do perfil para todos os dias — se o usuário mudou de peso, dias anteriores ficam com BMR errado.
+
+**Solução:** salvar `bmr` calculado dentro do `data JSONB` de cada medição corporal. Gráfico usa `getBmrForDate(bodyRows, date)` para buscar o BMR vigente em cada dia, com fallback para o BMR atual.
+
+**Sem migração SQL** — campo vai no JSONB existente.
+
+**Arquivos afetados:**
+- `src/types/body.ts` — `bmr?: number` em `BodyMeasurement`
+- `src/lib/calculators.ts` — exportar `calcBmrFromSettings()`
+- `src/pages/CorpoPage.tsx` — calcular e salvar BMR no `handleSave`
+- `src/pages/HomePage.tsx` — `buildBmrByDate` + carregar `bodyRows` no mount (não lazy)
+- `src/components/WeeklyKcalModal.tsx` — usar BMR do dia em vez de BMR fixo
+
+**Status:** [ ] Pendente — executar em sessão dedicada com `/spec` → `memory/spec-bmr-diario.md`
+
+---
+
 ## FASE 7 — IA Integrada (Kcal Coach dentro do app)
 
 > Planejamento completo em `memory/AI_Roadmap.md`

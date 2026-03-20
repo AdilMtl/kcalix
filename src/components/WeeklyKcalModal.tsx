@@ -178,8 +178,9 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
   const energies: EnergyDay[] = days.map(day => {
     const consumed   = kcalMap[day.iso] ?? 0
     const exercise   = Math.round(workoutKcalByDate[day.iso] ?? 0)
-    const basalTotal = bmr != null && bmr > 0 ? bmr + exercise : 0
-    const balance    = bmr != null && bmr > 0 ? consumed - basalTotal : null
+    // barra cinza só quando há alimento logado (fiel ao original L4199)
+    const basalTotal = bmr != null && bmr > 0 && consumed > 0 ? bmr + exercise : 0
+    const balance    = bmr != null && bmr > 0 && consumed > 0 ? consumed - basalTotal : null
     return { ...day, consumed, exercise, basalTotal, balance }
   })
 

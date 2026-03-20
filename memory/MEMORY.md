@@ -58,7 +58,8 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 4: CONCLUÍDA (2026-03-09) — Sessões 4A–4E completas
 - Fase 5: CONCLUÍDA (2026-03-14) — import/export completo validado com dados reais
 - Fase 6A: CONCLUÍDA (2026-03-15) — PWA base + Fix 404 SPA (v0.25.0)
-- Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam 10 e 11
+- Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam ITEM 10 (toggle Free/Assinante) e ITEM 11 (lentidão)
+- Fase 7A: CONCLUÍDA (2026-03-18) — Edge Function ai-chat + chat UI (FAB + AiChatModal) — v0.34.0
 
 ## Itens 6B concluídos
 - ITEM 1 — Error Boundary (v0.27.0)
@@ -72,9 +73,18 @@ Ambient glow já adicionado em `body::before/::after`.
 - ITEM 8 — Loading states / Skeleton: Skeleton.tsx, sem spinners de tela inteira (v0.29.0)
 - FIX — custom_foods: useCustomFoods.ts + integração FoodDrawer/CustomFoodModal (v0.29.0)
 
+## Padrões adicionados na Fase 7A (v0.34.0)
+- **useAiChat:** `src/hooks/useAiChat.ts` — `messages[]`, `sendMessage(text)`, `loading`, `error`, `reset()`; chama via `supabase.functions.invoke('ai-chat')` com JWT da sessão
+- **AiChatModal:** `src/components/AiChatModal.tsx` — z-index 340/341; bottom sheet gradiente padrão; balões usuário (direita, roxo) / coach (esquerda, surface); chips de ação rápida no estado vazio; loading 3 dots animados
+- **FAB 🤖:** montado no AppLayout (fora do `<main>`), z-index 200, `bottom: 76` (acima da Nav)
+- **Edge Function ai-chat:** busca diary + workouts + body_measurements + checkins (30 dias) + user_settings; monta system prompt com protocolos RP; chama gpt-4o-mini max_tokens 1000; retorna `{ reply: string }`
+- **OPENAI_API_KEY:** configurada apenas em Supabase Vault (secrets) — NUNCA prefixo VITE_, NUNCA em src/
+
 ## Próximo passo
-Fase 6B: implementar ITEM 10 e ITEM 11.
-Ver detalhes em memory/ROADMAP.md seção "FASE 6B".
+Fase 7B: log por linguagem natural — "comi 200g de frango com arroz"
+- Novo `action: 'parse-food'` na mesma Edge Function ai-chat
+- Modal de confirmação antes de salvar (obrigatório — IA erra ±20%)
+- Ver spec em memory/AI_Roadmap.md seção "Fase 7B"
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local

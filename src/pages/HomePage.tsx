@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
 import { fetchAllWorkoutRows } from '../hooks/useWorkout'
+import { fetchAllBodyRows } from '../hooks/useBody'
+import BodyEvolutionModal from '../components/BodyEvolutionModal'
+import type { BodyRow } from '../types/body'
 import { useAuthStore } from '../store/authStore'
 import { useDateStore } from '../store/dateStore'
 import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
@@ -289,26 +292,41 @@ function EnergyCard({
 // ── Gráfico Semanal ───────────────────────────────────────────────────────────
 interface WeekDay { iso: string; label: string; isFuture: boolean; isToday: boolean }
 
-function WeeklyChart({ weekDays, weekKcal, goal, todayKcal }: {
+function WeeklyChart({ weekDays, weekKcal, goal, todayKcal, bmr, workoutKcalByDate, todayWorkoutKcal }: {
   weekDays: WeekDay[]
   weekKcal: Record<string, number>
   goal: number
   todayKcal: number
+  bmr: number | undefined
+  workoutKcalByDate: Record<string, number>
+  todayWorkoutKcal: number
 }) {
   const CHART_H = 90
 
+  // consumed = kcal ingerida no dia (igual ao original)
   const consumed = (d: WeekDay) => d.isToday ? todayKcal : (weekKcal[d.iso] ?? 0)
 
-  const allVals = weekDays.map(d => consumed(d))
+  // total = BMR + treino do dia — só válido quando há alimento logado (fiel ao original L4199:
+  // balance = consumed > 0 && basalTotal != null ? ... : null)
+  const total = (d: WeekDay): number => {
+    if (bmr == null || bmr <= 0) return 0
+    if (consumed(d) === 0) return 0   // sem alimento → sem barra cinza
+    const exercise = d.isToday ? todayWorkoutKcal : (workoutKcalByDate[d.iso] ?? 0)
+    return bmr + exercise
+  }
+
+  // maxVal inclui consumed e total de cada dia + goal (fiel ao original L4292)
+  const allVals = weekDays.flatMap(d => [consumed(d), total(d)])
   if (goal > 0) allVals.push(goal)
   const maxVal = Math.max(...allVals, 1)
 
   const metaPx = goal > 0 ? Math.round((goal / maxVal) * CHART_H) : null
 
-  const daysWithData = weekDays.filter(d => !d.isFuture && consumed(d) > 0 && goal > 0)
+  // projeção: só dias com consumed > 0 (fiel ao original: balance != null só quando consumed > 0)
+  const daysWithData = weekDays.filter(d => !d.isFuture && consumed(d) > 0 && total(d) > 0)
   let projection: string | null = null
   if (daysWithData.length >= 2) {
-    const avgBalance = daysWithData.reduce((s, d) => s + (consumed(d) - goal), 0) / daysWithData.length
+    const avgBalance = daysWithData.reduce((s, d) => s + (consumed(d) - total(d)), 0) / daysWithData.length
     const kgPerWeek  = (avgBalance * 7) / 7700
     const sign       = kgPerWeek < 0 ? '📉' : '📈'
     projection = `${sign} Projeção: ${kgPerWeek >= 0 ? '+' : ''}${kgPerWeek.toFixed(2)} kg/sem (média ${Math.round(avgBalance)} kcal/dia)`
@@ -333,9 +351,10 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal }: {
         <div className="week-bars" style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', position: 'relative' }}>
           {weekDays.map(day => {
             const kcal      = consumed(day)
-            const consumedH = kcal > 0 ? Math.round((kcal / maxVal) * CHART_H) : 0
-            const totalH    = goal > 0 ? Math.round((goal / maxVal) * CHART_H) : 0
-            const noData    = !day.isFuture && kcal === 0
+            const totalDay  = total(day)
+            const consumedH = kcal > 0    ? Math.round((kcal     / maxVal) * CHART_H) : 0
+            const totalH    = totalDay > 0 ? Math.round((totalDay / maxVal) * CHART_H) : 0
+            const noData    = !day.isFuture && kcal === 0 && totalH === 0
 
             return (
               <div
@@ -393,31 +412,35 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal }: {
 }
 
 // ── Grid de ações (home-grid) ─────────────────────────────────────────────────
-function ActionGrid({ onNavigate, onOpenProfile }: { onNavigate: (path: string) => void; onOpenProfile: () => void }) {
-  const actions = [
+function ActionGrid({ onNavigate, onOpenProfile, onOpenEvolution }: {
+  onNavigate: (path: string) => void
+  onOpenProfile: () => void
+  onOpenEvolution: () => void
+}) {
+  const navActions = [
     { icon: '📊', label: 'Diário',  path: '/diario' },
     { icon: '🏋️', label: 'Treino',  path: '/treino' },
     { icon: '📏', label: 'Corpo',   path: '/corpo'  },
-    { icon: '⚙️', label: 'Mais',    path: '/mais'   },
   ]
+  const btnStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--line)',
+    borderRadius: 'var(--radius)',
+    padding: '22px 12px',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
+    fontFamily: 'var(--font)',
+    transition: 'background .15s, transform .1s',
+  }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
-      {actions.map(a => (
+      {navActions.map(a => (
         <button
           key={a.path}
           type="button"
           onClick={() => onNavigate(a.path)}
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            borderRadius: 'var(--radius)',
-            padding: '22px 12px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
-            fontFamily: 'var(--font)',
-            transition: 'background .15s, transform .1s',
-          }}
+          style={btnStyle}
           onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
           onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
           onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
@@ -427,6 +450,20 @@ function ActionGrid({ onNavigate, onOpenProfile }: { onNavigate: (path: string) 
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>{a.label}</span>
         </button>
       ))}
+
+      {/* Evolução corporal — substitui "Mais" */}
+      <button
+        type="button"
+        onClick={onOpenEvolution}
+        style={btnStyle}
+        onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
+        onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
+        onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
+        onTouchEnd={e => (e.currentTarget.style.background = 'var(--surface)')}
+      >
+        <span style={{ fontSize: '28px', lineHeight: 1.2 }}>📈</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>Evolução</span>
+      </button>
 
       {/* Botão full-width: Meu Perfil Nutricional → abre ProfileCheckinModal */}
       <button
@@ -473,6 +510,8 @@ export default function HomePage() {
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
+  const [evolutionOpen, setEvolutionOpen]   = useState(false)
+  const [bodyRows, setBodyRows]             = useState<BodyRow[]>([])
   const weekDays = getWeekDates()
   const todayIso = todayISO()
   const habitWeekDates = getHabitWeekDates(todayIso)
@@ -504,6 +543,14 @@ export default function HomePage() {
     }
     setWeeklyModalOpen(true)
   }, [user, workoutKcalByDate])
+
+  const handleOpenEvolution = useMemo(() => async () => {
+    if (user && bodyRows.length === 0) {
+      const rows = await fetchAllBodyRows(user.id)
+      setBodyRows(rows)
+    }
+    setEvolutionOpen(true)
+  }, [user, bodyRows.length])
 
   const loading = loadingSettings || loadingDiary
   const { kcalTarget = 0, pTarget = 0, cTarget = 0, gTarget = 0, bmr, tdee } = settings ?? {}
@@ -584,11 +631,18 @@ export default function HomePage() {
           weekKcal={weekKcal}
           goal={kcalTarget}
           todayKcal={totals.kcal}
+          bmr={bmr}
+          workoutKcalByDate={workoutKcalByDate}
+          todayWorkoutKcal={kcalTreino}
         />
       </Card>
 
       {/* Grid de ações */}
-      <ActionGrid onNavigate={navigate} onOpenProfile={() => setProfileOpen(true)} />
+      <ActionGrid
+        onNavigate={navigate}
+        onOpenProfile={() => setProfileOpen(true)}
+        onOpenEvolution={handleOpenEvolution}
+      />
 
       {/* Modal perfil nutricional + check-in */}
       {settings && (
@@ -627,6 +681,13 @@ export default function HomePage() {
         onClose={() => setDiaryHistOpen(false)}
         getAllDiaryRows={getAllDiaryRows}
         kcalTarget={kcalTarget}
+      />
+
+      {/* Modal evolução corporal */}
+      <BodyEvolutionModal
+        open={evolutionOpen}
+        onClose={() => setEvolutionOpen(false)}
+        rows={bodyRows}
       />
 
       {/* Modal histórico semanal de kcal */}

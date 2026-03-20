@@ -2,6 +2,27 @@
 
 ---
 
+## [0.38.0] — 2026-03-19
+
+### Adicionado
+- [feat] `src/components/BodyEvolutionModal.tsx` — gráfico SVG puro de evolução corporal: 3 métricas (Peso/Cintura/BF%), tooltip por toque/hover, summary Mínimo/Máximo/Atual/Variação, estado vazio amigável
+- [feat] `src/pages/CorpoPage.tsx` — botão "Ver evolução 📈" ativado (era disabled); abre BodyEvolutionModal com os dados já carregados
+- [feat] `src/pages/HomePage.tsx` — botão "Evolução 📈" no ActionGrid (substituiu "Mais ⚙️"); abre BodyEvolutionModal com carregamento lazy na primeira abertura
+- [feat] `src/hooks/useBody.ts` — `fetchAllBodyRows(userId)` exportada como função standalone (mesmo padrão de fetchAllWorkoutRows)
+
+### Melhorado
+- [improve] `src/pages/DiarioPage.tsx` — botão histórico virou ícone 📊 pequeno ao lado das kcal totais; botão "Adicionar alimento" ocupa largura total
+
+### Corrigido
+- [fix] `src/pages/HomePage.tsx` — WeeklyChart: barra cinza agora usa `BMR + treino do dia` em vez de meta calórica fixa; barra cinza só aparece em dias com alimento logado; projeção kg/sem usa balance correto (consumed − basalTotal)
+- [fix] `src/components/WeeklyKcalModal.tsx` — mesma correção no modal histórico semanal: barra cinza e balance só calculados quando consumed > 0
+
+### Notas
+- BMR do gráfico ainda é o atual do perfil para todos os dias — spec para BMR diário por medição salva em `memory/spec-bmr-diario.md` (ITEM 6B-12)
+- Débito técnico de schema `body_measurements` (JSONB → colunas) registrado no ROADMAP
+
+---
+
 ## [0.37.0] — 2026-03-19
 
 ### Adicionado

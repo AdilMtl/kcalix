@@ -7,6 +7,7 @@ import { useDateStore } from '../store/dateStore'
 import { useBody } from '../hooks/useBody'
 import { useSettings } from '../hooks/useSettings'
 import Skeleton from '../components/Skeleton'
+import BodyEvolutionModal from '../components/BodyEvolutionModal'
 import type { BodyMeasurement, BodyRow } from '../types/body'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -158,8 +159,9 @@ export default function CorpoPage() {
   const [th, setTh]       = useState('')
 
   // histórico
-  const [rows, setRows]   = useState<BodyRow[]>([])
-  const [toast, setToast] = useState('')
+  const [rows, setRows]     = useState<BodyRow[]>([])
+  const [toast, setToast]   = useState('')
+  const [chartOpen, setChartOpen] = useState(false)
 
   // preenche form quando muda data ou carrega medição
   useEffect(() => {
@@ -424,11 +426,9 @@ export default function CorpoPage() {
               <span style={{ fontSize: 11, color: 'var(--text3)' }}>
                 Tendência &gt; número do dia.
               </span>
-              {/* "Ver evolução 📈" — placeholder; gráfico entra na Sessão 4A+ */}
               <button
                 type="button"
-                disabled
-                title="Em breve"
+                onClick={() => setChartOpen(true)}
                 style={{
                   background: 'var(--accent)',
                   color: '#fff',
@@ -438,8 +438,8 @@ export default function CorpoPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   padding: '6px 12px',
-                  cursor: 'not-allowed',
-                  opacity: 0.5,
+                  cursor: 'pointer',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 Ver evolução 📈
@@ -555,6 +555,12 @@ export default function CorpoPage() {
 
         </div>
       </div>
+
+      <BodyEvolutionModal
+        open={chartOpen}
+        onClose={() => setChartOpen(false)}
+        rows={rows}
+      />
     </div>
   )
 }

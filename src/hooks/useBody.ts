@@ -7,6 +7,24 @@ import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import type { BodyMeasurement, BodyRow } from '../types/body'
 
+// Função standalone — sem instanciar o hook (mesmo padrão de fetchAllWorkoutRows)
+export async function fetchAllBodyRows(userId: string): Promise<BodyRow[]> {
+  const { data, error } = await supabase
+    .from('body_measurements')
+    .select('date, data')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(200)
+  if (error) {
+    console.error('fetchAllBodyRows:', error)
+    return []
+  }
+  return (data ?? []).map(row => ({
+    date: row.date as string,
+    ...(row.data as BodyMeasurement),
+  }))
+}
+
 interface UseBodyReturn {
   measurement: BodyMeasurement | null
   loading: boolean
