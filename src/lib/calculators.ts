@@ -1,6 +1,89 @@
 import { GOAL_PRESETS } from '../data/goalPresets'
 import type { GoalType } from '../data/goalPresets'
 
+// ── Hidratação ────────────────────────────────────────────────────────────────
+
+export interface WaterBreakdown {
+  base: number       // peso × 35 ml
+  sexAdj: number     // +300 se male
+  actAdj: number     // +0..+900 por nível de atividade
+  goalAdj: number    // +200 se cut/recomp
+  bfAdj: number      // −5% da base se BF% elevado
+}
+
+export interface WaterRecommendation {
+  goalMl: number
+  breakdown: WaterBreakdown
+  confidence: 'high' | 'medium' | 'low'
+  sources: string[]
+}
+
+/**
+ * Calcula meta diária de água com base em dados do perfil.
+ * Fontes: EFSA 2010 (35ml/kg), IOM 2004 (diferença sexual), GSSI/ADA (atividade).
+ *
+ * @param sex          - 'male' | 'female'
+ * @param weightKg     - peso corporal em kg
+ * @param activityFactor - fator de atividade (1.2 a 1.9)
+ * @param goal         - objetivo nutricional
+ * @param bfPct        - % de gordura corporal (opcional — do checkin)
+ */
+export function calcWaterGoal(
+  sex: 'male' | 'female',
+  weightKg: number,
+  activityFactor: number,
+  goal: GoalType,
+  bfPct?: number | null,
+): WaterRecommendation {
+  const af = parseFloat(String(activityFactor)) || 1.55
+
+  // Base: EFSA 2010 — 35 ml por kg de peso corporal
+  const base = Math.round(weightKg * 35)
+
+  // Ajuste por sexo: IOM 2004 — homens têm maior massa muscular (hidrata mais) e maior sudorese
+  const sexAdj = sex === 'male' ? 300 : 0
+
+  // Ajuste por atividade: GSSI/ADA — cada nível eleva necessidade hídrica por treino/suor
+  const actMap: Record<string, number> = {
+    '1.2':   0,
+    '1.375': 300,
+    '1.55':  500,
+    '1.725': 700,
+    '1.9':   900,
+  }
+  // Encontra a chave mais próxima
+  const actKey = Object.keys(actMap).reduce((prev, curr) =>
+    Math.abs(parseFloat(curr) - af) < Math.abs(parseFloat(prev) - af) ? curr : prev
+  )
+  const actAdj = actMap[actKey] ?? 500
+
+  // Ajuste por objetivo: corte/recomp aumenta mobilização de gordura → maior demanda hídrica
+  const goalAdj = (goal === 'cut' || goal === 'recomp') ? 200 : 0
+
+  // Ajuste por composição corporal: gordura corporal tem ~10% de água (vs ~73% da massa magra)
+  // BF% elevado (>25% ♂ / >32% ♀) → reduz a base em 5%
+  const bfThreshold = sex === 'male' ? 25 : 32
+  const bfAdj = (bfPct != null && bfPct > bfThreshold)
+    ? -Math.round(base * 0.05)
+    : 0
+
+  const raw = base + sexAdj + actAdj + goalAdj + bfAdj
+
+  // Clamp entre 1500 e 4500 ml, arredondado ao múltiplo de 50 mais próximo
+  const clamped = Math.max(1500, Math.min(4500, raw))
+  const goalMl = Math.round(clamped / 50) * 50
+
+  const confidence: WaterRecommendation['confidence'] =
+    bfPct != null ? 'high' : weightKg > 0 ? 'medium' : 'low'
+
+  return {
+    goalMl,
+    breakdown: { base, sexAdj, actAdj, goalAdj, bfAdj },
+    confidence,
+    sources: ['EFSA 2010', 'IOM 2004', 'GSSI'],
+  }
+}
+
 // ── Fórmulas base (portadas do index.html linhas 5124-5134) ──────────────────
 
 export function bmrMifflin(sex: string, weightKg: number, heightCm: number, age: number): number {

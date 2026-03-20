@@ -1,3 +1,5 @@
+// DEPLOY: supabase functions deploy ai-chat --no-verify-jwt
+// (--no-verify-jwt obrigatório — validação de JWT feita manualmente no código)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -85,6 +87,7 @@ interface DiaryData {
   meals: DiaryMeals
   totals: { p: number; c: number; g: number; kcal: number }
   kcalTreino?: number
+  waterMl?: number
 }
 
 interface DiaryRow {
@@ -147,6 +150,7 @@ interface SettingsData {
   metaC?: number
   metaG?: number
   metaKcal?: number
+  waterGoalMl?: number
 }
 
 // ─── PASSO 1: Detectar intenção por palavras-chave ────────────────────────────
@@ -156,7 +160,7 @@ function detectIntent(lastMsg: string): Intent {
 
   const isFullDiag = /analise|como estou|resumo|visão geral|visao geral|tudo|relatório|relatorio|diagnóstico|diagnostico/.test(msg)
 
-  const needsDiary = isFullDiag || /macro|proteína|proteina|carbo|carboidrato|gordura|kcal|caloria|comi|dieta|aderência|aderencia|refeição|refeicao|almoço|almoco|café|cafe|jantar|lanche|ceia|fome|nutrição|nutricao/.test(msg)
+  const needsDiary = isFullDiag || /macro|proteína|proteina|carbo|carboidrato|gordura|kcal|caloria|comi|dieta|aderência|aderencia|refeição|refeicao|almoço|almoco|café|cafe|jantar|lanche|ceia|fome|nutrição|nutricao|água|agua|hidrat|beb|ml|litro|sede/.test(msg)
 
   const needsWorkout = isFullDiag || /treino|série|serie|volume|exercício|exercicio|supino|agachamento|platô|plato|progressão|progressao|mev|mrv|mav|carga|rep|peito|costas|bíceps|biceps|tríceps|triceps|ombro|quad|glúteo|gluteo|posterior/.test(msg)
 
@@ -235,10 +239,14 @@ function formatDiary(rows: DiaryRow[], settings: SettingsData | null): string {
     lines.push(totalLine)
     if (desvioLine) lines.push(desvioLine)
     if (d.kcalTreino) lines.push(`  kcal treino: ${d.kcalTreino}`)
+    if (d.waterMl != null) lines.push(`  água: ${d.waterMl}ml`)
   }
 
   if (meta && meta.kcal > 0) {
     lines.push(`Meta diária: P=${meta.p}g C=${meta.c}g G=${meta.g}g kcal=${meta.kcal}`)
+  }
+  if (settings?.waterGoalMl) {
+    lines.push(`Meta de água: ${settings.waterGoalMl}ml/dia`)
   }
 
   return lines.join('\n')

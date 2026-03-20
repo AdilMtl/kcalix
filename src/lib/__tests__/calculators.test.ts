@@ -5,6 +5,7 @@ import {
   bodyDensityJP7,
   bfSiri,
   calcFromProfile,
+  calcWaterGoal,
 } from '../calculators'
 
 // ── bmrMifflin ────────────────────────────────────────────────────────────────
@@ -119,5 +120,86 @@ describe('calcFromProfile', () => {
       expect(result.bf).toBeGreaterThanOrEqual(2)
       expect(result.bf).toBeLessThanOrEqual(60)
     }
+  })
+})
+
+// ── calcWaterGoal ─────────────────────────────────────────────────────────────
+
+describe('calcWaterGoal', () => {
+  it('homem sedentário 70kg — base + sexo, sem ajuste de atividade', () => {
+    const r = calcWaterGoal('male', 70, 1.2, 'maintain')
+    // base=2450, sexAdj=+300, actAdj=0, goalAdj=0, bfAdj=0 → 2750 → arredonda a 50 → 2750
+    expect(r.goalMl).toBe(2750)
+    expect(r.breakdown.base).toBe(2450)
+    expect(r.breakdown.sexAdj).toBe(300)
+    expect(r.breakdown.actAdj).toBe(0)
+    expect(r.breakdown.goalAdj).toBe(0)
+    expect(r.breakdown.bfAdj).toBe(0)
+    expect(r.confidence).toBe('medium')
+    expect(r.sources).toContain('EFSA 2010')
+  })
+
+  it('mulher moderadamente ativa 60kg — sem ajuste de sexo', () => {
+    const r = calcWaterGoal('female', 60, 1.55, 'maintain')
+    // base=2100, sexAdj=0, actAdj=+500, goalAdj=0, bfAdj=0 → 2600
+    expect(r.goalMl).toBe(2600)
+    expect(r.breakdown.sexAdj).toBe(0)
+    expect(r.breakdown.actAdj).toBe(500)
+  })
+
+  it('objetivo de corte adiciona +200ml', () => {
+    const r = calcWaterGoal('male', 80, 1.2, 'cut')
+    // base=2800, sexAdj=+300, actAdj=0, goalAdj=+200 → 3300
+    expect(r.goalMl).toBe(3300)
+    expect(r.breakdown.goalAdj).toBe(200)
+  })
+
+  it('objetivo recomp também adiciona +200ml', () => {
+    const r = calcWaterGoal('male', 80, 1.2, 'recomp')
+    expect(r.breakdown.goalAdj).toBe(200)
+  })
+
+  it('objetivo bulk ou maintain não adiciona goalAdj', () => {
+    const rBulk = calcWaterGoal('male', 80, 1.2, 'bulk')
+    const rMaint = calcWaterGoal('male', 80, 1.2, 'maintain')
+    expect(rBulk.breakdown.goalAdj).toBe(0)
+    expect(rMaint.breakdown.goalAdj).toBe(0)
+  })
+
+  it('BF% elevado em homem (>25%) aplica redução de 5% na base', () => {
+    const r = calcWaterGoal('male', 80, 1.2, 'maintain', 28)
+    // base=2800, bfAdj=-140 → arredondado
+    expect(r.breakdown.bfAdj).toBe(-Math.round(2800 * 0.05))
+    expect(r.confidence).toBe('high')
+  })
+
+  it('BF% elevado em mulher (>32%) aplica redução', () => {
+    const r = calcWaterGoal('female', 70, 1.2, 'maintain', 35)
+    expect(r.breakdown.bfAdj).toBeLessThan(0)
+    expect(r.confidence).toBe('high')
+  })
+
+  it('BF% abaixo do limiar não aplica redução', () => {
+    const r = calcWaterGoal('male', 80, 1.2, 'maintain', 20)
+    expect(r.breakdown.bfAdj).toBe(0)
+  })
+
+  it('resultado é sempre múltiplo de 50', () => {
+    const r = calcWaterGoal('male', 73, 1.55, 'cut', 22)
+    expect(r.goalMl % 50).toBe(0)
+  })
+
+  it('resultado é sempre entre 1500 e 4500', () => {
+    // peso irreal baixo
+    const low = calcWaterGoal('female', 5, 1.2, 'maintain')
+    expect(low.goalMl).toBeGreaterThanOrEqual(1500)
+    // peso irreal alto
+    const high = calcWaterGoal('male', 200, 1.9, 'cut')
+    expect(high.goalMl).toBeLessThanOrEqual(4500)
+  })
+
+  it('confidence=low quando weightKg=0', () => {
+    const r = calcWaterGoal('male', 0, 1.55, 'maintain')
+    expect(r.confidence).toBe('low')
   })
 })

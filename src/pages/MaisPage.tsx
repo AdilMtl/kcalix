@@ -3,7 +3,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useBody } from '../hooks/useBody'
 import { useAuthStore } from '../store/authStore'
 import { exportAll } from '../lib/exportData'
-import { calcFromProfile } from '../lib/calculators'
+import { calcFromProfile, calcWaterGoal } from '../lib/calculators'
 import type { CalcResult } from '../lib/calculators'
 import { GOAL_PRESETS, WZ_ACTIVITY_LABELS } from '../data/goalPresets'
 import type { GoalType } from '../data/goalPresets'
@@ -253,6 +253,27 @@ export default function MaisPage() {
     setWizardOpen(false)
   }
 
+  // ── Hidratação ────────────────────────────────────────────────────────────
+  const waterRec = settings
+    ? calcWaterGoal(settings.sex, settings.weightKg, settings.activityFactor, settings.goal)
+    : null
+  const [waterGoalInput, setWaterGoalInput] = useState(
+    String(settings?.waterGoalMl ?? waterRec?.goalMl ?? '')
+  )
+
+  function handleSaveWaterGoal() {
+    if (!settings) return
+    const ml = parseInt(waterGoalInput, 10)
+    if (!ml || ml < 500 || ml > 6000) return
+    saveSettings({ ...settings, waterGoalMl: ml })
+  }
+
+  function handleResetWaterGoal() {
+    if (!settings || !waterRec) return
+    setWaterGoalInput(String(waterRec.goalMl))
+    saveSettings({ ...settings, waterGoalMl: undefined })
+  }
+
   // ────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ paddingBottom: 24 }}>
@@ -268,6 +289,45 @@ export default function MaisPage() {
         <div className="card-body">
 
           <NutriBanner settings={settings} onConfigure={() => setWizardOpen(true)} />
+
+          {/* Hidratação */}
+          <Accordion id="accWater" label="💧 Hidratação">
+            {waterRec && (
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 12, lineHeight: 1.8 }}>
+                <div><b style={{ color: 'var(--text2)' }}>Meta recomendada: {waterRec.goalMl} ml/dia</b></div>
+                <div>Base ({settings?.weightKg}kg × 35ml): {waterRec.breakdown.base} ml</div>
+                {waterRec.breakdown.sexAdj !== 0 && <div>+ Sexo masculino: +{waterRec.breakdown.sexAdj} ml</div>}
+                {waterRec.breakdown.actAdj !== 0 && <div>+ Atividade: +{waterRec.breakdown.actAdj} ml</div>}
+                {waterRec.breakdown.goalAdj !== 0 && <div>+ Objetivo corte/recomp: +{waterRec.breakdown.goalAdj} ml</div>}
+                {waterRec.breakdown.bfAdj !== 0 && <div>− BF% elevado: {waterRec.breakdown.bfAdj} ml</div>}
+                <div style={{ fontSize: 10, opacity: .6, marginTop: 4 }}>Fontes: {waterRec.sources.join(', ')}</div>
+              </div>
+            )}
+            {!settings && (
+              <p className="hint" style={{ marginBottom: 12 }}>Configure seu perfil para ver a meta recomendada.</p>
+            )}
+            <div className="form-grid cols-2">
+              <div className="form-row">
+                <label>💧 Meta diária (ml)</label>
+                <input
+                  inputMode="numeric"
+                  placeholder={String(waterRec?.goalMl ?? 2500)}
+                  value={waterGoalInput}
+                  onChange={e => setWaterGoalInput(e.target.value)}
+                />
+                <small>500–6000 ml. Deixe em branco para usar a recomendação.</small>
+              </div>
+            </div>
+            <div className="btn-group" style={{ marginTop: 12 }}>
+              <button className="btn primary" type="button" onClick={handleSaveWaterGoal}
+                disabled={!settings}>Salvar meta</button>
+              {settings?.waterGoalMl && (
+                <button className="btn ghost" type="button" onClick={handleResetWaterGoal}>
+                  Usar recomendação ({waterRec?.goalMl} ml)
+                </button>
+              )}
+            </div>
+          </Accordion>
 
           {/* Metas diárias */}
           <Accordion id="accGoals" label="🎯 Metas diárias" defaultOpen>

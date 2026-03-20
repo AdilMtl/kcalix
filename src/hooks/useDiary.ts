@@ -36,6 +36,7 @@ export interface DiaryData {
   meals: DiaryMeals
   totals: DiaryTotals
   kcalTreino: number
+  waterMl?: number
 }
 
 export type MealKey = keyof DiaryMeals
@@ -84,6 +85,8 @@ interface UseDiaryReturn {
   addFoodOptimistic: (meal: MealKey, entry: FoodEntry) => void
   removeFood: (meal: MealKey, index: number) => Promise<void>
   setKcalTreino: (kcal: number) => Promise<void>
+  addWaterMl: (ml: number) => void
+  resetWaterMl: () => void
   getRecentFoods: () => Promise<FoodItem[]>
   getWeekKcal: (dates: string[]) => Promise<Record<string, number>>
   getAllDiaryRows: () => Promise<{ date: string; data: DiaryData }[]>
@@ -178,6 +181,30 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
     await persist({ ...diary, kcalTreino: kcal }, diary)
   }, [diary, persist])
 
+  // Adiciona ml de água ao total do dia — optimistic, sem await bloqueante
+  const addWaterMl = useCallback((ml: number) => {
+    const next: DiaryData = { ...diary, waterMl: (diary.waterMl ?? 0) + ml }
+    setDiary(next)
+    if (user) {
+      supabase
+        .from('diary_entries')
+        .upsert({ user_id: user.id, date, data: next }, { onConflict: 'user_id,date' })
+        .then(({ error }) => { if (error) console.error('addWaterMl persist:', error) })
+    }
+  }, [diary, user?.id, date])
+
+  // Zera o consumo de água do dia — optimistic
+  const resetWaterMl = useCallback(() => {
+    const next: DiaryData = { ...diary, waterMl: 0 }
+    setDiary(next)
+    if (user) {
+      supabase
+        .from('diary_entries')
+        .upsert({ user_id: user.id, date, data: next }, { onConflict: 'user_id,date' })
+        .then(({ error }) => { if (error) console.error('resetWaterMl persist:', error) })
+    }
+  }, [diary, user?.id, date])
+
   // Varre todo o histórico de diary_entries, ordena por at desc, retorna 10 únicos
   const getRecentFoods = useCallback(async (): Promise<FoodItem[]> => {
     if (!user) return []
@@ -245,5 +272,5 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
     })
   }, [user?.id])
 
-  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, getRecentFoods, getWeekKcal, getAllDiaryRows }
+  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, addWaterMl, resetWaterMl, getRecentFoods, getWeekKcal, getAllDiaryRows }
 }

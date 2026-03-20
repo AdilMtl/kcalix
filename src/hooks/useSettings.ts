@@ -68,6 +68,8 @@ export interface UserSettingsData {
   // Configurações de bloco
   blocks?: { pG: number; cG: number; gG: number }
   kcalPerBlock?: { p: number; c: number; g: number }
+  // Meta de hidratação (ml/dia) — se ausente usa calcWaterGoal()
+  waterGoalMl?: number
 }
 
 interface UseSettingsReturn {

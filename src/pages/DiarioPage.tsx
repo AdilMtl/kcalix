@@ -6,6 +6,7 @@ import FoodDrawer from '../components/FoodDrawer'
 import Skeleton from '../components/Skeleton'
 import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
+import { calcWaterGoal } from '../lib/calculators'
 
 function round1(n: number) { return Math.round(n * 10) / 10 }
 
@@ -264,10 +265,174 @@ function MealAccordion({ meal, label, entries, isOpen, onToggle, onRemove, onQui
   )
 }
 
+// ─── WaterBar ────────────────────────────────────────────────────────────────
+
+const WATER_PRESETS = [100, 200, 300, 500] as const
+
+interface WaterBarProps {
+  waterMl: number
+  goalMl: number
+  weightKg: number
+  onAdd: (ml: number) => void
+  onReset: () => void
+  breakdown: ReturnType<typeof calcWaterGoal>['breakdown'] | null
+  confidence: ReturnType<typeof calcWaterGoal>['confidence']
+  sources: string[]
+}
+
+function WaterBar({ waterMl, goalMl, weightKg, onAdd, onReset, breakdown, confidence, sources }: WaterBarProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
+  const pct = goalMl > 0 ? Math.min(100, (waterMl / goalMl) * 100) : 0
+  const done = pct >= 100
+
+  function fmt(ml: number) {
+    return ml >= 1000 ? `${(ml / 1000).toFixed(1).replace('.0', '')} L` : `${ml} ml`
+  }
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+      border: '1px solid var(--line)',
+      borderRadius: 'var(--radius)',
+      overflow: 'hidden',
+      boxShadow: 'var(--shadow)',
+    }}>
+      {/* Cabeçalho — clicável para abrir breakdown (estilo acc-trigger) */}
+      <button
+        onClick={() => setShowBreakdown(v => !v)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', padding: '14px 16px 0',
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent', fontFamily: 'var(--font)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontSize: 16 }}>💧</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: done ? 'var(--good)' : 'var(--accent2)' }}>
+            {fmt(waterMl)}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600 }}>
+            de {fmt(goalMl)}
+          </span>
+        </div>
+        <span style={{
+          fontSize: 12, color: 'var(--text3)',
+          display: 'inline-block',
+          transform: showBreakdown ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform .2s ease',
+        }}>▾</span>
+      </button>
+
+      <div style={{ padding: '10px 16px 14px' }}>
+        {/* Barra de progresso */}
+        <div style={{
+          height: 6, background: 'rgba(255,255,255,.06)',
+          borderRadius: 999, overflow: 'hidden', marginBottom: 12,
+        }}>
+          <div style={{
+            height: '100%', width: `${pct}%`,
+            background: done ? 'var(--good)' : 'linear-gradient(90deg, #38bdf8, #7c5cff)',
+            borderRadius: 999,
+            transition: 'width .3s ease',
+          }} />
+        </div>
+
+        {/* Botões de adição */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {WATER_PRESETS.map(ml => (
+            <button
+              key={ml}
+              onClick={() => onAdd(ml)}
+              style={{
+                flex: 1, minHeight: 44, padding: '6px 0',
+                background: 'var(--surface2)', border: '1px solid var(--line)',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                color: 'var(--text)', fontFamily: 'var(--font)',
+                fontSize: 12, fontWeight: 600,
+                WebkitTapHighlightColor: 'transparent',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 1,
+              }}
+            >
+              <span style={{ fontSize: 16, lineHeight: 1 }}>🥛</span>
+              <span>+{ml}</span>
+            </button>
+          ))}
+          {/* Botão zerar — só aparece se tem algo registrado */}
+          {waterMl > 0 && (
+            <button
+              onClick={onReset}
+              aria-label="Zerar consumo"
+              style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: 'var(--surface3)', color: 'var(--text3)',
+                border: 'none', fontSize: 11, cursor: 'pointer', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                alignSelf: 'center',
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Breakdown — dropdown estilo accordion */}
+        {showBreakdown && breakdown && (
+          <div style={{
+            marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)',
+            fontSize: 12, color: 'var(--text3)', lineHeight: 1.9,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Base ({weightKg}kg × 35 ml)</span>
+              <span style={{ color: 'var(--text2)' }}>{breakdown.base} ml</span>
+            </div>
+            {breakdown.sexAdj !== 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>+ Sexo masculino</span>
+                <span style={{ color: 'var(--good)' }}>+{breakdown.sexAdj} ml</span>
+              </div>
+            )}
+            {breakdown.actAdj !== 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>+ Nível de atividade</span>
+                <span style={{ color: 'var(--good)' }}>+{breakdown.actAdj} ml</span>
+              </div>
+            )}
+            {breakdown.goalAdj !== 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>+ Objetivo (corte/recomp)</span>
+                <span style={{ color: 'var(--good)' }}>+{breakdown.goalAdj} ml</span>
+              </div>
+            )}
+            {breakdown.bfAdj !== 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>− BF% elevado</span>
+                <span style={{ color: '#fbbf24' }}>{breakdown.bfAdj} ml</span>
+              </div>
+            )}
+            <div style={{
+              marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--line)',
+              display: 'flex', justifyContent: 'space-between',
+            }}>
+              <span style={{ color: 'var(--text2)', fontWeight: 600 }}>Meta</span>
+              <span style={{ color: 'var(--accent2)', fontWeight: 700 }}>{goalMl} ml</span>
+            </div>
+            <div style={{ marginTop: 4, fontSize: 10, color: 'var(--text3)', opacity: .7 }}>
+              Confiança: {confidence === 'high' ? '● alta (com BF%)' : confidence === 'medium' ? '● média (perfil)' : '● baixa'}
+              {' · '}Fontes: {sources.join(', ')}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── DiarioPage ───────────────────────────────────────────────────────────────
 export default function DiarioPage() {
   const { selectedDate } = useDateStore()
-  const { diary, loading, removeFood, addFoodOptimistic, getAllDiaryRows } = useDiary(selectedDate)
+  const { diary, loading, removeFood, addFoodOptimistic, getAllDiaryRows, addWaterMl, resetWaterMl } = useDiary(selectedDate)
   const { settings } = useSettings()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
@@ -278,6 +443,18 @@ export default function DiarioPage() {
   const pTarget    = settings?.pTarget    ?? 0
   const cTarget    = settings?.cTarget    ?? 0
   const gTarget    = settings?.gTarget    ?? 0
+
+  // ── Hidratação ───────────────────────────────────────────────────────────
+  const waterRec = settings
+    ? calcWaterGoal(
+        settings.sex,
+        settings.weightKg,
+        settings.activityFactor,
+        settings.goal,
+      )
+    : null
+  // Meta manual sobrescreve o cálculo automático
+  const waterGoalMl = settings?.waterGoalMl ?? waterRec?.goalMl ?? 0
 
   function toggleMeal(meal: MealKey) {
     setOpenMealId(prev => prev === meal ? null : meal)
@@ -395,6 +572,32 @@ export default function DiarioPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Card de hidratação ── */}
+      {!loading && waterGoalMl > 0 && (
+        <WaterBar
+          waterMl={diary.waterMl ?? 0}
+          goalMl={waterGoalMl}
+          weightKg={settings?.weightKg ?? 0}
+          onAdd={addWaterMl}
+          onReset={resetWaterMl}
+          breakdown={waterRec?.breakdown ?? null}
+          confidence={waterRec?.confidence ?? 'medium'}
+          sources={waterRec?.sources ?? []}
+        />
+      )}
+      {!loading && !settings && (
+        <div style={{
+          background: 'rgba(56,189,248,.07)', border: '1px solid rgba(56,189,248,.2)',
+          borderRadius: 'var(--radius)', padding: '12px 14px',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 20 }}>💧</span>
+          <span style={{ fontSize: 13, color: 'var(--text2)' }}>
+            Preencha seu perfil para uma meta de hidratação personalizada.
+          </span>
+        </div>
+      )}
 
       {/* ── Refeições (accordion) ── */}
       {loading ? (
