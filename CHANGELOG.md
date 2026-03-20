@@ -2,6 +2,24 @@
 
 ---
 
+## [0.39.0] — 2026-03-19
+
+### Adicionado
+- [feat] `src/lib/calculators.ts` — `calcWaterGoal()`: algoritmo científico de meta de hidratação baseado em peso (EFSA 2010, 35ml/kg), sexo (IOM 2004, +300ml ♂), nível de atividade (GSSI, +0–900ml), objetivo nutricional (+200ml em cut/recomp) e BF% opcional (−5% base se elevado); retorna `WaterRecommendation` com breakdown detalhado e `confidence: high/medium/low`
+- [feat] `src/hooks/useDiary.ts` — `waterMl?: number` em `DiaryData` + `addWaterMl(ml)` e `resetWaterMl()` com optimistic UI (mesmo padrão do `addFoodOptimistic`)
+- [feat] `src/hooks/useSettings.ts` — `waterGoalMl?: number` em `UserSettingsData` (meta manual sobrescreve algoritmo)
+- [feat] `src/pages/DiarioPage.tsx` — componente `WaterBar`: card separado no diário com barra de progresso, presets 🥛+100/+200/+300/+500ml, botão ✕ para zerar, cabeçalho clicável (▾) que expande breakdown do cálculo com fontes científicas
+- [feat] `src/pages/MaisPage.tsx` — accordion "💧 Hidratação" em Nutrição: exibe meta recomendada com breakdown, campo de meta manual (500–6000ml), botão "Usar recomendação"
+- [feat] `supabase/functions/ai-chat/index.ts` — agente lê `waterMl` de cada dia do diário e `waterGoalMl` das settings; detecta intenção por palavras-chave de hidratação (`água`, `hidrat`, `ml`, `litro`, `sede`)
+- [test] `src/lib/__tests__/calculators.test.ts` — 11 novos casos para `calcWaterGoal`: sedentário/ativo, sexo, objetivo, BF% acima/abaixo limiar, múltiplo de 50, clamp 1500–4500, confidence
+
+### Notas
+- `waterMl` salvo em `diary_entries.data` (JSONB) — zero migration necessária
+- Edge Function `ai-chat` deployada (v18); tag de restauração: `v0.38.0-ai-chat-stable`
+- Widget de água não aparece na home (decisão: evitar redundância com o diário)
+
+---
+
 ## [0.38.0] — 2026-03-19
 
 ### Adicionado
