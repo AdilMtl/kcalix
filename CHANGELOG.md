@@ -2,6 +2,13 @@
 
 ---
 
+## [0.40.1] — 2026-03-22
+
+### Corrigido
+- [fix] `src/pages/HomePage.tsx` — WeeklyChart: barra cinza (BMR + treino) não incluía kcal de exercício no carregamento inicial da home; `workoutKcalByDate` agora é populado no mount via `useEffect` dependente de `user`, em vez de lazily ao abrir o modal de histórico
+
+---
+
 ## [0.39.0] — 2026-03-19
 
 ### Adicionado

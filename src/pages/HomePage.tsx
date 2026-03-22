@@ -520,6 +520,18 @@ export default function HomePage() {
     getWeekKcal(weekDays.map(d => d.iso)).then(setWeekKcal)
   }, [])
 
+  // Carrega kcal de treino por data no mount — necessário para a barra cinza do WeeklyChart
+  useEffect(() => {
+    if (!user) return
+    fetchAllWorkoutRows(user.id).then(rows => {
+      const map: Record<string, number> = {}
+      for (const r of rows) {
+        map[r.date] = (map[r.date] ?? 0) + (r.kcal ?? 0)
+      }
+      setWorkoutKcalByDate(map)
+    })
+  }, [user])
+
   // Onboarding automático: abre wizard na primeira visita
   // Condições: settings carregou (loadingSettings=false) + perfil nunca configurado (settings===null)
   // + usuário não dismissou sem salvar antes (localStorage)
@@ -531,18 +543,10 @@ export default function HomePage() {
     }
   }, [loadingSettings, settings])
 
-  // Carrega kcal de treino por data ao abrir o modal (lazy)
+  // Abre modal histórico semanal (workoutKcalByDate já carregado no mount)
   const handleOpenWeeklyModal = useMemo(() => async () => {
-    if (user && Object.keys(workoutKcalByDate).length === 0) {
-      const rows = await fetchAllWorkoutRows(user.id)
-      const map: Record<string, number> = {}
-      for (const r of rows) {
-        map[r.date] = (map[r.date] ?? 0) + (r.kcal ?? 0)
-      }
-      setWorkoutKcalByDate(map)
-    }
     setWeeklyModalOpen(true)
-  }, [user, workoutKcalByDate])
+  }, [])
 
   const handleOpenEvolution = useMemo(() => async () => {
     if (user && bodyRows.length === 0) {
