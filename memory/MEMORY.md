@@ -91,11 +91,19 @@ Ambient glow já adicionado em `body::before/::after`.
 - **Confirmação no chat:** ao confirmar o modal, o coach exibe mensagem no histórico listando os itens com gramas (não toast flutuante — overlapping bug)
 - **getFoodIndex():** `src/data/foodDb.ts` — gera string compacta `"Categoria: id(nome/Xg), ..."` para ser enviada à Edge Function na 7B-2 (~200 tokens)
 
+## Padrões adicionados na Sessão 7B-1 (v0.43.0)
+- **useCustomFoods CRUD completo:** `saveCustomFood()` retorna `FoodItem` com id real; `findCustomFood(nome)` dedup por nome case-insensitive; `updateCustomFood(id, food)` e `deleteCustomFood(id)` — instanciar direto no componente, sem prop chain
+- **Custom food salvo por 100g:** sempre `porcaoG: 100` + macros por 100g no cadastro; porção editada fica no `FoodEntry` do diário
+- **Dedup antes de criar:** `findCustomFood(nome)` antes de `saveCustomFood()` — evita duplicatas ao confirmar mesmo log duas vezes
+- **Mock fixo para validar fluxo:** `mockParseFood()` hardcoded (1 db + 1 custom); extração por palavras é frágil — substituir diretamente pela Edge Function na 7B-2
+- **AiLogConfirmModal itens custom:** badge ✨ Novo + P/C/G editáveis + kcal automático `p×4+c×4+g×9`
+- **CustomFoodModal modo edição:** `initialValues?: Omit<FoodItem, 'id'>` — reutilizado no FoodDrawer para editar
+- **FoodDrawer CRUD:** botões ✏️/🗑️ só em `food.id.startsWith('custom_')`; confirmação antes de excluir
+
 ## Próximo passo
-Fase 7B — pendências para próxima sessão:
-- **7B-3b:** fluxo de custom food — quando IA retorna `source:'custom'`, criar via `saveCustomFood()` antes de inserir no diário
-- **7B-2:** bloco `action:'parse-food'` na Edge Function `ai-chat` (isolado com `if (body.action === 'parse-food')` antes do fluxo de chat); substituir `mockParseFood` por chamada real; testar via curl antes de ligar no app
-- Deploy conjunto 7B-2 + 7B-3b após validação
+Fase 7B — próxima sessão:
+- **7B-2:** bloco `action:'parse-food'` na Edge Function `ai-chat` — isolado com `if (body.action === 'parse-food')` antes do fluxo de chat; recebe `{ text, foodIndex }`; retorna `{ meal, items[] }` com `source:'db'|'custom'` e macros estimados pela IA; testar via curl antes de ligar no app
+- **7B-3:** substituir `mockParseFood()` em `useAiChat.ts` pela chamada real à Edge Function; resto do fluxo não muda
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local
