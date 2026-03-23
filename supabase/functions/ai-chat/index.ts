@@ -144,6 +144,103 @@ interface Message {
   content: string
 }
 
+// ─── Tipos parse-food ─────────────────────────────────────────────────────────
+
+interface ParseFoodRequest {
+  action: 'parse-food'
+  text: string
+  foodIndex: string
+}
+
+interface ParsedFoodItem {
+  foodId: string | null
+  nome: string
+  grams: number
+  source: 'db' | 'custom'
+  p?: number
+  c?: number
+  g?: number
+  kcal?: number
+}
+
+interface ParseFoodResponse {
+  meal: 'cafe' | 'lanche1' | 'almoco' | 'lanche2' | 'jantar' | 'ceia' | null
+  items: ParsedFoodItem[]
+}
+
+// ─── Handler parse-food (isolado — zero queries ao Supabase) ──────────────────
+
+async function parseFoodHandler(body: ParseFoodRequest): Promise<Response> {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY')
+  if (!openaiKey) {
+    return new Response(
+      JSON.stringify({ error: 'Configuração incompleta' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const systemPrompt = `Você é um parser de alimentos. Analise o texto do usuário e retorne APENAS JSON válido, sem markdown, sem explicação.
+
+Índice de alimentos disponíveis (formato: "id(nome/Xg)"):
+${body.foodIndex}
+
+Retorne exatamente neste formato:
+{"meal":"cafe"|"lanche1"|"almoco"|"lanche2"|"jantar"|"ceia"|null,"items":[{"foodId":"id_ou_null","nome":"nome legível","grams":100,"source":"db"|"custom","p":0,"c":0,"g":0,"kcal":0}]}
+
+Regras:
+- meal: inferir do texto ("almocei"→almoco, "café da manhã"→cafe, "lanchei"→lanche1, "jantei"→jantar, "ceia"→ceia). null se não for possível inferir.
+- source "db": alimento existe no índice → usar foodId exato do índice, omitir p/c/g/kcal (ou setar como 0)
+- source "custom": alimento NÃO existe no índice → foodId=null, estimar macros por 100g
+- grams: gramas mencionadas. Se não mencionado, usar porção típica (frango→150, arroz→150, feijão→100, ovo→60, banana→100, pão→50, leite→200)
+- Retornar SOMENTE o JSON. Nenhum texto antes ou depois.`
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 400,
+      temperature: 0,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: body.text },
+      ],
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    return new Response(
+      JSON.stringify({ error: `OpenAI error: ${err}` }),
+      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content ?? ''
+
+  // Modelo pode envolver JSON em ```json ... ``` — limpar
+  const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim()
+
+  let parsed: ParseFoodResponse
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'IA retornou JSON inválido', raw }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  return new Response(
+    JSON.stringify(parsed),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+  )
+}
+
 interface Intent {
   needsDiary: boolean
   needsWorkout: boolean
@@ -508,7 +605,15 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { messages } = await req.json() as { messages: Message[] }
+    const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string }
+
+    // ── BLOCO parse-food — isolado, sem tocar no fluxo de chat abaixo ──────────
+    if (body.action === 'parse-food') {
+      return await parseFoodHandler(body as ParseFoodRequest)
+    }
+    // ── FIM BLOCO parse-food ───────────────────────────────────────────────────
+
+    const { messages } = body
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: 'messages inválido' }),

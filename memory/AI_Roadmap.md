@@ -17,9 +17,11 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 | 7A-2 | UI do chat (frontend) | ✅ Concluída (2026-03-18) |
 | 7A-3 | Otimização de tokens — pré-proc + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
 | 7B-1 | Log por linguagem natural — Frontend + mock | ✅ Concluída (2026-03-23) |
+| 7B-3b | Fluxo custom food — source:'custom' → saveCustomFood() → inserir | ✅ Concluída (2026-03-23) |
 | 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | 🔵 Próximo |
-| 7B-3 | Log por linguagem natural — Integração completa (substituir mock por Edge Function) | 🔵 Após 7B-2 |
-| 7C | Foto para macros | 🔵 Após 7B |
+| 7B-3 | Integração — substituir mock por chamada real à Edge Function | 🔵 Após 7B-2 |
+| 7B-4 | IA decide intenção — unifica chat + log num fluxo único (sem regex) | 🔵 Após 7B-3 |
+| 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
 
 ---
 
@@ -208,6 +210,15 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
 
 ---
 
+### Sub-sessão 7B-3b — Fluxo custom food ✅ Concluída (2026-03-23)
+
+**O que foi entregue (v0.43.0):**
+- `handleConfirmLog` em `AiChatModal.tsx` — `source:'custom'` → `findCustomFood(nome)` → reutiliza se existe, `saveCustomFood()` se não → `foodId = saved.id`
+- Macros salvos por 100g (`porcaoG: 100`) — porção editada fica no `FoodEntry`, não no cadastro
+- Dedup por nome evita duplicatas no banco de custom foods
+
+---
+
 ### Sub-sessão 7B-2 — Edge Function (bloco isolado) 🔵 Próximo
 
 **Arquivos a modificar:**
@@ -288,6 +299,53 @@ interface AiChatModalProps { onAddFood?: (meal: string, item: FoodEntry) => void
 
 **Schema:** nenhuma tabela nova — usa `diary_entries` e `custom_foods` existentes.
 **Atenção:** IA erra gramas ±20-30% — modal de confirmação é obrigatório, nunca salvar direto.
+
+---
+
+### Sub-sessão 7B-4 — IA decide intenção (sem regex) 🔵 Após 7B-3
+
+**Motivação:**
+Hoje a detecção de intenção ("o usuário quer logar ou consultar?") é feita por regex no frontend. É frágil — frases naturais como "acabei de tomar um shake", "minha janta foi filé" ou "200g de frango" não são detectadas e caem no chat como consulta.
+
+O objetivo é que o fluxo seja completamente natural: o usuário escreve o que quiser, e a IA entende sozinha se é um log ou uma pergunta.
+
+**Mudança arquitetural:**
+Em vez de dois caminhos separados (regex → parse-food | chat), toda mensagem vai para a Edge Function e ela retorna um output tipado:
+
+```typescript
+// Output atual
+{ reply: string }
+
+// Output após 7B-4
+{ type: 'reply', reply: string }
+| { type: 'log', meal: MealKey | null, items: ParsedFoodItem[] }
+```
+
+A Edge Function detecta a intenção internamente (sem regex, usando o próprio modelo) e decide qual bloco executar. O frontend reage ao `type` — se `log`, abre o `AiLogConfirmModal`; se `reply`, exibe o texto no chat.
+
+**Vantagens:**
+- Frases completamente naturais funcionam sem lista de verbos
+- Um fluxo único — menos código no frontend
+- Regex some do `useAiChat.ts`
+- Abre caminho para 7C (foto para macros) de forma ainda mais natural
+
+**Arquivos a modificar:**
+- `supabase/functions/ai-chat/index.ts` — output tipado + detecção de intenção pelo modelo
+- `src/hooks/useAiChat.ts` — remover `detectLogIntent()` + reagir ao `type` do response
+- `src/components/AiChatModal.tsx` — lógica de abertura do modal baseada em `type`, não em regex
+
+**Decisão de design — quem detecta a intenção:**
+A Edge Function manda o texto para o modelo com instrução: *"Classifique: é um registro de alimento ou uma pergunta? Se for registro, extraia os itens."* Uma única chamada OpenAI cobre os dois casos — sem chamada extra.
+
+**Schema:** nenhuma tabela nova.
+
+**Critérios de feito:**
+- [ ] "acabei de tomar um shake de whey 30g" → abre modal de confirmação
+- [ ] "minha janta foi filé com batata" → abre modal de confirmação
+- [ ] "como estão meus macros?" → resposta no chat (sem modal)
+- [ ] "200g de frango" (ambíguo) → modal de confirmação (IA assume log quando há alimento + quantidade)
+- [ ] Regex removida do `useAiChat.ts`
+- [ ] Build sem erros TypeScript
 
 ---
 

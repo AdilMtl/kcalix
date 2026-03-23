@@ -60,7 +60,7 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 6A: CONCLUÍDA (2026-03-15) — PWA base + Fix 404 SPA (v0.25.0)
 - Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam ITEM 10 (toggle Free/Assinante) e ITEM 11 (lentidão)
 - Fase 7A: CONCLUÍDA (2026-03-18) — Edge Function ai-chat + chat UI (FAB + AiChatModal) — v0.34.0
-- Fase 7B: EM ANDAMENTO (v0.42.0 — 2026-03-23) — 7B-1 (frontend+mock) + 7B-3a (inserção real) concluídos; pendente: 7B-2 (Edge Function parse-food) e 7B-3b (custom food)
+- Fase 7B: EM ANDAMENTO (v0.43.0 — 2026-03-23) — 7B-1, 7B-3a, 7B-3b concluídos; pendente: 7B-2 (Edge Function parse-food) e 7B-3 (integração final)
 
 ## Itens 6B concluídos
 - ITEM 1 — Error Boundary (v0.27.0)
@@ -80,6 +80,7 @@ Ambient glow já adicionado em `body::before/::after`.
 - **FAB 🤖:** montado no AppLayout (fora do `<main>`), z-index 200, `bottom: 76` (acima da Nav)
 - **Edge Function ai-chat:** busca diary + workouts + body_measurements + checkins (30 dias) + user_settings; monta system prompt com protocolos RP; chama gpt-4o-mini max_tokens 1000; retorna `{ reply: string }`
 - **OPENAI_API_KEY:** configurada apenas em Supabase Vault (secrets) — NUNCA prefixo VITE_, NUNCA em src/
+- **Deploy Edge Function:** ver `memory/supabase-edge-functions-deploy.md` — inclui: comando obrigatório `--no-verify-jwt`, como obter JWT para curl, 3 curls de verificação, rollback passo a passo, sintomas comuns
 
 ## Padrões adicionados na Fase 7B (v0.42.0 — parcial)
 - **AiLogConfirmModal:** `src/components/AiLogConfirmModal.tsx` — z-index 348/350; lista de `PendingLogItem` com input de gramas por item; totalizador P/C/G/kcal recalculado em tempo real; dropdown de refeição obrigatório se não detectado no texto
@@ -101,9 +102,9 @@ Ambient glow já adicionado em `body::before/::after`.
 - **FoodDrawer CRUD:** botões ✏️/🗑️ só em `food.id.startsWith('custom_')`; confirmação antes de excluir
 
 ## Próximo passo
-Fase 7B — próxima sessão:
-- **7B-2:** bloco `action:'parse-food'` na Edge Function `ai-chat` — isolado com `if (body.action === 'parse-food')` antes do fluxo de chat; recebe `{ text, foodIndex }`; retorna `{ meal, items[] }` com `source:'db'|'custom'` e macros estimados pela IA; testar via curl antes de ligar no app
-- **7B-3:** substituir `mockParseFood()` em `useAiChat.ts` pela chamada real à Edge Function; resto do fluxo não muda
+Fase 7B — próximas sessões:
+- **7B-2 (próxima):** bloco `action:'parse-food'` na Edge Function `ai-chat` — isolado com `if (body.action === 'parse-food')` antes do fluxo de chat; recebe `{ text, foodIndex }`; retorna `{ meal, items[] }` com `source:'db'|'custom'` e macros estimados pela IA; testar via curl antes de ligar no app
+- **7B-3 (após 7B-2):** substituir `mockParseFood()` em `useAiChat.ts` pela chamada real à Edge Function; resto do fluxo não muda
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local

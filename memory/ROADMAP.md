@@ -1093,8 +1093,10 @@ body_measurements (
 | 7A-3 | Otimização de tokens — pré-processamento + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
 | 7B-1 | Frontend + mock — AiLogConfirmModal, detecção de intenção, getFoodIndex() | ✅ Concluída (2026-03-23) |
 | 7B-3a | Inserção real no diário via addFoodsToDiary() standalone | ✅ Concluída (2026-03-23) |
-| 7B-3b | Fluxo custom food — source:'custom' → saveCustomFood() → inserir | 🔵 Próxima sessão |
-| 7B-2 | Edge Function — bloco action:'parse-food' isolado (substitui mock) | 🔵 Após 7B-3b |
+| 7B-3b | Fluxo custom food — source:'custom' → saveCustomFood() → inserir | ✅ Concluída (2026-03-23) |
+| 7B-2 | Edge Function — bloco action:'parse-food' isolado (substitui mock) | 🔵 Próxima sessão |
+| 7B-3 | Integração — substituir mock por chamada real à Edge Function | 🔵 Após 7B-2 |
+| 7B-4 | IA decide intenção — unifica chat + log, remove regex do frontend | 🔵 Após 7B-3 |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B completa |
 
 ### Benchmark de tokens — referência para otimizações futuras
