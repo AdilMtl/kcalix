@@ -246,6 +246,14 @@ interface Intent {
   needsWorkout: boolean
   needsBody: boolean
   isFullDiag: boolean
+  wantsLog: boolean
+}
+
+// Detecta intenção de logar refeição na última mensagem do usuário
+// Migrado do frontend (useAiChat.ts hasLogIntent) para cá na 7B-4
+function detectFoodLog(lastMsg: string): boolean {
+  const t = lastMsg.toLowerCase()
+  return /comi|almocei|jantei|café da manhã|no café|lanchei|tomei|bebi|no almoço|no jantar|de manhã|hoje comi|comer|registrar|adicionar ao diário|anotar/.test(t)
 }
 
 interface FoodEntry {
@@ -369,11 +377,14 @@ function detectIntent(messages: Message[]): Intent {
 
   // Fallback: se nenhuma flag ativa na última mensagem, assume nutrição
   const anyActive = needsDiary || needsWorkout || needsBody
+  // wantsLog: intenção de registrar refeição na última mensagem
+  const lastMsgRaw = messages.filter(m => m.role === 'user').at(-1)?.content ?? ''
   return {
     needsDiary: anyActive ? needsDiary : true,
     needsWorkout,
     needsBody,
     isFullDiag,
+    wantsLog: detectFoodLog(lastMsgRaw),
   }
 }
 
@@ -613,7 +624,7 @@ Deno.serve(async (req) => {
     }
     // ── FIM BLOCO parse-food ───────────────────────────────────────────────────
 
-    const { messages } = body
+    const { messages, foodIndex } = body
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: 'messages inválido' }),
@@ -623,6 +634,29 @@ Deno.serve(async (req) => {
 
     // ── PASSO 1: Detectar intenção (acumula toda a conversa — FIX 4) ────────
     const intent = detectIntent(messages)
+
+    // ── 7B-4: Roteamento interno — se wantsLog e foodIndex disponível ────────
+    // A IA decide a intenção (não regex no frontend). Frontend sempre envia
+    // { messages, foodIndex } — aqui decidimos se é log ou chat.
+    if (intent.wantsLog && foodIndex) {
+      const lastUserMsg = messages.filter(m => m.role === 'user').at(-1)?.content ?? ''
+      const parseFoodReq: ParseFoodRequest = {
+        action: 'parse-food',
+        text: lastUserMsg,
+        foodIndex,
+      }
+      const parseFoodRes = await parseFoodHandler(parseFoodReq)
+      // Reembalar com action:'parse-food' para o frontend distinguir do chat
+      if (parseFoodRes.ok) {
+        const parsed = await parseFoodRes.json()
+        return new Response(
+          JSON.stringify({ action: 'parse-food', ...parsed }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+      // Se parseFoodHandler falhou, cai no fluxo de chat normal (graceful fallback)
+    }
+    // ── FIM 7B-4 ─────────────────────────────────────────────────────────────
 
     // ── PASSO 2: Busca cirúrgica — só o necessário ─────────────────────────
     // FIX 3: 8 dias em vez de 7 para garantir que "hoje" sempre esteja incluído
@@ -787,7 +821,7 @@ Deno.serve(async (req) => {
     const reply = openaiData.choices?.[0]?.message?.content ?? ''
 
     return new Response(
-      JSON.stringify({ reply }),
+      JSON.stringify({ action: 'chat', reply }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
 

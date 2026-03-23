@@ -24,18 +24,6 @@ export interface PendingLog {
   items: PendingLogItem[]
 }
 
-// Palavras que indicam intenção de registrar refeição (7B-4: substituir por detecção via IA)
-const LOG_TRIGGERS = [
-  'comi', 'almocei', 'jantei', 'café', 'lanche', 'tomei', 'bebi',
-  'no almoço', 'no jantar', 'no café', 'de manhã', 'hoje comi',
-  'comer', 'registrar', 'adicionar ao diário', 'anotar',
-]
-
-function hasLogIntent(text: string): boolean {
-  const t = text.toLowerCase()
-  return LOG_TRIGGERS.some(trigger => t.includes(trigger))
-}
-
 // Converte item retornado pela Edge Function para PendingLogItem (com macros por 100g)
 function toLogItem(item: {
   foodId: string | null
@@ -82,34 +70,6 @@ export function useAiChat() {
   const [pendingLog, setPendingLog] = useState<PendingLog | null>(null)
 
   async function sendMessage(text: string) {
-    // Detecta intenção de log ANTES de chamar a Edge Function (7B-4: mover detecção para IA)
-    if (hasLogIntent(text)) {
-      setMessages(prev => [...prev, { role: 'user', content: text }])
-      setLoading(true)
-      setError(null)
-
-      try {
-        const res = await supabase.functions.invoke('ai-chat', {
-          body: { action: 'parse-food', text, foodIndex: getFoodIndex() },
-        })
-
-        if (res.error) throw new Error(res.error.message)
-
-        const data = res.data as { meal: string | null; items: Parameters<typeof toLogItem>[0][] }
-        const log: PendingLog = {
-          meal: data.meal,
-          items: data.items.map(toLogItem),
-        }
-        setPendingLog(log)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao identificar alimentos')
-      } finally {
-        setLoading(false)
-      }
-      return
-    }
-
-    // Fluxo normal de chat — sem alteração
     const newMessages: ChatMessage[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setLoading(true)
@@ -117,13 +77,25 @@ export function useAiChat() {
 
     try {
       const res = await supabase.functions.invoke('ai-chat', {
-        body: { messages: newMessages },
+        body: { messages: newMessages, foodIndex: getFoodIndex() },
       })
 
       if (res.error) throw new Error(res.error.message)
 
-      const reply = (res.data as { reply: string }).reply
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }])
+      type AiChatResponse =
+        | { action: 'chat'; reply: string }
+        | { action: 'parse-food'; meal: string | null; items: Parameters<typeof toLogItem>[0][] }
+
+      const data = res.data as AiChatResponse
+
+      if (data.action === 'parse-food') {
+        setPendingLog({
+          meal: data.meal,
+          items: data.items.map(toLogItem),
+        })
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
