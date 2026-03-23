@@ -7,6 +7,8 @@ import CustomFoodModal from './CustomFoodModal'
 import type { FoodItem } from '../data/foodDb'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
+type EditingFood = { id: string; food: Omit<FoodItem, 'id'> }
+
 interface FoodDrawerProps {
   onClose: () => void
   onAddFood: (meal: MealKey, entry: FoodEntry) => void
@@ -16,12 +18,14 @@ const CATEGORIES = Object.keys(FOOD_DB)
 
 export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
   const { getRecentFoods } = useDiary()
-  const { customFoods, saveCustomFood } = useCustomFoods()
+  const { customFoods, saveCustomFood, updateCustomFood, deleteCustomFood } = useCustomFoods()
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
   const [recentFoods, setRecentFoods] = useState<FoodItem[]>([])
   const [showCustomModal, setShowCustomModal] = useState(false)
+  const [editingFood, setEditingFood] = useState<EditingFood | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -114,24 +118,47 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {items.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text3)', fontSize: '12px' }}>Nenhum alimento encontrado.</p>
-          ) : items.map(food => (
-            <button
-              key={food.id}
-              onClick={() => setSelectedFood(food)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', textAlign: 'left', width: '100%', flexShrink: 0 }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{food.nome}</p>
-                <p style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 600, marginTop: '1px' }}>{food.porcao}</p>
+          ) : items.map(food => {
+            const isCustom = food.id.startsWith('custom_')
+            return (
+              <div key={food.id} style={{ display: 'flex', alignItems: 'stretch', gap: 6 }}>
+                <button
+                  onClick={() => setSelectedFood(food)}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', textAlign: 'left', minWidth: 0 }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{food.nome}</p>
+                    <p style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 600, marginTop: '1px' }}>{food.porcao}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>
+                    <span style={{ color: 'var(--pColor)' }}>{food.p}P</span>
+                    <span style={{ color: 'var(--cColor)' }}>{food.c}C</span>
+                    <span style={{ color: 'var(--gColor)' }}>{food.g}G</span>
+                    <span style={{ color: 'var(--text3)' }}>{food.kcal}</span>
+                  </div>
+                </button>
+
+                {/* Ações — só para alimentos personalizados */}
+                {isCustom && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <button
+                      onClick={() => setEditingFood({
+                        id: food.id,
+                        food: { nome: food.nome, porcao: food.porcao, porcaoG: food.porcaoG, p: food.p, c: food.c, g: food.g, kcal: food.kcal },
+                      })}
+                      style={{ flex: 1, padding: '0 10px', background: 'rgba(124,92,255,0.1)', border: '1px solid rgba(124,92,255,0.2)', borderRadius: 'var(--radius-sm)', color: '#a78bfa', fontSize: 13, cursor: 'pointer' }}
+                      aria-label="Editar"
+                    >✏️</button>
+                    <button
+                      onClick={() => setDeletingId(food.id)}
+                      style={{ flex: 1, padding: '0 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--radius-sm)', color: '#fca5a5', fontSize: 13, cursor: 'pointer' }}
+                      aria-label="Excluir"
+                    >🗑️</button>
+                  </div>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '8px', fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>
-                <span style={{ color: 'var(--pColor)' }}>{food.p}P</span>
-                <span style={{ color: 'var(--cColor)' }}>{food.c}C</span>
-                <span style={{ color: 'var(--gColor)' }}>{food.g}G</span>
-                <span style={{ color: 'var(--text3)' }}>{food.kcal}</span>
-              </div>
-            </button>
-          ))}
+            )
+          })}
         </div>
 
         {/* Botão criar alimento personalizado */}
@@ -161,7 +188,7 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
         />
       )}
 
-      {/* CustomFoodModal */}
+      {/* CustomFoodModal — criar */}
       {showCustomModal && (
         <CustomFoodModal
           onSave={async food => {
@@ -171,6 +198,53 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
           }}
           onClose={() => setShowCustomModal(false)}
         />
+      )}
+
+      {/* CustomFoodModal — editar */}
+      {editingFood && (
+        <CustomFoodModal
+          initialValues={editingFood.food}
+          onSave={async food => {
+            await updateCustomFood(editingFood.id, food)
+            setEditingFood(null)
+          }}
+          onClose={() => setEditingFood(null)}
+        />
+      )}
+
+      {/* Confirmação de exclusão */}
+      {deletingId && (
+        <>
+          <div
+            onClick={() => setDeletingId(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 62 }}
+          />
+          <div style={{
+            position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+            zIndex: 63, background: 'linear-gradient(180deg, #1a2035, #121828)',
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+            padding: '24px 20px', width: 'min(320px, 90vw)', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🗑️</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>Excluir alimento?</div>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+              Esta ação não pode ser desfeita. Registros anteriores no diário não são afetados.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setDeletingId(null)}
+                style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              >Cancelar</button>
+              <button
+                onClick={async () => {
+                  await deleteCustomFood(deletingId)
+                  setDeletingId(null)
+                }}
+                style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >Excluir</button>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

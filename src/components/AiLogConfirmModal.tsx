@@ -3,6 +3,11 @@ import type { PendingLog, PendingLogItem } from '../hooks/useAiChat'
 import { MEAL_LABELS } from '../hooks/useDiary'
 import type { MealKey } from '../hooks/useDiary'
 
+// Mesma fórmula do CustomFoodModal
+function calcKcalAuto(p: number, c: number, g: number): number {
+  return Math.round(p * 4 + c * 4 + g * 9)
+}
+
 const MEAL_ORDER: MealKey[] = ['cafe', 'lanche1', 'almoco', 'lanche2', 'jantar', 'ceia']
 
 interface Props {
@@ -21,11 +26,28 @@ function calcMacros(item: PendingLogItem, grams: number) {
   }
 }
 
+// Estado de macros editáveis para itens custom
+interface CustomMacros { p: string; c: string; g: string }
+
 export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
-  // Gramas editáveis por item (índice)
   const [gramsMap, setGramsMap] = useState<Record<number, string>>(() => {
     const init: Record<number, string> = {}
     pendingLog.items.forEach((item, i) => { init[i] = String(item.grams) })
+    return init
+  })
+
+  // Macros editáveis para itens custom (por 100g)
+  const [customMacros, setCustomMacros] = useState<Record<number, CustomMacros>>(() => {
+    const init: Record<number, CustomMacros> = {}
+    pendingLog.items.forEach((item, i) => {
+      if (item.source === 'custom') {
+        init[i] = {
+          p: String(item.pPer100),
+          c: String(item.cPer100),
+          g: String(item.gPer100),
+        }
+      }
+    })
     return init
   })
 
@@ -33,12 +55,28 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
     (pendingLog.meal as MealKey | null) ?? ''
   )
 
+  function handleCustomMacroChange(idx: number, field: 'p' | 'c' | 'g', val: string) {
+    setCustomMacros(prev => ({ ...prev, [idx]: { ...prev[idx], [field]: val } }))
+  }
+
+  // Resolve macros por 100g para um item (custom usa estado editável)
+  function resolveItem(item: PendingLogItem, i: number): PendingLogItem {
+    if (item.source !== 'custom') return item
+    const cm = customMacros[i]
+    if (!cm) return item
+    const p = parseFloat(cm.p) || 0
+    const c = parseFloat(cm.c) || 0
+    const g = parseFloat(cm.g) || 0
+    return { ...item, pPer100: p, cPer100: c, gPer100: g, kcalPer100: calcKcalAuto(p, c, g) }
+  }
+
   // Totais calculados em tempo real
   const totals = useMemo(() => {
     let p = 0, c = 0, g = 0, kcal = 0
     pendingLog.items.forEach((item, i) => {
+      const resolved = resolveItem(item, i)
       const grams = parseFloat(gramsMap[i]) || 0
-      const m = calcMacros(item, grams)
+      const m = calcMacros(resolved, grams)
       p += m.p; c += m.c; g += m.g; kcal += m.kcal
     })
     return {
@@ -47,7 +85,8 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
       g:    Math.round(g * 10) / 10,
       kcal: Math.round(kcal),
     }
-  }, [gramsMap, pendingLog.items])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gramsMap, customMacros, pendingLog.items])
 
   function handleGramsChange(idx: number, val: string) {
     setGramsMap(prev => ({ ...prev, [idx]: val }))
@@ -55,10 +94,13 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
 
   function handleConfirm() {
     if (!selectedMeal) return
-    const updatedItems = pendingLog.items.map((item, i) => ({
-      ...item,
-      grams: parseFloat(gramsMap[i]) || item.grams,
-    }))
+    const updatedItems = pendingLog.items.map((item, i) => {
+      const resolved = resolveItem(item, i)
+      return {
+        ...resolved,
+        grams: parseFloat(gramsMap[i]) || item.grams,
+      }
+    })
     onConfirm(selectedMeal as MealKey, updatedItems)
   }
 
@@ -164,54 +206,105 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {pendingLog.items.map((item, i) => {
+              const resolved = resolveItem(item, i)
               const grams = parseFloat(gramsMap[i]) || 0
-              const m = calcMacros(item, grams)
+              const m = calcMacros(resolved, grams)
+              const isCustom = item.source === 'custom'
+              const cm = customMacros[i]
               return (
                 <div
                   key={i}
                   style={{
-                    background: 'rgba(255,255,255,0.05)',
+                    background: isCustom ? 'rgba(124,92,255,0.06)' : 'rgba(255,255,255,0.05)',
+                    border: isCustom ? '1px solid rgba(124,92,255,0.2)' : '1px solid transparent',
                     borderRadius: 12,
                     padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
                   }}
                 >
-                  {/* Nome + macros */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontSize: 14, fontWeight: 500, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.nome}
+                  {/* Linha 1: nome + badge + gramas */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.nome}
+                        </span>
+                        {isCustom && (
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, color: '#a78bfa',
+                            background: 'rgba(124,92,255,0.15)', borderRadius: 4,
+                            padding: '1px 5px', flexShrink: 0,
+                          }}>
+                            ✨ Novo
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
+                        P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
+                      </div>
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
-                      P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
+
+                    {/* Input de gramas */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                      <input
+                        type="number"
+                        min="1"
+                        max="2000"
+                        value={gramsMap[i]}
+                        onChange={e => handleGramsChange(i, e.target.value)}
+                        style={{
+                          width: 64,
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: 8,
+                          color: '#fff',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          padding: '6px 8px',
+                          outline: 'none',
+                          textAlign: 'right',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      />
+                      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>g</span>
                     </div>
                   </div>
 
-                  {/* Input de gramas */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                    <input
-                      type="number"
-                      min="1"
-                      max="2000"
-                      value={gramsMap[i]}
-                      onChange={e => handleGramsChange(i, e.target.value)}
-                      style={{
-                        width: 64,
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                        borderRadius: 8,
-                        color: '#fff',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        padding: '6px 8px',
-                        outline: 'none',
-                        textAlign: 'right',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    />
-                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>g</span>
-                  </div>
+                  {/* Linha 2: macros editáveis (só para itens custom) */}
+                  {isCustom && cm && (
+                    <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                      {(['p', 'c', 'g'] as const).map(field => {
+                        const colors = { p: '#f87171', c: '#fbbf24', g: '#34d399' }
+                        const labels = { p: 'Prot (g/100g)', c: 'Carbo (g/100g)', g: 'Gord (g/100g)' }
+                        return (
+                          <div key={field} style={{
+                            background: 'rgba(0,0,0,0.2)',
+                            borderRadius: 8, padding: '6px 8px',
+                          }}>
+                            <div style={{ color: colors[field], fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 3 }}>
+                              {labels[field]}
+                            </div>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={cm[field]}
+                              onChange={e => handleCustomMacroChange(i, field, e.target.value)}
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                outline: 'none',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}

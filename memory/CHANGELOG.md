@@ -1,5 +1,24 @@
 # Kcalix — CHANGELOG
 
+## [v0.43.0] — 2026-03-23
+
+### Adicionado
+- [feat] Fase 7B-3b: `AiLogConfirmModal` — itens `source:'custom'` ganham badge ✨ Novo + campos P/C/G editáveis inline com kcal recalculado automaticamente (p×4 + c×4 + g×9)
+- [feat] Fase 7B-3b: `useCustomFoods` — `saveCustomFood()` retorna `FoodItem` com id real; novos: `findCustomFood()` (dedup por nome), `updateCustomFood()`, `deleteCustomFood()`
+- [feat] Fase 7B-3b: `AiChatModal` — instancia `useCustomFoods()` diretamente (sem prop chain); `handleConfirmLog()` vira async; verifica duplicata antes de criar; salva custom com macros por 100g
+- [feat] `FoodDrawer` — botões ✏️ editar e 🗑️ excluir nos alimentos personalizados; `CustomFoodModal` reutilizado no modo edição com `initialValues`; confirmação antes de excluir
+- [feat] `CustomFoodModal` — aceita `initialValues` para modo edição; título e botão adaptam ao contexto
+
+### Corrigido
+- [fix] Alimento custom sendo criado duplicado ao confirmar o mesmo log duas vezes — `findCustomFood()` verifica por nome antes de chamar `saveCustomFood()`
+- [fix] Macros do custom food ficavam inconsistentes ao editar gramas — alimento sempre salvo com porção 100g (padrão do banco); diário registra a quantidade real separadamente
+- [fix] Catch silencioso mascarava erros de criação de alimento — removido; erro agora sobe normalmente
+
+### Notas
+- Mock fixo (1 item db + 1 item custom) ativo para validar fluxo — será substituído pela Edge Function `action:'parse-food'` na Fase 7B-2
+- Fluxo completo validado: detecta intenção → modal de confirmação → dedup → cria custom_food se novo → insere no diário
+- `useCustomFoods` agora é hook completo (CRUD total); pode ser instanciado em qualquer componente sem prop chain
+
 ## [v0.42.0] — 2026-03-23
 
 ### Adicionado

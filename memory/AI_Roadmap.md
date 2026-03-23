@@ -1,6 +1,6 @@
 # Kcal Coach IA — Roadmap Técnico Completo
 **Criado:** 2026-03-17
-**Última atualização:** 2026-03-19
+**Última atualização:** 2026-03-23
 
 ---
 
@@ -16,9 +16,9 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 | 7A-1 | Edge Function ai-chat (backend) | ✅ Concluída (2026-03-18) |
 | 7A-2 | UI do chat (frontend) | ✅ Concluída (2026-03-18) |
 | 7A-3 | Otimização de tokens — pré-proc + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
-| 7B-1 | Log por linguagem natural — Frontend + mock (Edge Function intocada) | 🔵 Próximo |
-| 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | 🔵 Após 7B-1 |
-| 7B-3 | Log por linguagem natural — Integração com DiarioPage | 🔵 Após 7B-2 |
+| 7B-1 | Log por linguagem natural — Frontend + mock | ✅ Concluída (2026-03-23) |
+| 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | 🔵 Próximo |
+| 7B-3 | Log por linguagem natural — Integração completa (substituir mock por Edge Function) | 🔵 Após 7B-2 |
 | 7C | Foto para macros | 🔵 Após 7B |
 
 ---
@@ -187,38 +187,28 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
 
 ---
 
-### Sub-sessão 7B-1 — Frontend + mock (Edge Function intocada)
+### Sub-sessão 7B-1 — Frontend + mock ✅ Concluída (2026-03-23)
 
-**Arquivos a criar/modificar:**
-- `src/data/foodDb.ts` — nova função `getFoodIndex()`: string compacta por categoria (~200 tokens, não 500 IDs soltos)
-- `src/hooks/useAiChat.ts` — estados `pendingLog`, `parseFood()` (mock offline), `confirmLog()`, `cancelLog()`
-- `src/components/AiLogConfirmModal.tsx` — modal de confirmação (novo)
-- `src/components/AiChatModal.tsx` — detecta intenção de log no frontend + abre modal
+**O que foi entregue (v0.42.0 + v0.43.0):**
+- `AiLogConfirmModal` — modal com gramas editáveis, totalizador em tempo real, dropdown de refeição
+- `useAiChat` — `PendingLog`/`PendingLogItem`, detecção de intenção, mock fixo (1 item db + 1 item custom)
+- `getFoodIndex()` em `foodDb.ts` — índice compacto ~200 tokens para uso na Edge Function
+- `addFoodsToDiary()` standalone em `useDiary.ts` — evita race condition entre instâncias
+- Itens `source:'custom'` com badge ✨ Novo + campos P/C/G editáveis inline + kcal automático
+- `useCustomFoods` CRUD completo: `saveCustomFood()` retorna id real, `findCustomFood()` evita duplicatas, `updateCustomFood()`, `deleteCustomFood()`
+- `FoodDrawer` — botões ✏️/🗑️ nos alimentos personalizados
+- `CustomFoodModal` — modo edição via `initialValues`
 
-**Detalhe — getFoodIndex() compacto:**
-```
-Carnes: frango_grelhado(Frango grelhado/100g), bife_grelhado(Bife alcatra/100g)...
-Cereais: arroz_branco(Arroz branco/50g), batata_doce(Batata doce/100g)...
-```
-→ ~200 tokens vs ~1.500 da spec anterior
-
-**Detalhe — mock para testar UI sem backend:**
-```typescript
-// Durante 7B-1: parseFood() retorna JSON hardcoded
-// Durante 7B-3: substituído pela chamada real à Edge Function
-```
-
-**Critérios de feito:**
-- [ ] Modal abre ao detectar log de refeição no chat
-- [ ] Itens exibidos com gramas editáveis e totalizador em tempo real
-- [ ] Refeição detectada ou dropdown obrigatório se não detectada
-- [ ] Confirmar/Cancelar funcionam (confirmação mostra toast por ora)
-- [ ] Build sem erros TypeScript
-- [ ] **Zero mudança na Edge Function**
+**Aprendizados desta sub-sessão:**
+- Mock de extração por palavras-chave é muito frágil (pega verbos como "almocei" como alimento) — não vale refinar; substituir diretamente pela Edge Function na 7B-2
+- Mock fixo (hardcoded) é suficiente para validar o fluxo completo de UI
+- `saveCustomFood` deve sempre salvar com `porcaoG: 100` (padrão do banco) — a porção editada fica no `FoodEntry` do diário, não no cadastro do alimento
+- `useCustomFoods` pode ser instanciado diretamente no `AiChatModal` — não precisa de prop chain (mesmo padrão do `useHabits` no `TreinoPage`)
+- Dedup por nome (`findCustomFood`) é suficiente para o MVP; na Edge Function real o `foodId` virá do banco diretamente
 
 ---
 
-### Sub-sessão 7B-2 — Edge Function (bloco isolado)
+### Sub-sessão 7B-2 — Edge Function (bloco isolado) 🔵 Próximo
 
 **Arquivos a modificar:**
 - `supabase/functions/ai-chat/index.ts` — bloco `action:'parse-food'` **antes** do fluxo de chat existente

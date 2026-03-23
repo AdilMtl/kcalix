@@ -30,7 +30,10 @@ function rowToFoodItem(row: CustomFoodRow): FoodItem {
 interface UseCustomFoodsReturn {
   customFoods: FoodItem[]
   loading: boolean
-  saveCustomFood: (food: Omit<FoodItem, 'id'>) => Promise<void>
+  saveCustomFood: (food: Omit<FoodItem, 'id'>) => Promise<FoodItem>
+  findCustomFood: (nome: string) => FoodItem | undefined
+  updateCustomFood: (id: string, food: Omit<FoodItem, 'id'>) => Promise<void>
+  deleteCustomFood: (id: string) => Promise<void>
 }
 
 export function useCustomFoods(): UseCustomFoodsReturn {
@@ -58,8 +61,8 @@ export function useCustomFoods(): UseCustomFoodsReturn {
       })
   }, [user?.id])
 
-  const saveCustomFood = useCallback(async (food: Omit<FoodItem, 'id'>) => {
-    if (!user) return
+  const saveCustomFood = useCallback(async (food: Omit<FoodItem, 'id'>): Promise<FoodItem> => {
+    if (!user) throw new Error('Não autenticado')
     const { data, error } = await supabase
       .from('custom_foods')
       .insert({
@@ -75,8 +78,50 @@ export function useCustomFoods(): UseCustomFoodsReturn {
       .select('id, nome, porcao, porcao_g, p, c, g, kcal')
       .single()
     if (error) throw error
-    setCustomFoods(prev => [rowToFoodItem(data as CustomFoodRow), ...prev])
+    const saved = rowToFoodItem(data as CustomFoodRow)
+    setCustomFoods(prev => [saved, ...prev])
+    return saved
   }, [user?.id])
 
-  return { customFoods, loading, saveCustomFood }
+  // Busca por nome (case-insensitive) — usado para evitar duplicatas
+  const findCustomFood = useCallback((nome: string): FoodItem | undefined => {
+    const n = nome.toLowerCase().trim()
+    return customFoods.find(f => f.nome.toLowerCase().trim() === n)
+  }, [customFoods])
+
+  const updateCustomFood = useCallback(async (id: string, food: Omit<FoodItem, 'id'>) => {
+    if (!user) return
+    const rawId = id.startsWith('custom_') ? id.slice(7) : id
+    const { error } = await supabase
+      .from('custom_foods')
+      .update({
+        nome:     food.nome,
+        porcao:   food.porcao,
+        porcao_g: food.porcaoG,
+        p:        food.p,
+        c:        food.c,
+        g:        food.g,
+        kcal:     food.kcal,
+      })
+      .eq('id', rawId)
+      .eq('user_id', user.id)
+    if (error) throw error
+    setCustomFoods(prev => prev.map(f =>
+      f.id === id ? { ...food, id } : f
+    ))
+  }, [user?.id])
+
+  const deleteCustomFood = useCallback(async (id: string) => {
+    if (!user) return
+    const rawId = id.startsWith('custom_') ? id.slice(7) : id
+    const { error } = await supabase
+      .from('custom_foods')
+      .delete()
+      .eq('id', rawId)
+      .eq('user_id', user.id)
+    if (error) throw error
+    setCustomFoods(prev => prev.filter(f => f.id !== id))
+  }, [user?.id])
+
+  return { customFoods, loading, saveCustomFood, findCustomFood, updateCustomFood, deleteCustomFood }
 }

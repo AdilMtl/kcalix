@@ -6,6 +6,7 @@ type FoodPayload = Omit<FoodItem, 'id'>
 interface CustomFoodModalProps {
   onSave: (food: Omit<FoodItem, 'id'>) => Promise<void>
   onClose: () => void
+  initialValues?: Omit<FoodItem, 'id'>
 }
 
 function clamp(val: string): number {
@@ -19,13 +20,13 @@ function calcKcal(p: string, c: string, g: string): string {
   return String(Math.round(pv * 4 + cv * 4 + gv * 9))
 }
 
-export default function CustomFoodModal({ onSave, onClose }: CustomFoodModalProps) {
-  const [nome, setNome] = useState('')
-  const [porcao, setPorcao] = useState('')
-  const [p, setP] = useState('')
-  const [c, setC] = useState('')
-  const [g, setG] = useState('')
-  const [kcal, setKcal] = useState('')
+export default function CustomFoodModal({ onSave, onClose, initialValues }: CustomFoodModalProps) {
+  const [nome, setNome] = useState(initialValues?.nome ?? '')
+  const [porcao, setPorcao] = useState(initialValues?.porcao ?? '')
+  const [p, setP] = useState(initialValues ? String(initialValues.p) : '')
+  const [c, setC] = useState(initialValues ? String(initialValues.c) : '')
+  const [g, setG] = useState(initialValues ? String(initialValues.g) : '')
+  const [kcal, setKcal] = useState(initialValues ? String(initialValues.kcal) : '')
   const [kcalManual, setKcalManual] = useState(false)
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
@@ -116,7 +117,7 @@ export default function CustomFoodModal({ onSave, onClose }: CustomFoodModalProp
 
         {/* Header */}
         <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line)' }}>
-          <b style={{ fontSize: '15px', color: 'var(--text)' }}>➕ Alimento personalizado</b>
+          <b style={{ fontSize: '15px', color: 'var(--text)' }}>{initialValues ? '✏️ Editar alimento' : '➕ Alimento personalizado'}</b>
           <button
             onClick={onClose}
             style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface2)', color: 'var(--text2)', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font)' }}
@@ -188,7 +189,7 @@ export default function CustomFoodModal({ onSave, onClose }: CustomFoodModalProp
               color: '#fff', fontFamily: 'var(--font)', fontSize: '14px', fontWeight: 700,
               cursor: 'pointer',
             }}
-          >{saving ? 'Salvando...' : 'Salvar alimento'}</button>
+          >{saving ? 'Salvando...' : initialValues ? 'Salvar alterações' : 'Salvar alimento'}</button>
         </div>
       </div>
     </>

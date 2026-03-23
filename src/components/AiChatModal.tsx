@@ -3,6 +3,7 @@ import { useAiChat } from '../hooks/useAiChat'
 import type { PendingLogItem } from '../hooks/useAiChat'
 import { AiLogConfirmModal } from './AiLogConfirmModal'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
+import { useCustomFoods } from '../hooks/useCustomFoods'
 
 const CHIPS = [
   '🍽 Como estão meus macros esta semana?',
@@ -19,6 +20,7 @@ interface Props {
 
 export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   const { messages, loading, error, sendMessage, reset, pendingLog, cancelLog, addMessage } = useAiChat()
+  const { saveCustomFood, findCustomFood } = useCustomFoods()
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -41,12 +43,40 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
     onClose()
   }
 
-  function handleConfirmLog(meal: MealKey, items: PendingLogItem[]) {
+  async function handleConfirmLog(meal: MealKey, items: PendingLogItem[]) {
     cancelLog()
-    const entries: FoodEntry[] = items.map(item => {
+
+    const MEAL_NAMES: Record<string, string> = {
+      cafe: 'café', lanche1: 'lanche 1', almoco: 'almoço',
+      lanche2: 'lanche 2', jantar: 'jantar', ceia: 'ceia',
+    }
+
+    const entries: FoodEntry[] = await Promise.all(items.map(async item => {
       const ratio = item.grams / 100
+      let foodId = item.foodId ?? ''
+
+      // Alimento custom: reutiliza se já existe, cria se não
+      if (item.source === 'custom') {
+        const existing = findCustomFood(item.nome)
+        if (existing) {
+          foodId = existing.id
+        } else {
+          // Salva com macros por 100g (não pela porção) — padrão do banco
+          const saved = await saveCustomFood({
+            nome:    item.nome,
+            porcao:  '100g',
+            porcaoG: 100,
+            p:       Math.round(item.pPer100    * 10) / 10,
+            c:       Math.round(item.cPer100    * 10) / 10,
+            g:       Math.round(item.gPer100    * 10) / 10,
+            kcal:    Math.round(item.kcalPer100),
+          })
+          foodId = saved.id
+        }
+      }
+
       return {
-        foodId:  item.foodId ?? `custom_${Date.now()}`,
+        foodId,
         nome:    item.nome,
         qty:     1,
         porcaoG: item.grams,
@@ -56,12 +86,9 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
         kcal:    Math.round(item.kcalPer100 * ratio),
         at:      new Date().toISOString(),
       }
-    })
+    }))
+
     onAddFoods?.(meal, entries)
-    const MEAL_NAMES: Record<string, string> = {
-      cafe: 'café', lanche1: 'lanche 1', almoco: 'almoço',
-      lanche2: 'lanche 2', jantar: 'jantar', ceia: 'ceia',
-    }
     const nomes = items.map(i => `• ${i.nome} (${i.grams}g)`).join('\n')
     addMessage({ role: 'assistant', content: `✅ Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
   }

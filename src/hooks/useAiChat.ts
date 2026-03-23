@@ -47,71 +47,38 @@ function hasLogIntent(text: string): boolean {
   return LOG_TRIGGERS.some(trigger => t.includes(trigger))
 }
 
-// Mock: simula o que a IA vai retornar na Fase 7B-2
-// Retorna itens com base nos alimentos do banco mais comuns
+// Mock fixo para testar o fluxo completo (db + custom) antes da Edge Function real (Fase 7B-2)
+// Sempre retorna 2 itens: 1 do banco + 1 custom — independente do texto digitado
 function mockParseFood(text: string): PendingLog {
   const meal = detectMeal(text)
   const lookup = buildFoodLookup()
-  const t = text.toLowerCase()
 
-  // Tenta encontrar alimentos mencionados no texto pelo nome ou id
-  const foundItems: PendingLogItem[] = []
-
-  // Lista de mapeamentos simples: palavra-chave → foodId
-  const KEYWORD_MAP: Record<string, string> = {
-    'frango': 'frango_grelhado',
-    'arroz': 'arroz_branco',
-    'feijão': 'feijao_carioca',
-    'feijao': 'feijao_carioca',
-    'ovo': 'ovo_cozido',
-    'batata': 'batata_doce',
-    'macarrão': 'macarrao_cozido',
-    'macarrao': 'macarrao_cozido',
-    'pão': 'pao_frances',
-    'pao': 'pao_frances',
-    'carne': 'bife_grelhado',
-    'bife': 'bife_grelhado',
-    'salada': 'alface',
-    'banana': 'banana',
-    'whey': 'whey_protein',
-    'proteína': 'whey_protein',
-    'proteina': 'whey_protein',
-    'leite': 'leite_desnatado',
-    'iogurte': 'iogurte_natural',
-    'aveia': 'aveia',
+  // Item do banco: frango grelhado
+  const f = lookup['frango_grelhado']
+  const dbItem: PendingLogItem = {
+    foodId: f.id,
+    nome: f.nome,
+    grams: f.porcaoG,
+    source: 'db',
+    pPer100: (f.p / f.porcaoG) * 100,
+    cPer100: (f.c / f.porcaoG) * 100,
+    gPer100: (f.g / f.porcaoG) * 100,
+    kcalPer100: (f.kcal / f.porcaoG) * 100,
   }
 
-  for (const [keyword, foodId] of Object.entries(KEYWORD_MAP)) {
-    if (t.includes(keyword) && lookup[foodId]) {
-      const f = lookup[foodId]
-      foundItems.push({
-        foodId: f.id,
-        nome: f.nome,
-        grams: f.porcaoG,
-        source: 'db',
-        pPer100: (f.p / f.porcaoG) * 100,
-        cPer100: (f.c / f.porcaoG) * 100,
-        gPer100: (f.g / f.porcaoG) * 100,
-        kcalPer100: (f.kcal / f.porcaoG) * 100,
-      })
-    }
+  // Item custom: alimento fictício não existente no banco
+  const customItem: PendingLogItem = {
+    foodId: null,
+    nome: 'Queijo coalho grelhado',
+    grams: 50,
+    source: 'custom',
+    pPer100: 22,
+    cPer100: 2,
+    gPer100: 18,
+    kcalPer100: 262,
   }
 
-  // Se não encontrou nada, retorna um item genérico para demonstrar o modal
-  if (foundItems.length === 0) {
-    foundItems.push({
-      foodId: 'frango_grelhado',
-      nome: 'Frango grelhado (peito)',
-      grams: 150,
-      source: 'db',
-      pPer100: 32,
-      cPer100: 0,
-      gPer100: 2.5,
-      kcalPer100: 151,
-    })
-  }
-
-  return { meal, items: foundItems }
+  return { meal, items: [dbItem, customItem] }
 }
 
 export function useAiChat() {
