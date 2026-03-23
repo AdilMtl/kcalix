@@ -1096,8 +1096,11 @@ body_measurements (
 | 7B-3b | Fluxo custom food — source:'custom' → saveCustomFood() → inserir | ✅ Concluída (2026-03-23) |
 | 7B-2 | Edge Function — bloco action:'parse-food' isolado (substitui mock) | ✅ Concluída (2026-03-23) |
 | 7B-3 | Integração — substituir mock por chamada real à Edge Function | ✅ Concluída (2026-03-23) |
-| 7B-4 | IA decide intenção — unifica chat + log, remove regex do frontend | 🔵 Após 7B-3 |
+| 7B-4 | IA decide intenção — unifica chat + log, remove regex do frontend | ✅ Concluída (2026-03-23) |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B completa |
+
+> ⚠️ **TODO FUTURO — Notificação de nova versão/funcionalidades para usuários**
+> Quando houver features relevantes (ex: log via IA, 7C foto), notificar todos os usuários ativos dentro do app (banner ou modal "Novidades"). Implementar após Fase 7 estável — não bloqueia nenhuma fase atual.
 
 ### Benchmark de tokens — referência para otimizações futuras
 

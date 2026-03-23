@@ -2,6 +2,24 @@
 
 ---
 
+## [0.47.0] — 2026-03-23
+
+### Adicionado
+- [feat] `supabase/functions/ai-chat/index.ts` — MODO LOG no system prompt: IA decide se mensagem é relato de refeição ou pergunta sobre o diário, retornando `{"action":"parse-food"}` ou `{"action":"chat","reply":"..."}` — elimina regex no frontend
+- [feat] `supabase/functions/ai-chat/index.ts` — tabela de referência TACO/IBGE inline no prompt do `parseFoodHandler` (25 alimentos); alimentos `source:'custom'` agora retornam macros estimados por 100g, nunca zeros
+
+### Corrigido
+- [fix] `src/hooks/useAiChat.ts` — `hasLogIntent()` + `LOG_TRIGGERS` removidos; `sendMessage` unificado em um único fluxo; resposta interpretada via discriminated union `action:'chat' | 'parse-food'`
+- [fix] `supabase/functions/ai-chat/index.ts` — match no índice exige mesmo alimento (couve ≠ couve-flor); em caso de dúvida → `source:'custom'`
+- [fix] `supabase/functions/ai-chat/index.ts` — alimentos compostos (farofa de calabresa, omelete) retornados como item único com macros estimados do prato, não separados em ingredientes
+
+### Notas
+- Fase 7B concluída — log de alimentos via IA totalmente funcional
+- Edge Function `ai-chat` deployada (v0.47.0); tag de restauração: `v0.45.0-ai-chat-stable`
+- Ajustes de prompt são iterativos — reportar casos inesperados para refinamento
+
+---
+
 ## [0.40.1] — 2026-03-22
 
 ### Corrigido
