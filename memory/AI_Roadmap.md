@@ -18,8 +18,8 @@ Hoje o Kcal Coach existe como um Gem do Gemini: você exporta o JSON do app, abr
 | 7A-3 | Otimização de tokens — pré-proc + roteamento + prompt modular | ✅ Concluída (2026-03-17) |
 | 7B-1 | Log por linguagem natural — Frontend + mock | ✅ Concluída (2026-03-23) |
 | 7B-3b | Fluxo custom food — source:'custom' → saveCustomFood() → inserir | ✅ Concluída (2026-03-23) |
-| 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | 🔵 Próximo |
-| 7B-3 | Integração — substituir mock por chamada real à Edge Function | 🔵 Após 7B-2 |
+| 7B-2 | Log por linguagem natural — Edge Function (action:parse-food isolado) | ✅ Concluída (2026-03-23) |
+| 7B-3 | Integração — substituir mock por chamada real à Edge Function | ✅ Concluída (2026-03-23) |
 | 7B-4 | IA decide intenção — unifica chat + log num fluxo único (sem regex) | 🔵 Após 7B-3 |
 | 7C | Foto para macros — GPT-4o Vision | 🔵 Após 7B |
 
@@ -219,7 +219,7 @@ O chat completo no app. FAB roxo em todas as telas → bottom sheet → conversa
 
 ---
 
-### Sub-sessão 7B-2 — Edge Function (bloco isolado) 🔵 Próximo
+### Sub-sessão 7B-2 — Edge Function (bloco isolado) ✅ Concluída (2026-03-23)
 
 **Arquivos a modificar:**
 - `supabase/functions/ai-chat/index.ts` — bloco `action:'parse-food'` **antes** do fluxo de chat existente

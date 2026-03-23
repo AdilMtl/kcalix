@@ -1,5 +1,23 @@
 # Kcalix — CHANGELOG
 
+## [v0.45.0] — 2026-03-23
+
+### Adicionado
+- [feat] Fase 7B-2: bloco `action:'parse-food'` isolado na Edge Function `ai-chat` — `parseFoodHandler()` recebe `{text, foodIndex}`, retorna `{meal, items[]}` com `source:'db'|'custom'`; `temperature:0`, `max_tokens:400`; limpeza de ```json``` do output; guard `if(body.action==='parse-food')` antes do fluxo de chat
+- [feat] Fase 7B-3: `useAiChat.ts` — `mockParseFood()` removido; chamada real à Edge Function `action:'parse-food'`; `toLogItem()` converte response para `PendingLogItem` com macros por 100g (db=lookup local, custom=macros da IA); `loading:true` durante parse
+
+### Documentação
+- [doc] `memory/supabase-edge-functions-deploy.md` — guia completo de deploy de Edge Functions: `--no-verify-jwt`, como obter JWT, 3 curls de verificação, rollback com tags git, sintomas comuns
+- [doc] `memory/spec-7B-2-parse-food-edge-function.md` — spec detalhada com padrão de isolamento, prompt, tratamento de erro e checklist
+- [doc] `memory/AI_Roadmap.md` — 7B-4 documentada (IA decide intenção, remove regex); status 7B-2 e 7B-3 fechados
+- [ops] Tags git: `v0.40.0-ai-chat-stable` e `v0.44.0-ai-chat-stable` criadas como pontos de restauração
+
+### Notas
+- Custo parse-food: ~$0.00007/chamada (100x mais barato que o chat)
+- Chat normal (`action` ausente) continua intocado — guard não afeta fluxo existente
+- LOG_TRIGGERS (regex de detecção) mantido com nota 7B-4 — será substituído por detecção via IA
+- Próximo: 7B-4 (IA decide intenção, unifica chat+log num fluxo único sem regex) ou 7C (foto para macros)
+
 ## [v0.43.0] — 2026-03-23
 
 ### Adicionado
