@@ -100,10 +100,20 @@ const SYSTEM_PROMPT_BASE = `Você é o Kcal Coach, coach de nutrição e treino 
 
 Seja direto, honesto, orientado a dados. Sem elogios vazios. Cite valores e datas reais. Responda sempre em português brasileiro.
 
-## MODOS DE RESPOSTA — identifique antes de responder
+## MODO LOG — detectar intenção de registrar refeição
+
+Se o usuário está RELATANDO o que comeu/bebeu (ex: "comi frango com arroz", "almocei X", "jantei Y", "tomei whey"), responda com este JSON exato (sem markdown, sem texto antes ou depois):
+{"action":"parse-food","reply":"Ok, vou registrar isso para você!"}
+
+NÃO use MODO LOG para perguntas sobre o diário (ex: "o que comi hoje?", "como foram meus macros?", "quanto comi de proteína?").
+NÃO use MODO LOG se a mensagem contém "?" ou verbos como "posso", "devo", "consigo", "o que", "quanto".
+
+## MODOS DE RESPOSTA (para tudo que NÃO é log)
+
+Responda sempre com: {"action":"chat","reply":"<sua resposta aqui>"}
 
 MODO A (pergunta simples): "posso", "devo", "quanto", "o que é", alimento/exercício específico → 1-3 frases, sem listas.
-MODO B (nutrição): macro, proteína, carbo, kcal, comi, dieta, refeição, fome → dados de diário; aderência P/C/G, refeição que falha, proteína/kg. Máx 3 parágrafos.
+MODO B (nutrição): macro, proteína, carbo, kcal, dieta, refeição, fome → dados de diário; aderência P/C/G, refeição que falha, proteína/kg. Máx 3 parágrafos.
 MODO C (treino): treino, série, volume, exercício, carga, progressão, MEV, MRV → dados de treino; volume vs landmarks, progressão. Máx 3 parágrafos.
 MODO D (corpo): peso, gordura, bf, medida, cintura, check-in → tendência kg/sem, BF%. Máx 2 parágrafos.
 MODO E (emocional): difícil, desanimado, falhei, frustrado → empatia (1 parágrafo) + 1 ajuste simples. Sem métricas.
@@ -246,15 +256,8 @@ interface Intent {
   needsWorkout: boolean
   needsBody: boolean
   isFullDiag: boolean
-  wantsLog: boolean
 }
 
-// Detecta intenção de logar refeição na última mensagem do usuário
-// Migrado do frontend (useAiChat.ts hasLogIntent) para cá na 7B-4
-function detectFoodLog(lastMsg: string): boolean {
-  const t = lastMsg.toLowerCase()
-  return /comi|almocei|jantei|café da manhã|no café|lanchei|tomei|bebi|no almoço|no jantar|de manhã|hoje comi|comer|registrar|adicionar ao diário|anotar/.test(t)
-}
 
 interface FoodEntry {
   nome: string
@@ -377,14 +380,11 @@ function detectIntent(messages: Message[]): Intent {
 
   // Fallback: se nenhuma flag ativa na última mensagem, assume nutrição
   const anyActive = needsDiary || needsWorkout || needsBody
-  // wantsLog: intenção de registrar refeição na última mensagem
-  const lastMsgRaw = messages.filter(m => m.role === 'user').at(-1)?.content ?? ''
   return {
     needsDiary: anyActive ? needsDiary : true,
     needsWorkout,
     needsBody,
     isFullDiag,
-    wantsLog: detectFoodLog(lastMsgRaw),
   }
 }
 
@@ -635,29 +635,6 @@ Deno.serve(async (req) => {
     // ── PASSO 1: Detectar intenção (acumula toda a conversa — FIX 4) ────────
     const intent = detectIntent(messages)
 
-    // ── 7B-4: Roteamento interno — se wantsLog e foodIndex disponível ────────
-    // A IA decide a intenção (não regex no frontend). Frontend sempre envia
-    // { messages, foodIndex } — aqui decidimos se é log ou chat.
-    if (intent.wantsLog && foodIndex) {
-      const lastUserMsg = messages.filter(m => m.role === 'user').at(-1)?.content ?? ''
-      const parseFoodReq: ParseFoodRequest = {
-        action: 'parse-food',
-        text: lastUserMsg,
-        foodIndex,
-      }
-      const parseFoodRes = await parseFoodHandler(parseFoodReq)
-      // Reembalar com action:'parse-food' para o frontend distinguir do chat
-      if (parseFoodRes.ok) {
-        const parsed = await parseFoodRes.json()
-        return new Response(
-          JSON.stringify({ action: 'parse-food', ...parsed }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        )
-      }
-      // Se parseFoodHandler falhou, cai no fluxo de chat normal (graceful fallback)
-    }
-    // ── FIM 7B-4 ─────────────────────────────────────────────────────────────
-
     // ── PASSO 2: Busca cirúrgica — só o necessário ─────────────────────────
     // FIX 3: 8 dias em vez de 7 para garantir que "hoje" sempre esteja incluído
     const since8 = new Date()
@@ -818,8 +795,36 @@ Deno.serve(async (req) => {
     }
 
     const openaiData = await openaiRes.json()
-    const reply = openaiData.choices?.[0]?.message?.content ?? ''
+    const raw = openaiData.choices?.[0]?.message?.content ?? ''
 
+    // ── 7B-4: IA decide a ação via JSON estruturado ──────────────────────────
+    // Tentar parsear como JSON — modelo pode retornar { action, reply } ou texto livre
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim()
+    let modelAction: { action: string; reply: string } | null = null
+    try {
+      const parsed = JSON.parse(cleaned)
+      if (parsed.action === 'parse-food' || parsed.action === 'chat') {
+        modelAction = parsed
+      }
+    } catch { /* não é JSON — resposta livre (fallback para chat) */ }
+
+    if (modelAction?.action === 'parse-food' && foodIndex) {
+      // IA detectou intenção de log → chamar parseFoodHandler com a última mensagem
+      const lastUserMsg = messages.filter(m => m.role === 'user').at(-1)?.content ?? ''
+      const parseFoodReq: ParseFoodRequest = { action: 'parse-food', text: lastUserMsg, foodIndex }
+      const parseFoodRes = await parseFoodHandler(parseFoodReq)
+      if (parseFoodRes.ok) {
+        const parsed = await parseFoodRes.json()
+        return new Response(
+          JSON.stringify({ action: 'parse-food', ...parsed }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+      // parseFoodHandler falhou → cai no chat com o reply de fallback
+    }
+
+    // Resposta de chat normal — usar reply do JSON ou o texto bruto
+    const reply = modelAction?.reply ?? raw
     return new Response(
       JSON.stringify({ action: 'chat', reply }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
