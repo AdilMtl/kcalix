@@ -189,20 +189,33 @@ async function parseFoodHandler(body: ParseFoodRequest): Promise<Response> {
     )
   }
 
-  const systemPrompt = `Você é um parser de alimentos. Analise o texto do usuário e retorne APENAS JSON válido, sem markdown, sem explicação.
+  const systemPrompt = `Você é um parser de alimentos com conhecimento nutricional baseado na Tabela TACO e IBGE. Analise o texto do usuário e retorne APENAS JSON válido, sem markdown, sem explicação.
 
 Índice de alimentos disponíveis (formato: "id(nome/Xg)"):
 ${body.foodIndex}
 
 Retorne exatamente neste formato:
-{"meal":"cafe"|"lanche1"|"almoco"|"lanche2"|"jantar"|"ceia"|null,"items":[{"foodId":"id_ou_null","nome":"nome legível","grams":100,"source":"db"|"custom","p":0,"c":0,"g":0,"kcal":0}]}
+{"meal":"cafe"|"lanche1"|"almoco"|"lanche2"|"jantar"|"ceia"|null,"items":[{"foodId":"id_ou_null","nome":"nome legível","grams":100,"source":"db"|"custom","p":25.0,"c":0.0,"g":3.0,"kcal":130}]}
 
 Regras:
 - meal: inferir do texto ("almocei"→almoco, "café da manhã"→cafe, "lanchei"→lanche1, "jantei"→jantar, "ceia"→ceia). null se não for possível inferir.
-- source "db": alimento existe no índice → usar foodId exato do índice, omitir p/c/g/kcal (ou setar como 0)
-- source "custom": alimento NÃO existe no índice → foodId=null, estimar macros por 100g
-- grams: gramas mencionadas. Se não mencionado, usar porção típica (frango→150, arroz→150, feijão→100, ovo→60, banana→100, pão→50, leite→200)
-- Retornar SOMENTE o JSON. Nenhum texto antes ou depois.`
+- source "db": alimento existe no índice → usar foodId exato do índice, setar p/c/g/kcal como 0 (serão buscados do banco)
+- source "custom": alimento NÃO existe no índice → foodId=null, OBRIGATÓRIO estimar p/c/g/kcal por 100g com base em conhecimento nutricional real (TACO/IBGE). NUNCA retornar zeros para custom.
+- grams: gramas mencionadas. Se não mencionado, usar porção típica (frango→150, arroz→150, feijão→100, ovo→60, banana→100, pão→50, leite→200, whey→30, batata→150, macarrão→80)
+- Retornar SOMENTE o JSON. Nenhum texto antes ou depois.
+
+Referências TACO para estimativas custom (por 100g):
+frango grelhado: p=31 c=0 g=3 kcal=159 | carne bovina: p=26 c=0 g=5 kcal=152
+peixe (tilápia): p=26 c=0 g=3 kcal=129 | atum (lata): p=28 c=0 g=1 kcal=119
+ovo inteiro: p=13 c=1 g=9 kcal=143 | clara de ovo: p=11 c=1 g=0 kcal=48
+arroz branco cozido: p=2 c=28 g=0 kcal=128 | feijão cozido: p=5 c=14 g=0 kcal=77
+batata cozida: p=2 c=18 g=0 kcal=82 | macarrão cozido: p=4 c=23 g=1 kcal=117
+pão francês: p=8 c=58 g=2 kcal=289 | aveia: p=13 c=67 g=7 kcal=394
+banana: p=1 c=23 g=0 kcal=92 | maçã: p=0 c=15 g=0 kcal=56 | laranja: p=1 c=12 g=0 kcal=47
+leite integral: p=3 c=5 g=3 kcal=61 | iogurte natural: p=5 c=6 g=3 kcal=66
+queijo mussarela: p=22 c=1 g=17 kcal=244 | requeijão: p=9 c=3 g=22 kcal=244
+whey protein: p=80 c=8 g=4 kcal=392 | azeite: p=0 c=0 g=100 kcal=884
+salada folhas: p=2 c=3 g=0 kcal=20 | tomate: p=1 c=4 g=0 kcal=18`
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
