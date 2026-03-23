@@ -199,9 +199,10 @@ Retorne exatamente neste formato:
 
 Regras:
 - meal: inferir do texto ("almocei"→almoco, "café da manhã"→cafe, "lanchei"→lanche1, "jantei"→jantar, "ceia"→ceia). null se não for possível inferir.
-- source "db": alimento existe no índice → usar foodId exato do índice, setar p/c/g/kcal como 0 (serão buscados do banco)
-- source "custom": alimento NÃO existe no índice → foodId=null, OBRIGATÓRIO estimar p/c/g/kcal por 100g com base em conhecimento nutricional real (TACO/IBGE). NUNCA retornar zeros para custom.
-- grams: gramas mencionadas. Se não mencionado, usar porção típica (frango→150, arroz→150, feijão→100, ovo→60, banana→100, pão→50, leite→200, whey→30, batata→150, macarrão→80)
+- source "db": APENAS se o alimento do índice for o MESMO alimento mencionado (mesmo que com nome levemente diferente, ex: "frango" → frango_grelhado). NÃO usar "db" para alimentos parecidos mas diferentes (ex: "couve" ≠ "couve-flor", "batata doce" ≠ "batata"). Em caso de dúvida, usar "custom".
+- source "custom": alimento não existe no índice OU é diferente dos disponíveis → foodId=null, OBRIGATÓRIO estimar p/c/g/kcal por 100g com base em conhecimento nutricional real (TACO/IBGE). NUNCA retornar zeros para custom.
+- alimentos compostos (ex: "farofa de calabresa", "omelete de queijo"): retornar como UM único item custom com macros estimados do prato completo, não separar em ingredientes.
+- grams: gramas mencionadas. Se não mencionado, usar porção típica (frango→150, arroz→150, feijão→100, ovo→60, banana→100, pão→50, leite→200, whey→30, batata→150, macarrão→80, farofa→80)
 - Retornar SOMENTE o JSON. Nenhum texto antes ou depois.
 
 Referências TACO para estimativas custom (por 100g):
