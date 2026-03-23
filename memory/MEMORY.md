@@ -60,7 +60,7 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 6A: CONCLUÍDA (2026-03-15) — PWA base + Fix 404 SPA (v0.25.0)
 - Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam ITEM 10 (toggle Free/Assinante) e ITEM 11 (lentidão)
 - Fase 7A: CONCLUÍDA (2026-03-18) — Edge Function ai-chat + chat UI (FAB + AiChatModal) — v0.34.0
-- Fase 7B: EM ANDAMENTO (v0.45.0 — 2026-03-23) — 7B-1, 7B-2, 7B-3, 7B-3a, 7B-3b concluídos; pendente: 7B-4 (IA decide intenção, remove regex)
+- Fase 7B: CONCLUÍDA (v0.47.0 — 2026-03-23) — log de alimentos via IA completo; IA decide intenção via JSON estruturado; macros custom via TACO/IBGE
 
 ## Itens 6B concluídos
 - ITEM 1 — Error Boundary (v0.27.0)
@@ -102,8 +102,7 @@ Ambient glow já adicionado em `body::before/::after`.
 - **FoodDrawer CRUD:** botões ✏️/🗑️ só em `food.id.startsWith('custom_')`; confirmação antes de excluir
 
 ## Próximo passo
-Fase 7B — pendência:
-- **7B-4 (próxima):** IA decide intenção — toda mensagem vai para a Edge Function; output tipado `{ type: 'reply'|'log', ... }`; frontend reage ao `type`; `LOG_TRIGGERS` e `hasLogIntent()` removidos de `useAiChat.ts`; frases naturais sem verbo de log passam a funcionar ("200g de frango", "minha janta foi filé"). Ver spec em `memory/AI_Roadmap.md` → Sub-sessão 7B-4
+Fase 7C — Foto para macros (GPT-4o Vision) — após Fase 7B concluída ✅
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local
