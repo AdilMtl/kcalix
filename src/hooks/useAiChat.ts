@@ -1,24 +1,143 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { buildFoodLookup } from '../data/foodDb'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
+export interface PendingLogItem {
+  foodId: string | null   // null = custom (não encontrado no banco)
+  nome: string
+  grams: number
+  source: 'db' | 'custom'
+  // macros base por 100g (para recalcular ao editar gramas)
+  pPer100: number
+  cPer100: number
+  gPer100: number
+  kcalPer100: number
+}
+
+export interface PendingLog {
+  meal: string | null     // null = usuário precisa selecionar
+  items: PendingLogItem[]
+}
+
+// Palavras que indicam intenção de registrar refeição
+const LOG_TRIGGERS = [
+  'comi', 'almocei', 'jantei', 'café', 'lanche', 'tomei', 'bebi',
+  'no almoço', 'no jantar', 'no café', 'de manhã', 'hoje comi',
+  'comer', 'registrar', 'adicionar ao diário', 'anotar',
+]
+
+// Detecta a refeição a partir do texto
+function detectMeal(text: string): string | null {
+  const t = text.toLowerCase()
+  if (t.includes('café') || t.includes('manha') || t.includes('manhã') || t.includes('desjejum')) return 'cafe'
+  if (t.includes('almoc') || t.includes('almoço')) return 'almoco'
+  if (t.includes('lanche')) return 'lanche'
+  if (t.includes('jant') || t.includes('jantar')) return 'jantar'
+  if (t.includes('ceia')) return 'ceia'
+  return null
+}
+
+function hasLogIntent(text: string): boolean {
+  const t = text.toLowerCase()
+  return LOG_TRIGGERS.some(trigger => t.includes(trigger))
+}
+
+// Mock: simula o que a IA vai retornar na Fase 7B-2
+// Retorna itens com base nos alimentos do banco mais comuns
+function mockParseFood(text: string): PendingLog {
+  const meal = detectMeal(text)
+  const lookup = buildFoodLookup()
+  const t = text.toLowerCase()
+
+  // Tenta encontrar alimentos mencionados no texto pelo nome ou id
+  const foundItems: PendingLogItem[] = []
+
+  // Lista de mapeamentos simples: palavra-chave → foodId
+  const KEYWORD_MAP: Record<string, string> = {
+    'frango': 'frango_grelhado',
+    'arroz': 'arroz_branco',
+    'feijão': 'feijao_carioca',
+    'feijao': 'feijao_carioca',
+    'ovo': 'ovo_cozido',
+    'batata': 'batata_doce',
+    'macarrão': 'macarrao_cozido',
+    'macarrao': 'macarrao_cozido',
+    'pão': 'pao_frances',
+    'pao': 'pao_frances',
+    'carne': 'bife_grelhado',
+    'bife': 'bife_grelhado',
+    'salada': 'alface',
+    'banana': 'banana',
+    'whey': 'whey_protein',
+    'proteína': 'whey_protein',
+    'proteina': 'whey_protein',
+    'leite': 'leite_desnatado',
+    'iogurte': 'iogurte_natural',
+    'aveia': 'aveia',
+  }
+
+  for (const [keyword, foodId] of Object.entries(KEYWORD_MAP)) {
+    if (t.includes(keyword) && lookup[foodId]) {
+      const f = lookup[foodId]
+      foundItems.push({
+        foodId: f.id,
+        nome: f.nome,
+        grams: f.porcaoG,
+        source: 'db',
+        pPer100: (f.p / f.porcaoG) * 100,
+        cPer100: (f.c / f.porcaoG) * 100,
+        gPer100: (f.g / f.porcaoG) * 100,
+        kcalPer100: (f.kcal / f.porcaoG) * 100,
+      })
+    }
+  }
+
+  // Se não encontrou nada, retorna um item genérico para demonstrar o modal
+  if (foundItems.length === 0) {
+    foundItems.push({
+      foodId: 'frango_grelhado',
+      nome: 'Frango grelhado (peito)',
+      grams: 150,
+      source: 'db',
+      pPer100: 32,
+      cPer100: 0,
+      gPer100: 2.5,
+      kcalPer100: 151,
+    })
+  }
+
+  return { meal, items: foundItems }
+}
+
 export function useAiChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingLog, setPendingLog] = useState<PendingLog | null>(null)
 
   async function sendMessage(text: string) {
+    // Detecta intenção de log ANTES de chamar a Edge Function
+    if (hasLogIntent(text)) {
+      // Adiciona a mensagem do usuário ao chat
+      setMessages(prev => [...prev, { role: 'user', content: text }])
+      // Seta o mock como pendingLog (7B-2: substituir por chamada real)
+      const log = mockParseFood(text)
+      setPendingLog(log)
+      return
+    }
+
+    // Fluxo normal de chat — sem alteração
     const newMessages: ChatMessage[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setLoading(true)
     setError(null)
 
     try {
-      // O SDK do Supabase injeta o Authorization automaticamente
       const res = await supabase.functions.invoke('ai-chat', {
         body: { messages: newMessages },
       })
@@ -34,10 +153,19 @@ export function useAiChat() {
     }
   }
 
+  function cancelLog() {
+    setPendingLog(null)
+  }
+
   function reset() {
     setMessages([])
     setError(null)
+    setPendingLog(null)
   }
 
-  return { messages, loading, error, sendMessage, reset }
+  function addMessage(msg: ChatMessage) {
+    setMessages(prev => [...prev, msg])
+  }
+
+  return { messages, loading, error, sendMessage, reset, pendingLog, cancelLog, addMessage }
 }

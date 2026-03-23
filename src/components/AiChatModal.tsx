@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAiChat } from '../hooks/useAiChat'
+import type { PendingLogItem } from '../hooks/useAiChat'
+import { AiLogConfirmModal } from './AiLogConfirmModal'
+import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
 const CHIPS = [
   '🍽 Como estão meus macros esta semana?',
@@ -11,10 +14,11 @@ const CHIPS = [
 interface Props {
   open: boolean
   onClose: () => void
+  onAddFoods?: (meal: MealKey, entries: FoodEntry[]) => void
 }
 
-export function AiChatModal({ open, onClose }: Props) {
-  const { messages, loading, error, sendMessage, reset } = useAiChat()
+export function AiChatModal({ open, onClose, onAddFoods }: Props) {
+  const { messages, loading, error, sendMessage, reset, pendingLog, cancelLog, addMessage } = useAiChat()
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -35,6 +39,31 @@ export function AiChatModal({ open, onClose }: Props) {
     reset()
     setInput('')
     onClose()
+  }
+
+  function handleConfirmLog(meal: MealKey, items: PendingLogItem[]) {
+    cancelLog()
+    const entries: FoodEntry[] = items.map(item => {
+      const ratio = item.grams / 100
+      return {
+        foodId:  item.foodId ?? `custom_${Date.now()}`,
+        nome:    item.nome,
+        qty:     1,
+        porcaoG: item.grams,
+        p:       Math.round(item.pPer100    * ratio * 10) / 10,
+        c:       Math.round(item.cPer100    * ratio * 10) / 10,
+        g:       Math.round(item.gPer100    * ratio * 10) / 10,
+        kcal:    Math.round(item.kcalPer100 * ratio),
+        at:      new Date().toISOString(),
+      }
+    })
+    onAddFoods?.(meal, entries)
+    const MEAL_NAMES: Record<string, string> = {
+      cafe: 'café', lanche1: 'lanche 1', almoco: 'almoço',
+      lanche2: 'lanche 2', jantar: 'jantar', ceia: 'ceia',
+    }
+    const nomes = items.map(i => `• ${i.nome} (${i.grams}g)`).join('\n')
+    addMessage({ role: 'assistant', content: `✅ Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
   }
 
   async function handleSend() {
@@ -233,7 +262,7 @@ export function AiChatModal({ open, onClose }: Props) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Pergunte algo sobre seus dados..."
+            placeholder="Pergunte algo ou registre o que comeu..."
             rows={1}
             style={{
               flex: 1, resize: 'none', overflow: 'hidden',
@@ -268,6 +297,15 @@ export function AiChatModal({ open, onClose }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Modal de confirmação de log */}
+      {pendingLog && (
+        <AiLogConfirmModal
+          pendingLog={pendingLog}
+          onConfirm={handleConfirmLog}
+          onCancel={cancelLog}
+        />
+      )}
 
       <style>{`
         @keyframes bounce {

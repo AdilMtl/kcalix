@@ -60,6 +60,7 @@ Ambient glow já adicionado em `body::before/::after`.
 - Fase 6A: CONCLUÍDA (2026-03-15) — PWA base + Fix 404 SPA (v0.25.0)
 - Fase 6B: EM ANDAMENTO — ITENs 1–9 concluídos; faltam ITEM 10 (toggle Free/Assinante) e ITEM 11 (lentidão)
 - Fase 7A: CONCLUÍDA (2026-03-18) — Edge Function ai-chat + chat UI (FAB + AiChatModal) — v0.34.0
+- Fase 7B: EM ANDAMENTO (v0.42.0 — 2026-03-23) — 7B-1 (frontend+mock) + 7B-3a (inserção real) concluídos; pendente: 7B-2 (Edge Function parse-food) e 7B-3b (custom food)
 
 ## Itens 6B concluídos
 - ITEM 1 — Error Boundary (v0.27.0)
@@ -80,11 +81,21 @@ Ambient glow já adicionado em `body::before/::after`.
 - **Edge Function ai-chat:** busca diary + workouts + body_measurements + checkins (30 dias) + user_settings; monta system prompt com protocolos RP; chama gpt-4o-mini max_tokens 1000; retorna `{ reply: string }`
 - **OPENAI_API_KEY:** configurada apenas em Supabase Vault (secrets) — NUNCA prefixo VITE_, NUNCA em src/
 
+## Padrões adicionados na Fase 7B (v0.42.0 — parcial)
+- **AiLogConfirmModal:** `src/components/AiLogConfirmModal.tsx` — z-index 348/350; lista de `PendingLogItem` com input de gramas por item; totalizador P/C/G/kcal recalculado em tempo real; dropdown de refeição obrigatório se não detectado no texto
+- **PendingLogItem:** `{ foodId, nome, grams, source, pPer100, cPer100, gPer100, kcalPer100 }` — macros armazenados por 100g para permitir recalcular ao editar gramas
+- **Detecção de intenção (frontend):** `hasLogIntent(text)` em `useAiChat.ts` — palavras-chave `comi/almocei/jantei/...`; intercepta ANTES de chamar a Edge Function; sem custo de tokens
+- **Mock parse-food:** `mockParseFood(text)` — KEYWORD_MAP com ~20 palavras → foodId; retorna só `source:'db'`; será substituído pela Edge Function na 7B-2
+- **addFoodsToDiary:** função standalone exportada de `useDiary.ts` — lê estado atual do banco, concatena entries, persiste; evita race condition de ter dois `useDiary` instanciados (AppLayout + DiarioPage)
+- **NUNCA instanciar useDiary no AppLayout** para escritas do chat — usar sempre `addFoodsToDiary(userId, date, meal, entries)` diretamente
+- **Confirmação no chat:** ao confirmar o modal, o coach exibe mensagem no histórico listando os itens com gramas (não toast flutuante — overlapping bug)
+- **getFoodIndex():** `src/data/foodDb.ts` — gera string compacta `"Categoria: id(nome/Xg), ..."` para ser enviada à Edge Function na 7B-2 (~200 tokens)
+
 ## Próximo passo
-Fase 7B: log por linguagem natural — "comi 200g de frango com arroz"
-- Novo `action: 'parse-food'` na mesma Edge Function ai-chat
-- Modal de confirmação antes de salvar (obrigatório — IA erra ±20%)
-- Ver spec em memory/AI_Roadmap.md seção "Fase 7B"
+Fase 7B — pendências para próxima sessão:
+- **7B-3b:** fluxo de custom food — quando IA retorna `source:'custom'`, criar via `saveCustomFood()` antes de inserir no diário
+- **7B-2:** bloco `action:'parse-food'` na Edge Function `ai-chat` (isolado com `if (body.action === 'parse-food')` antes do fluxo de chat); substituir `mockParseFood` por chamada real; testar via curl antes de ligar no app
+- Deploy conjunto 7B-2 + 7B-3b após validação
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local

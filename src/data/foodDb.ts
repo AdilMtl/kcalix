@@ -170,3 +170,16 @@ export function buildFoodLookup(): Record<string, FoodItem> {
   }
   return lookup
 }
+
+// Índice compacto para a IA (~200 tokens) — usado pelo parse-food na Fase 7B
+// Formato: "Categoria: id(nome/porcaoG), ..."
+export function getFoodIndex(): string {
+  return Object.entries(FOOD_DB)
+    .map(([cat, items]) => {
+      // Remove emoji do nome da categoria para economizar tokens
+      const catName = cat.replace(/^\S+\s/, '')
+      const ids = items.map(f => `${f.id}(${f.nome}/${f.porcaoG}g)`).join(', ')
+      return `${catName}: ${ids}`
+    })
+    .join('\n')
+}

@@ -1,5 +1,25 @@
 # Kcalix — CHANGELOG
 
+## [v0.42.0] — 2026-03-23
+
+### Adicionado
+- [feat] Fase 7B-1: `AiLogConfirmModal` — modal de confirmação de alimentos detectados no chat com gramas editáveis por item, totalizador de macros em tempo real (P/C/G/kcal) e dropdown de refeição pré-selecionado por palavras-chave
+- [feat] Fase 7B-1: `useAiChat` — tipos `PendingLogItem`/`PendingLog`, detecção de intenção de log por palavras-chave (`comi`, `almocei`, `jantei`, etc.) no frontend sem chamar a Edge Function; mock retorna alimentos reais do `FOOD_DB` com base no texto
+- [feat] Fase 7B-1: `getFoodIndex()` em `foodDb.ts` — índice compacto (~200 tokens) das 9 categorias do banco para uso na Edge Function na Fase 7B-2
+- [feat] Fase 7B-3a: `addFoodsToDiary()` — função standalone em `useDiary.ts` que lê o estado atual do banco antes de escrever; elimina race condition entre instâncias do hook
+- [feat] Fase 7B-3a: `addFoodsOptimistic()` — variante plural do addFoodOptimistic; insere múltiplos itens num único upsert evitando sobrescrita
+- [feat] Fase 7B-3a: `App.tsx` — `AiChatModal` recebe `onAddFoods` via `addFoodsToDiary` standalone; inserção real no diário de hoje a partir do chat
+
+### Corrigido
+- [fix] Toast de confirmação sobrepondo mensagens do chat — substituído por mensagem do coach no próprio histórico listando itens e gramas confirmados
+- [fix] Gramas editadas no modal não sendo salvas — `forEach` com múltiplos `onAddFood` causava race condition no closure do `diary`; corrigido com upsert único via `addFoodsOptimistic`
+- [fix] Duplicatas ao reabrir o chat — `useDiary` instanciado no `AppLayout` ficava desincronizado da `DiarioPage`; corrigido removendo a instância do layout e usando `addFoodsToDiary` standalone
+
+### Notas
+- Edge Function `ai-chat` não foi alterada — chat existente continua funcionando normalmente
+- Mock só retorna `source:'db'` (alimentos do banco); fluxo de custom food vem na Fase 7B-3b
+- Próximo: Fase 7B-2 (bloco `parse-food` na Edge Function) ou 7B-3b (custom food) + deploy conjunto
+
 ## [v0.40.0] — 2026-03-20
 
 ### Melhorado

@@ -83,6 +83,7 @@ interface UseDiaryReturn {
   loading: boolean
   addFood: (meal: MealKey, entry: FoodEntry) => Promise<void>
   addFoodOptimistic: (meal: MealKey, entry: FoodEntry) => void
+  addFoodsOptimistic: (meal: MealKey, entries: FoodEntry[]) => void
   removeFood: (meal: MealKey, index: number) => Promise<void>
   setKcalTreino: (kcal: number) => Promise<void>
   addWaterMl: (ml: number) => void
@@ -90,6 +91,35 @@ interface UseDiaryReturn {
   getRecentFoods: () => Promise<FoodItem[]>
   getWeekKcal: (dates: string[]) => Promise<Record<string, number>>
   getAllDiaryRows: () => Promise<{ date: string; data: DiaryData }[]>
+}
+
+// Adiciona itens ao diário sem depender de estado local — lê do banco, concatena, persiste.
+// Usada pelo AiChatModal (fora da DiarioPage) para evitar race condition entre instâncias.
+export async function addFoodsToDiary(
+  userId: string,
+  date: string,
+  meal: MealKey,
+  entries: FoodEntry[]
+): Promise<void> {
+  const { data } = await supabase
+    .from('diary_entries')
+    .select('data')
+    .eq('user_id', userId)
+    .eq('date', date)
+    .maybeSingle()
+
+  const raw = data?.data as DiaryData | undefined
+  const current: DiaryData = raw ?? { meals: { cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: [] }, totals: { p: 0, c: 0, g: 0, kcal: 0 }, kcalTreino: 0 }
+
+  const nextMeals: DiaryMeals = {
+    ...current.meals,
+    [meal]: [...(current.meals[meal] ?? []), ...entries],
+  }
+  const next: DiaryData = { ...current, meals: nextMeals, totals: recalcTotals(nextMeals) }
+
+  await supabase
+    .from('diary_entries')
+    .upsert({ user_id: userId, date, data: next }, { onConflict: 'user_id,date' })
 }
 
 export function useDiary(date: string = todayISO()): UseDiaryReturn {
@@ -166,6 +196,22 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
         .from('diary_entries')
         .upsert({ user_id: user.id, date, data: next }, { onConflict: 'user_id,date' })
         .then(({ error }) => { if (error) console.error('addFoodOptimistic persist:', error) })
+    }
+  }, [diary, user?.id, date])
+
+  // Adiciona múltiplos itens de uma vez — único upsert, evita race condition
+  const addFoodsOptimistic = useCallback((meal: MealKey, entries: FoodEntry[]) => {
+    const nextMeals: DiaryMeals = {
+      ...diary.meals,
+      [meal]: [...diary.meals[meal], ...entries],
+    }
+    const next: DiaryData = { ...diary, meals: nextMeals, totals: recalcTotals(nextMeals) }
+    setDiary(next)
+    if (user) {
+      supabase
+        .from('diary_entries')
+        .upsert({ user_id: user.id, date, data: next }, { onConflict: 'user_id,date' })
+        .then(({ error }) => { if (error) console.error('addFoodsOptimistic persist:', error) })
     }
   }, [diary, user?.id, date])
 
@@ -272,5 +318,5 @@ export function useDiary(date: string = todayISO()): UseDiaryReturn {
     })
   }, [user?.id])
 
-  return { diary, loading, addFood, addFoodOptimistic, removeFood, setKcalTreino, addWaterMl, resetWaterMl, getRecentFoods, getWeekKcal, getAllDiaryRows }
+  return { diary, loading, addFood, addFoodOptimistic, addFoodsOptimistic, removeFood, setKcalTreino, addWaterMl, resetWaterMl, getRecentFoods, getWeekKcal, getAllDiaryRows }
 }

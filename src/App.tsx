@@ -6,6 +6,8 @@ import DateNavBar from './components/DateNavBar'
 import { InstallPrompt } from './components/InstallPrompt'
 import { UpdateToast } from './components/UpdateToast'
 import { AiChatModal } from './components/AiChatModal'
+import { addFoodsToDiary } from './hooks/useDiary'
+import { todayISO } from './lib/dateUtils'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
@@ -60,6 +62,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 // Layout com Nav inferior — usado em todas as rotas privadas com abas
 function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false)
+  const { user } = useAuthStore()
 
   return (
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg)' }}>
@@ -100,7 +103,11 @@ function AppLayout() {
         🤖
       </button>
 
-      <AiChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
+      <AiChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        onAddFoods={user ? (meal, entries) => addFoodsToDiary(user.id, todayISO(), meal, entries) : undefined}
+      />
     </div>
   )
 }
