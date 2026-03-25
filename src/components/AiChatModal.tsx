@@ -155,20 +155,20 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
     }
   }
 
-  // No Android, o WebView perde foco brevemente ao abrir o seletor de galeria
-  // — isso pode fazer `open` flutuar para false e desmontar o componente (tela preta).
-  // Manter montado enquanto há operação de foto ativa.
+  // No Android, o WebView suspende/resume ao abrir a galeria — qualquer desmonte
+  // durante esse ciclo causa piscar. Nunca desmontar enquanto há operação de foto.
   if (!open && !photoLoading) return null
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — oculto quando fechado mas com foto em andamento */}
       <div
-        onClick={handleClose}
+        onClick={open ? handleClose : undefined}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.6)',
           zIndex: 340,
+          display: open ? 'block' : 'none',
         }}
       />
 
@@ -180,7 +180,7 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
           background: 'linear-gradient(180deg, #1a2035, #121828)',
           borderRadius: '20px 20px 0 0',
           maxHeight: '88dvh',
-          display: 'flex',
+          display: open ? 'flex' : 'none',
           flexDirection: 'column',
           boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
         }}
