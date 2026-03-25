@@ -265,6 +265,144 @@ salada folhas: p=2 c=3 g=0 kcal=20 | tomate: p=1 c=4 g=0 kcal=18`
   )
 }
 
+// ─── Tipos analyze-photo ──────────────────────────────────────────────────────
+
+interface AnalyzePhotoRequest {
+  action: 'analyze-photo'
+  image: string      // base64 sem prefixo data:
+  mimeType: string   // 'image/jpeg'
+}
+
+interface PhotoAltItem {
+  nome: string
+  pPer100: number
+  cPer100: number
+  gPer100: number
+  kcalPer100: number
+}
+
+interface PhotoFoodItem {
+  foodId: null
+  nome: string
+  grams: number
+  source: 'photo'
+  pPer100: number
+  cPer100: number
+  gPer100: number
+  kcalPer100: number
+  confidence: number        // 0–1
+  alternatives: PhotoAltItem[]
+}
+
+interface AnalyzePhotoResponse {
+  items: PhotoFoodItem[]
+  message?: string
+}
+
+// ─── Handler analyze-photo (isolado — zero queries ao Supabase) ───────────────
+
+async function analyzePhotoHandler(body: AnalyzePhotoRequest): Promise<Response> {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY')
+  if (!openaiKey) {
+    return new Response(
+      JSON.stringify({ error: 'Configuração incompleta' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const systemPrompt = `Você é um nutricionista especializado em identificar alimentos em fotos e estimar macronutrientes com base na Tabela TACO e IBGE.
+
+Analise a imagem e retorne APENAS JSON válido, sem markdown, sem explicação.
+
+Formato obrigatório:
+{"items":[{"nome":"nome legível","grams":150,"pPer100":2.5,"cPer100":28.1,"gPer100":0.2,"kcalPer100":128,"confidence":0.92,"alternatives":[{"nome":"alternativa","pPer100":2.5,"cPer100":28.1,"gPer100":0.2,"kcalPer100":128}]}],"message":null}
+
+Regras:
+- Identifique TODOS os alimentos visíveis na foto
+- grams: estimativa visual da porção em gramas
+- confidence: 0.0–1.0 — sua certeza sobre a identificação (ex: arroz claro e solto = 0.95; algo coberto por molho = 0.45)
+- alternatives: top-3 alternativas plausíveis APENAS quando confidence < 0.70, senão array vazio []
+- pPer100/cPer100/gPer100/kcalPer100: macros por 100g (não pela porção)
+- Se não houver alimentos visíveis: {"items":[],"message":"Não identifiquei alimentos na foto. Tente uma foto mais próxima ou com melhor iluminação."}
+- Retornar SOMENTE o JSON. Nenhum texto antes ou depois.
+
+Referências TACO (por 100g):
+arroz branco cozido: p=2 c=28 g=0 kcal=128 | feijão cozido: p=5 c=14 g=0 kcal=77
+frango grelhado: p=31 c=0 g=3 kcal=159 | carne bovina: p=26 c=0 g=5 kcal=152
+batata cozida: p=2 c=18 g=0 kcal=82 | macarrão cozido: p=4 c=23 g=1 kcal=117
+ovo inteiro: p=13 c=1 g=9 kcal=143 | pão francês: p=8 c=58 g=2 kcal=289
+salada folhas: p=2 c=3 g=0 kcal=20 | tomate: p=1 c=4 g=0 kcal=18
+banana: p=1 c=23 g=0 kcal=92 | maçã: p=0 c=15 g=0 kcal=56
+leite integral: p=3 c=5 g=3 kcal=61 | queijo mussarela: p=22 c=1 g=17 kcal=244
+azeite: p=0 c=0 g=100 kcal=884 | manteiga: p=1 c=0 g=83 kcal=752`
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 600,
+      temperature: 0,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${body.mimeType};base64,${body.image}`,
+                detail: 'low',   // menor custo — suficiente para identificar alimentos
+              },
+            },
+            {
+              type: 'text',
+              text: 'Identifique todos os alimentos visíveis nesta foto e retorne o JSON conforme instruído.',
+            },
+          ],
+        },
+      ],
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    return new Response(
+      JSON.stringify({ error: `OpenAI error: ${err}` }),
+      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const data = await res.json()
+  const raw = data.choices?.[0]?.message?.content ?? ''
+
+  // Modelo pode envolver JSON em ```json ... ``` — limpar (mesmo padrão do parse-food)
+  const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim()
+
+  let parsed: AnalyzePhotoResponse
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    return new Response(
+      JSON.stringify({ items: [], message: 'Não consegui analisar a foto. Tente descrever por texto.' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  // Garantir que items sempre seja array
+  if (!Array.isArray(parsed.items)) parsed.items = []
+
+  return new Response(
+    JSON.stringify(parsed),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+  )
+}
+
+// ─── Tipos chat ───────────────────────────────────────────────────────────────
+
 interface Intent {
   needsDiary: boolean
   needsWorkout: boolean
@@ -630,13 +768,19 @@ Deno.serve(async (req) => {
       )
     }
 
-    const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string }
+    const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string; image?: string; mimeType?: string }
 
     // ── BLOCO parse-food — isolado, sem tocar no fluxo de chat abaixo ──────────
     if (body.action === 'parse-food') {
       return await parseFoodHandler(body as ParseFoodRequest)
     }
     // ── FIM BLOCO parse-food ───────────────────────────────────────────────────
+
+    // ── BLOCO analyze-photo — isolado, sem tocar no fluxo de chat abaixo ───────
+    if (body.action === 'analyze-photo') {
+      return await analyzePhotoHandler(body as unknown as AnalyzePhotoRequest)
+    }
+    // ── FIM BLOCO analyze-photo ──────────────────────────────────────────────
 
     const { messages, foodIndex } = body
     if (!messages || !Array.isArray(messages) || messages.length === 0) {

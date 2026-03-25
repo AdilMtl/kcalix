@@ -11,7 +11,7 @@ export interface PendingLogItem {
   foodId: string | null   // null = custom (não encontrado no banco)
   nome: string
   grams: number
-  source: 'db' | 'custom'
+  source: 'db' | 'custom' | 'photo'
   // macros base por 100g (para recalcular ao editar gramas)
   pPer100: number
   cPer100: number
@@ -118,4 +118,37 @@ export function useAiChat() {
   }
 
   return { messages, loading, error, sendMessage, reset, pendingLog, cancelLog, addMessage }
+}
+
+// ─── Tipos Fase 7C — Foto para macros ─────────────────────────────────────────
+
+export interface PhotoAltItem {
+  nome: string
+  pPer100: number
+  cPer100: number
+  gPer100: number
+  kcalPer100: number
+}
+
+export interface PhotoFoodItem extends PendingLogItem {
+  source: 'photo'
+  confidence: number       // 0–1 — abaixo de 0.70 mostra ⚠️
+  alternatives: PhotoAltItem[]
+}
+
+export interface PhotoFoodResult {
+  items: PhotoFoodItem[]
+  message?: string         // preenchido quando items: [] (ex: "Nenhum alimento identificado")
+}
+
+
+export async function sendPhotoToAi(
+  base64: string,
+  mimeType: string,
+): Promise<PhotoFoodResult> {
+  const res = await supabase.functions.invoke('ai-chat', {
+    body: { action: 'analyze-photo', image: base64, mimeType },
+  })
+  if (res.error) throw new Error(res.error.message)
+  return res.data as PhotoFoodResult
 }

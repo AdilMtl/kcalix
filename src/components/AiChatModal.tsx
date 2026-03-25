@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAiChat } from '../hooks/useAiChat'
-import type { PendingLogItem } from '../hooks/useAiChat'
+import { useAiChat, sendPhotoToAi } from '../hooks/useAiChat'
+import type { PendingLogItem, PhotoFoodResult } from '../hooks/useAiChat'
 import { AiLogConfirmModal } from './AiLogConfirmModal'
+import { PhotoReviewSheet } from './PhotoReviewSheet'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 import { useCustomFoods } from '../hooks/useCustomFoods'
+import { resizeImageToBase64 } from '../lib/imageUtils'
 
 const CHIPS = [
   '🍽 Como estão meus macros esta semana?',
@@ -25,6 +27,14 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // ── Foto ──────────────────────────────────────────────────────────────────
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoResult, setPhotoResult] = useState<PhotoFoodResult | null>(null)
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false)
+
   // Scroll para o final quando nova mensagem chega
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -40,7 +50,45 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   function handleClose() {
     reset()
     setInput('')
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    setPhotoResult(null)
+    setPhotoPreviewUrl(null)
+    setShowPhotoOptions(false)
     onClose()
+  }
+
+  async function handlePhotoFile(file: File | null | undefined) {
+    if (!file) return
+    setShowPhotoOptions(false)
+
+    // Preview local (object URL — não sai do device)
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    const preview = URL.createObjectURL(file)
+    setPhotoPreviewUrl(preview)
+
+    setPhotoLoading(true)
+    try {
+      const { base64, mimeType, sizeKB } = await resizeImageToBase64(file)
+      console.debug(`[photo] ${sizeKB}KB enviado para análise`)
+      const result = await sendPhotoToAi(base64, mimeType)
+      setPhotoResult(result)
+    } catch (err) {
+      addMessage({ role: 'assistant', content: '⚠️ Não consegui processar a foto. Tente novamente ou descreva por texto.' })
+      console.error('[photo]', err)
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
+  function handleDismissPhoto() {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    setPhotoResult(null)
+    setPhotoPreviewUrl(null)
+  }
+
+  function handleDescribeByText() {
+    handleDismissPhoto()
+    setTimeout(() => inputRef.current?.focus(), 100)
   }
 
   async function handleConfirmLog(meal: MealKey, items: PendingLogItem[]) {
@@ -281,56 +329,140 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
           padding: '10px 12px',
           paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
           borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', gap: 8, alignItems: 'flex-end',
+          display: 'flex', flexDirection: 'column', gap: 8,
           flexShrink: 0,
         }}>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Pergunte algo ou registre o que comeu..."
-            rows={1}
-            style={{
-              flex: 1, resize: 'none', overflow: 'hidden',
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 14, padding: '10px 14px',
-              color: '#fff', fontSize: 14, lineHeight: 1.4,
-              outline: 'none', fontFamily: 'inherit',
-              maxHeight: 120,
-            }}
-            onInput={e => {
-              const el = e.currentTarget
-              el.style.height = 'auto'
-              el.style.height = `${el.scrollHeight}px`
-            }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            style={{
-              width: 42, height: 42, borderRadius: '50%', border: 'none',
-              background: input.trim() && !loading
-                ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                : 'rgba(255,255,255,0.08)',
-              color: '#fff', fontSize: 18, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, transition: 'background 0.2s',
-            }}
-            aria-label="Enviar"
-          >
-            ↑
-          </button>
+          {/* Opções de câmera / galeria */}
+          {showPhotoOptions && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {/* Tirar foto — input com capture */}
+              <label style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                background: 'rgba(124,92,255,0.12)', border: '1px solid rgba(124,92,255,0.3)',
+                borderRadius: 10, padding: '9px 12px',
+                color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>
+                📷 Tirar foto
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={e => handlePhotoFile(e.target.files?.[0])}
+                />
+              </label>
+              {/* Galeria — input sem capture */}
+              <label style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                background: 'rgba(124,92,255,0.12)', border: '1px solid rgba(124,92,255,0.3)',
+                borderRadius: 10, padding: '9px 12px',
+                color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>
+                🖼️ Galeria
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => handlePhotoFile(e.target.files?.[0])}
+                />
+              </label>
+              <button
+                onClick={() => setShowPhotoOptions(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)', border: 'none',
+                  color: 'rgba(255,255,255,0.4)', fontSize: 18,
+                  width: 36, height: 36, borderRadius: '50%',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >×</button>
+            </div>
+          )}
+
+          {/* Linha de texto + câmera + enviar */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            {/* Botão câmera */}
+            <button
+              onClick={() => setShowPhotoOptions(v => !v)}
+              disabled={photoLoading}
+              style={{
+                width: 42, height: 42, borderRadius: '50%', border: 'none',
+                background: showPhotoOptions
+                  ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
+                  : 'rgba(255,255,255,0.08)',
+                color: '#fff', fontSize: 18, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'background 0.2s',
+              }}
+              aria-label="Enviar foto"
+            >
+              {photoLoading ? '⏳' : '📷'}
+            </button>
+
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Pergunte algo ou registre o que comeu..."
+              rows={1}
+              style={{
+                flex: 1, resize: 'none', overflow: 'hidden',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 14, padding: '10px 14px',
+                color: '#fff', fontSize: 14, lineHeight: 1.4,
+                outline: 'none', fontFamily: 'inherit',
+                maxHeight: 120,
+              }}
+              onInput={e => {
+                const el = e.currentTarget
+                el.style.height = 'auto'
+                el.style.height = `${el.scrollHeight}px`
+              }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || loading}
+              style={{
+                width: 42, height: 42, borderRadius: '50%', border: 'none',
+                background: input.trim() && !loading
+                  ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
+                  : 'rgba(255,255,255,0.08)',
+                color: '#fff', fontSize: 18, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'background 0.2s',
+              }}
+              aria-label="Enviar"
+            >
+              ↑
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Modal de confirmação de log */}
+      {/* Modal de confirmação de log (via texto) */}
       {pendingLog && (
         <AiLogConfirmModal
           pendingLog={pendingLog}
           onConfirm={handleConfirmLog}
           onCancel={cancelLog}
+        />
+      )}
+
+      {/* Sheet de confirmação de log (via foto) */}
+      {photoResult && (
+        <PhotoReviewSheet
+          result={photoResult}
+          previewUrl={photoPreviewUrl}
+          onConfirm={(meal, items) => {
+            handleConfirmLog(meal, items)
+            handleDismissPhoto()
+          }}
+          onCancel={handleDismissPhoto}
+          onDescribeByText={handleDescribeByText}
         />
       )}
 
