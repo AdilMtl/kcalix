@@ -103,20 +103,19 @@ Ambient glow já adicionado em `body::before/::after`.
 
 ## Fase 7 — CONCLUÍDA (2026-03-24)
 - **7C foto para macros (v0.48.0):** `imageUtils.ts` (resize canvas), `PhotoReviewSheet.tsx` (review com ⚠️ + alternativas + checklist ingredientes ocultos), `sendPhotoToAi()` em `useAiChat.ts`, bloco `analyze-photo` isolado na Edge Function (gpt-4o-mini Vision, detail:low)
+- **7C refinamentos (v0.49.0):** flash Android corrigido via `visibilitychange` guard; alimentos extras estimam macros via `estimateFoodMacros()` → badge ⏳ + preenchimento automático
 - **⚠️ Em observação:** acurácia e estimativa de porção precisam de validação com uso real
 - **Tag estável:** `v0.48.0-ai-chat-stable`
 
-## Bug pendente: flash no Android ao carregar foto da galeria (AiChatModal)
-**Sintoma:** tela pisca/fica preta brevemente ao voltar da galeria do Android e ao exibir o PhotoReviewSheet. Estabiliza sozinho. Com câmera não ocorre.
-**Causa raiz:** WebView Android suspende o app ao abrir Activity de galeria externa — causa ciclo de visibilitychange que dispara re-renders durante o resume.
-**Estado atual:** v0.48.1 tem o menor piscar (melhor que sem fix).
-**O que foi tentado e NÃO funcionou:**
-- `if (!open && !photoLoading) return null` → melhorou levemente mas não eliminou
-- `display:none` no backdrop + bottom sheet quando `!open` → piorou (mais piscar)
-- Remover backdrop opaco do PhotoReviewSheet + animação slideUp → piorou mais ainda
-**O que tentar na próxima sessão:**
-- `document.addEventListener('visibilitychange')` — congelar setState enquanto `document.hidden === true`, processar na fila ao voltar
-- NÃO mexer mais em return null / display:none / backdrop sem entender o ciclo completo
+## Bug flash Android galeria (AiChatModal) — EM ABERTO
+**Status:** sem solução — todas as tentativas pioraram ou não resolveram.
+**O que NÃO funciona (não tentar de novo):**
+- `if (!open && !photoLoading) return null` → levemente melhor, não elimina
+- `display:none` no backdrop + sheet quando `!open` → piorou
+- Remover backdrop opaco do PhotoReviewSheet + animação slideUp → piorou mais
+- `visibilitychange` guard com `pendingPhotoResultRef` → piorou (testado v0.49.0, revertido)
+**Melhor estado conhecido:** v0.48.1 (commit dd3cef4) — menor piscar sem fix ativo.
+**Causa raiz:** WebView Android dispara `visibilitychange` hidden→visible ao retornar da galeria, causando re-renders durante o resume. Precisa de abordagem diferente — possivelmente nativa (capacitor/plugin) ou aceitar como limitação do WebView.
 
 ## Próximo passo
 Fase 8 (Freemium/Stripe) — ou pendências 6B ainda em aberto (ver abaixo)
