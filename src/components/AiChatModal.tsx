@@ -155,7 +155,10 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
     }
   }
 
-  if (!open) return null
+  // No Android, o WebView perde foco brevemente ao abrir o seletor de galeria
+  // — isso pode fazer `open` flutuar para false e desmontar o componente (tela preta).
+  // Manter montado enquanto há operação de foto ativa.
+  if (!open && !photoLoading) return null
 
   return (
     <>
