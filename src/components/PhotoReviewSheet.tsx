@@ -153,9 +153,10 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
   if (result.items.length === 0) {
     return (
       <>
-        <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 348 }} />
+        <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 348 }} />
         <div style={{
           position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 350,
+          animation: 'slideUp 0.22s ease-out',
           background: 'linear-gradient(180deg, #1a2035, #121828)',
           borderRadius: '20px 20px 0 0',
           padding: '24px 20px',
@@ -198,8 +199,8 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
 
   return (
     <>
-      {/* Backdrop */}
-      <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 348 }} />
+      {/* Backdrop — transparente, só captura clique fora */}
+      <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 348 }} />
 
       {/* Bottom sheet */}
       <div style={{
@@ -208,6 +209,7 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
         borderRadius: '20px 20px 0 0',
         maxHeight: '92dvh',
         display: 'flex', flexDirection: 'column',
+        animation: 'slideUp 0.22s ease-out',
         boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
       }}>
 
@@ -581,3 +583,11 @@ function AddExtraInput({ placeholder, onAdd, onCancel }: {
 
 // Necessário para evitar warning de unused import (calcKcalAuto usado indiretamente via handleAddExtra macros zerados)
 void calcKcalAuto
+
+// Keyframe — sheet sobe suavemente em vez de aparecer abruptamente (evita flash no Android)
+const _style = document.createElement('style')
+_style.textContent = `@keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }`
+if (!document.head.querySelector('[data-photo-review-anim]')) {
+  _style.setAttribute('data-photo-review-anim', '1')
+  document.head.appendChild(_style)
+}
