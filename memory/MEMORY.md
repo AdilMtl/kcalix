@@ -106,6 +106,18 @@ Ambient glow já adicionado em `body::before/::after`.
 - **⚠️ Em observação:** acurácia e estimativa de porção precisam de validação com uso real
 - **Tag estável:** `v0.48.0-ai-chat-stable`
 
+## Bug pendente: flash no Android ao carregar foto da galeria (AiChatModal)
+**Sintoma:** tela pisca/fica preta brevemente ao voltar da galeria do Android e ao exibir o PhotoReviewSheet. Estabiliza sozinho. Com câmera não ocorre.
+**Causa raiz:** WebView Android suspende o app ao abrir Activity de galeria externa — causa ciclo de visibilitychange que dispara re-renders durante o resume.
+**Estado atual:** v0.48.1 tem o menor piscar (melhor que sem fix).
+**O que foi tentado e NÃO funcionou:**
+- `if (!open && !photoLoading) return null` → melhorou levemente mas não eliminou
+- `display:none` no backdrop + bottom sheet quando `!open` → piorou (mais piscar)
+- Remover backdrop opaco do PhotoReviewSheet + animação slideUp → piorou mais ainda
+**O que tentar na próxima sessão:**
+- `document.addEventListener('visibilitychange')` — congelar setState enquanto `document.hidden === true`, processar na fila ao voltar
+- NÃO mexer mais em return null / display:none / backdrop sem entender o ciclo completo
+
 ## Próximo passo
 Fase 8 (Freemium/Stripe) — ou pendências 6B ainda em aberto (ver abaixo)
 
