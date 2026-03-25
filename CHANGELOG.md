@@ -2,6 +2,24 @@
 
 ---
 
+## [0.48.0] — 2026-03-24
+
+### Adicionado
+- [feat] `src/lib/imageUtils.ts` — `resizeImageToBase64()`: redimensiona foto para max 800px, JPEG qualidade 0.7, retorna base64 + sizeKB; alvo < 200KB para minimizar custo de tokens Vision
+- [feat] `src/components/PhotoReviewSheet.tsx` — tela de review de foto: lista editável de alimentos detectados, badge ⚠️ com alternativas inline para itens com confidence < 0.70, checklist fixo de ingredientes ocultos (molho, recheio, tempero), fallback amigável quando nenhum alimento é identificado, botão "Descrever por texto" como saída
+- [feat] `src/hooks/useAiChat.ts` — tipos `PhotoFoodItem`, `PhotoFoodResult`, `PhotoAltItem`; `sendPhotoToAi(base64, mimeType)` chama Edge Function com `action:'analyze-photo'`; `PendingLogItem.source` ampliado para `'db' | 'custom' | 'photo'`
+- [feat] `src/components/AiChatModal.tsx` — botão 📷 no input do chat; dois `<label>+<input type="file">` separados (câmera com `capture="environment"` e galeria sem capture — padrão iOS/Safari); preview miniatura no header do sheet; photoLoading state com ⏳
+- [feat] `supabase/functions/ai-chat/index.ts` — bloco `action:'analyze-photo'` isolado (mesmo padrão do `parse-food`); gpt-4o-mini Vision com `detail:"low"` (~$0.001–0.002/foto); retorna `PhotoFoodResult` com confidence e alternatives por item; sem storage — imagem apenas em memória durante o request
+
+### Notas
+- Fase 7C concluída — Fase 7 (IA Integrada) completa: 7A (chat) + 7B (log via texto) + 7C (log via foto)
+- ⚠️ **Em observação** — feature nova com IA generativa; precisam de validação com uso real de usuários: acurácia de identificação, estimativa de porção, casos de ingredientes ocultos
+- Edge Function deployada; tag de restauração: `v0.48.0-ai-chat-stable` (rollback em ~2 min se necessário)
+- Custo estimado: ~$0.001–0.002/foto (gpt-4o-mini Vision, detail:low, imagem < 200KB)
+- Próximas melhorias possíveis após validação: refinamento do prompt com casos reais, suporte a múltiplas fotos, integração com banco de dados TACO para macros mais precisos
+
+---
+
 ## [0.47.0] — 2026-03-23
 
 ### Adicionado
