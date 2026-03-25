@@ -92,12 +92,12 @@ curl -X POST https://klvqyczfqxrbybgljnhe.supabase.co/functions/v1/ai-chat \
 
 Cada versão estável da Edge Function é marcada com uma tag. Isso permite rollback em segundos sem precisar caçar hash de commit.
 
-**Tag atual estável:** `v0.40.0-ai-chat-stable`
-(v0.40.0 — 5 fixes de qualidade: volume treino, nome/grupo exercícios, data de hoje, intent multi-turn, max_tokens)
+**Tag atual estável:** `v0.48.0-ai-chat-stable`
+(v0.48.0 — 7C: bloco analyze-photo isolado, gpt-4o-mini Vision, detail:low)
 
 **Para restaurar se uma mudança quebrar:**
 ```bash
-git show v0.40.0-ai-chat-stable:supabase/functions/ai-chat/index.ts > supabase/functions/ai-chat/index.ts
+git show v0.48.0-ai-chat-stable:supabase/functions/ai-chat/index.ts > supabase/functions/ai-chat/index.ts
 supabase functions deploy ai-chat --no-verify-jwt
 supabase functions list  # confirmar UPDATED_AT
 ```
@@ -111,7 +111,10 @@ git push origin v0.XX.X-ai-chat-stable
 **Tags existentes:**
 - `v0.35.1-ai-chat-stable` — pré-processamento + roteamento + prompt modular
 - `v0.38.0-ai-chat-stable` — versão anterior (antes dos 5 fixes)
-- `v0.40.0-ai-chat-stable` — versão atual estável ← usar esta
+- `v0.40.0-ai-chat-stable` — 5 fixes de qualidade
+- `v0.44.0-ai-chat-stable` — versão intermediária
+- `v0.47.0-ai-chat-stable` — pré-7C (versão estável antes de analyze-photo)
+- `v0.48.0-ai-chat-stable` — versão atual estável ← usar esta
 
 ### Tempo estimado de reversão
 - Restaurar + deploy: ~1-2 min
