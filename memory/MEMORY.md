@@ -101,8 +101,13 @@ Ambient glow já adicionado em `body::before/::after`.
 - **CustomFoodModal modo edição:** `initialValues?: Omit<FoodItem, 'id'>` — reutilizado no FoodDrawer para editar
 - **FoodDrawer CRUD:** botões ✏️/🗑️ só em `food.id.startsWith('custom_')`; confirmação antes de excluir
 
+## Fase 7 — CONCLUÍDA (2026-03-24)
+- **7C foto para macros (v0.48.0):** `imageUtils.ts` (resize canvas), `PhotoReviewSheet.tsx` (review com ⚠️ + alternativas + checklist ingredientes ocultos), `sendPhotoToAi()` em `useAiChat.ts`, bloco `analyze-photo` isolado na Edge Function (gpt-4o-mini Vision, detail:low)
+- **⚠️ Em observação:** acurácia e estimativa de porção precisam de validação com uso real
+- **Tag estável:** `v0.48.0-ai-chat-stable`
+
 ## Próximo passo
-Fase 7C — Foto para macros (GPT-4o Vision) — após Fase 7B concluída ✅
+Fase 8 (Freemium/Stripe) — ou pendências 6B ainda em aberto (ver abaixo)
 
 ## Padrões adicionados na Sessão 6B (v0.29.0)
 - **useCustomFoods:** `src/hooks/useCustomFoods.ts` — CRUD tabela `custom_foods`; `saveCustomFood()` faz INSERT e atualiza estado local
