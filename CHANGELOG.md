@@ -2,6 +2,20 @@
 
 ---
 
+## [0.50.0] — 2026-03-24
+
+### Melhorado
+- [improve] `src/components/AiChatModal.tsx` — estado vazio do chat reformulado: pool de 12 chips (nutrição/treino/corpo/registro) com 3 sorteados aleatoriamente a cada abertura; chips de registro preenchem o input com placeholder e focam o teclado em vez de enviar direto (evita log vazio acidental)
+- [improve] `src/components/AiChatModal.tsx` — bloco "Também posso..." fixo no estado vazio listando as 4 capacidades do coach (foto, registro por texto, diagnóstico, sugestões)
+- [improve] `src/components/AiChatModal.tsx` — feedback visual ao enviar foto: bolha do usuário com miniatura + barra de progresso pulsante; bolha do coach "🔍 Identificando alimentos..." com 3 dots; header subtitle "Analisando foto..."
+- [fix] `src/components/AiChatModal.tsx` — scroll automático ao iniciar upload de foto: `photoLoading` adicionado na dep do `useEffect` + `setTimeout(50ms)` para aguardar render das bolhas antes do scroll
+
+### Notas
+- Bug flash Android galeria documentado no roadmap com histórico completo de tentativas — todas as abordagens frontend falharam; opção futura é Capacitor (wrapper nativo)
+- Fase 7 encerrada como estável — refinamentos de UX contínuos conforme uso real
+
+---
+
 ## [0.49.0] — 2026-03-24
 
 ### Corrigido

@@ -1027,6 +1027,28 @@ Reportado em 2026-03-15 após deploy do v0.27.0 (code splitting + SW atualizado)
 
 ---
 
+## BUG CONHECIDO — Flash ao carregar foto da galeria no Android (registrado 2026-03-24)
+
+**Sintoma:** tela pisca 4-5x ao voltar da galeria do Android e ao exibir o PhotoReviewSheet. Estabiliza e funciona corretamente — é só visual.
+
+**Causa raiz:** WebView Android abre Activity externa de galeria → suspende o processo → ao retornar dispara ciclo `visibilitychange` (hidden→visible) que causa re-renders durante o resume. O JavaScript puro não consegue controlar esse ciclo.
+
+**O que foi tentado e NÃO funciona (não tentar de novo):**
+- `if (!open && !photoLoading) return null` → levemente melhor, não elimina (v0.48.1)
+- `display:none` no backdrop + sheet quando `!open` → piorou (v0.48.2)
+- Remover backdrop opaco do PhotoReviewSheet + animação slideUp → piorou mais (v0.48.3)
+- `visibilitychange` guard com `pendingPhotoResultRef` → piorou (v0.49.0, revertido)
+
+**Melhor estado conhecido:** v0.48.1 / commit `dd3cef4` — menor piscar sem fix ativo.
+
+**Opções reais para resolver:**
+1. **Capacitor** — wrapper nativo substitui `<input type="file">` por API nativa de câmera/galeria, sem abrir Activity externa e sem o ciclo suspend/resume. Requer mudança de stack (PWA → app híbrido). Decisão de produto.
+2. **Aceitar como limitação do WebView** — bug cosmético, não afeta funcionalidade.
+
+**Status:** [ ] Em aberto — avaliar após Fase 8 se Capacitor fizer sentido
+
+---
+
 ## DÉBITO TÉCNICO — Schema de body_measurements (registrado 2026-03-19)
 
 **Problema atual:** todos os campos de medição corporal vivem dentro de um único `data JSONB`:

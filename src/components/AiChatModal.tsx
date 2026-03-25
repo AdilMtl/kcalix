@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useAiChat, sendPhotoToAi } from '../hooks/useAiChat'
 import type { PendingLogItem, PhotoFoodResult } from '../hooks/useAiChat'
 import { AiLogConfirmModal } from './AiLogConfirmModal'
@@ -7,11 +7,31 @@ import type { MealKey, FoodEntry } from '../hooks/useDiary'
 import { useCustomFoods } from '../hooks/useCustomFoods'
 import { resizeImageToBase64 } from '../lib/imageUtils'
 
-const CHIPS = [
-  '🍽 Como estão meus macros esta semana?',
-  '💪 Como está meu volume muscular?',
-  '⚖️ Como está minha evolução de peso?',
-  '🔍 Analise tudo dos últimos 30 dias',
+// Pool de sugestões — 3 são sorteadas a cada abertura do chat
+// chips com action:'log' preenchem o input em vez de enviar diretamente
+interface Chip {
+  label: string
+  action: 'send' | 'log'
+  logPlaceholder?: string  // texto pré-preenchido no input quando action:'log'
+}
+
+const CHIP_POOL: Chip[] = [
+  // Nutrição
+  { label: '🍽️ Como estão meus macros hoje?',        action: 'send' },
+  { label: '🥗 O que devo jantar hoje?',              action: 'send' },
+  { label: '🎯 Estou batendo minha meta de proteína?', action: 'send' },
+  { label: '📊 Resumo da minha semana de nutrição',   action: 'send' },
+  // Treino
+  { label: '💪 Como devo treinar hoje?',              action: 'send' },
+  { label: '📈 Como está minha progressão de carga?', action: 'send' },
+  { label: '🏋️ O que achaste dos meus treinos?',      action: 'send' },
+  { label: '😴 Preciso de descanso hoje?',            action: 'send' },
+  // Corpo
+  { label: '⚖️ Como está minha evolução de peso?',   action: 'send' },
+  { label: '🔍 Analisa tudo dos últimos 30 dias',     action: 'send' },
+  // Registro
+  { label: '🍴 Registrar o que comi agora',           action: 'log', logPlaceholder: 'Comi ' },
+  { label: '☕ Registrar café da manhã',              action: 'log', logPlaceholder: 'No café da manhã comi ' },
 ]
 
 interface Props {
@@ -27,6 +47,13 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Sorteia 3 chips do pool a cada abertura — estável enquanto o chat estiver aberto
+  const chips = useMemo(() => {
+    const shuffled = [...CHIP_POOL].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, 3)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
   // ── Foto ──────────────────────────────────────────────────────────────────
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -35,10 +62,11 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
   const [showPhotoOptions, setShowPhotoOptions] = useState(false)
 
-  // Scroll para o final quando nova mensagem chega
+  // Scroll para o final quando nova mensagem chega ou foto começa a carregar
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
+    const t = setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    return () => clearTimeout(t)
+  }, [messages, loading, photoLoading])
 
   // Foca o input ao abrir
   useEffect(() => {
@@ -204,7 +232,7 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
             <div>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Kcal Coach</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
-                {loading ? 'Pensando...' : 'Online'}
+                {photoLoading ? 'Analisando foto...' : loading ? 'Pensando...' : 'Online'}
               </div>
             </div>
           </div>
@@ -229,34 +257,79 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           {/* Estado vazio — chips de ação rápida */}
-          {messages.length === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 8 }}>🤖</div>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
+          {messages.length === 0 && !photoLoading && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 8 }}>
+              {/* Hero */}
+              <div style={{ textAlign: 'center', padding: '4px 0' }}>
+                <div style={{ fontSize: 38, marginBottom: 10 }}>🤖</div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 6 }}>
                   Olá! Sou o Kcal Coach.
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5 }}>
-                  Analiso seus dados reais de nutrição e treino e te dou feedback concreto.
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>
+                  Acesso aos seus dados reais de nutrição,{'\n'}treino e corpo. Pergunte à vontade.
                 </div>
               </div>
+
+              {/* Chips sorteados */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {CHIPS.map(chip => (
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>
+                  Sugestões de hoje
+                </div>
+                {chips.map(chip => (
                   <button
-                    key={chip}
-                    onClick={() => sendMessage(chip)}
+                    key={chip.label}
                     disabled={loading}
+                    onClick={() => {
+                      if (chip.action === 'log') {
+                        setInput(chip.logPlaceholder ?? '')
+                        setTimeout(() => {
+                          inputRef.current?.focus()
+                          // mover cursor para o final do texto pré-preenchido
+                          const el = inputRef.current
+                          if (el) el.setSelectionRange(el.value.length, el.value.length)
+                        }, 50)
+                      } else {
+                        sendMessage(chip.label.replace(/^[\p{Emoji}\s]+/u, '').trim())
+                      }
+                    }}
                     style={{
-                      background: 'rgba(124,92,255,0.12)',
-                      border: '1px solid rgba(124,92,255,0.3)',
-                      borderRadius: 12, padding: '10px 14px',
-                      color: '#a78bfa', fontSize: 13, textAlign: 'left',
+                      background: chip.action === 'log'
+                        ? 'rgba(52,211,153,0.08)'
+                        : 'rgba(124,92,255,0.10)',
+                      border: chip.action === 'log'
+                        ? '1px solid rgba(52,211,153,0.25)'
+                        : '1px solid rgba(124,92,255,0.25)',
+                      borderRadius: 12, padding: '11px 14px',
+                      color: chip.action === 'log' ? '#34d399' : '#a78bfa',
+                      fontSize: 13, textAlign: 'left',
                       cursor: 'pointer', fontWeight: 500,
+                      display: 'flex', alignItems: 'center', gap: 8,
                     }}
                   >
-                    {chip}
+                    <span>{chip.label}</span>
+                    {chip.action === 'log' && (
+                      <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.6 }}>✏️ digitar</span>
+                    )}
                   </button>
                 ))}
+              </div>
+
+              {/* Hint */}
+              <div style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 10, padding: '10px 14px',
+                display: 'flex', flexDirection: 'column', gap: 5,
+              }}>
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Também posso...
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, lineHeight: 1.7 }}>
+                  📷 Analisar foto de refeição — toque em 📷{'\n'}
+                  🍴 Registrar o que comeu — descreva em texto{'\n'}
+                  📊 Diagnosticar nutrição, treino e corpo{'\n'}
+                  💡 Dar sugestões personalizadas baseadas nos seus dados
+                </div>
               </div>
             </div>
           )}
@@ -292,7 +365,59 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
             </div>
           ))}
 
-          {/* Loading bubble */}
+          {/* Bolha de foto enviada — aparece imediatamente ao selecionar */}
+          {photoLoading && photoPreviewUrl && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{
+                maxWidth: '72%',
+                background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
+                borderRadius: '16px 16px 4px 16px',
+                overflow: 'hidden',
+              }}>
+                <img
+                  src={photoPreviewUrl}
+                  alt="Foto enviada"
+                  style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }}
+                />
+                <div style={{ padding: '7px 12px 9px', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
+                  📷 Foto enviada
+                </div>
+                {/* Barra de progresso pulsante */}
+                <div style={{ height: 3, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    background: 'rgba(255,255,255,0.6)',
+                    animation: 'photoProgress 1.6s ease-in-out infinite',
+                  }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bolha do coach — "Identificando alimentos..." durante photoLoading */}
+          {photoLoading && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '16px 16px 16px 4px',
+                background: 'rgba(255,255,255,0.07)',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>🔍 Identificando alimentos</span>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: '#a78bfa',
+                      animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading bubble (chat de texto) */}
           {loading && (
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <div style={{
@@ -473,6 +598,11 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0) }
           30% { transform: translateY(-6px) }
+        }
+        @keyframes photoProgress {
+          0% { width: 0%; margin-left: 0% }
+          50% { width: 60%; margin-left: 20% }
+          100% { width: 0%; margin-left: 100% }
         }
       `}</style>
     </>
