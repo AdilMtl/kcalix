@@ -152,3 +152,31 @@ export async function sendPhotoToAi(
   if (res.error) throw new Error(res.error.message)
   return res.data as PhotoFoodResult
 }
+
+// Estima macros de um alimento por nome via Edge Function parse-food (TACO/IBGE)
+// foodIndex vazio força source:'custom' — sempre retorna macros estimados
+// Retorna null se falhar — caller trata o fallback (macros = 0)
+export async function estimateFoodMacros(nome: string): Promise<{
+  pPer100: number
+  cPer100: number
+  gPer100: number
+  kcalPer100: number
+} | null> {
+  try {
+    const res = await supabase.functions.invoke('ai-chat', {
+      body: { action: 'parse-food', text: nome, foodIndex: '' },
+    })
+    if (res.error) return null
+    const data = res.data as { meal: string | null; items: { p?: number; c?: number; g?: number; kcal?: number }[] }
+    const item = data.items?.[0]
+    if (!item) return null
+    return {
+      pPer100: item.p ?? 0,
+      cPer100: item.c ?? 0,
+      gPer100: item.g ?? 0,
+      kcalPer100: item.kcal ?? 0,
+    }
+  } catch {
+    return null
+  }
+}

@@ -2,6 +2,21 @@
 
 ---
 
+## [0.49.0] — 2026-03-24
+
+### Corrigido
+- [fix] `src/components/AiChatModal.tsx` — guard `visibilitychange` no Android: congela `setPhotoResult` enquanto `document.hidden === true` (WebView suspenso ao abrir galeria), aplica resultado ao voltar ao foco via `pendingPhotoResultRef` — elimina piscar da tela ao carregar foto da galeria
+- [fix] `src/components/PhotoReviewSheet.tsx` — alimentos adicionados manualmente (checklist "ingredientes ocultos" e campo livre) agora estimam macros via Edge Function `parse-food`; item aparece imediatamente com badge ⏳ e macros preenchem em ~1-2s; fallback ⚠️ se chamada falhar
+
+### Adicionado
+- [feat] `src/hooks/useAiChat.ts` — `estimateFoodMacros(nome)`: função standalone que chama `parse-food` com `foodIndex:''` (força estimativa TACO/IBGE); sem alteração de deploy na Edge Function
+
+### Notas
+- Edge Function: sem mudança, sem redeploy necessário
+- Bug 1 (flash Android) requer teste em dispositivo físico — não reproduzível no desktop
+
+---
+
 ## [0.48.0] — 2026-03-24
 
 ### Adicionado

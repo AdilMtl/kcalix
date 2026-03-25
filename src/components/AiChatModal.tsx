@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAiChat, sendPhotoToAi } from '../hooks/useAiChat'
 import type { PendingLogItem, PhotoFoodResult } from '../hooks/useAiChat'
 import { AiLogConfirmModal } from './AiLogConfirmModal'
@@ -34,6 +34,24 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
   const [photoResult, setPhotoResult] = useState<PhotoFoodResult | null>(null)
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
   const [showPhotoOptions, setShowPhotoOptions] = useState(false)
+
+  // ── Guard Android WebView flash ────────────────────────────────────────────
+  // O WebView Android suspende o app ao abrir a galeria e dispara visibilitychange
+  // durante o resume. Congelar setState enquanto document.hidden e aplicar ao voltar.
+  const pendingPhotoResultRef = useRef<PhotoFoodResult | null>(null)
+
+  const applyPendingPhotoResult = useCallback(() => {
+    if (!document.hidden && pendingPhotoResultRef.current) {
+      setPhotoResult(pendingPhotoResultRef.current)
+      setPhotoLoading(false)
+      pendingPhotoResultRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', applyPendingPhotoResult)
+    return () => document.removeEventListener('visibilitychange', applyPendingPhotoResult)
+  }, [applyPendingPhotoResult])
 
   // Scroll para o final quando nova mensagem chega
   useEffect(() => {
@@ -71,11 +89,17 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
       const { base64, mimeType, sizeKB } = await resizeImageToBase64(file)
       console.debug(`[photo] ${sizeKB}KB enviado para análise`)
       const result = await sendPhotoToAi(base64, mimeType)
-      setPhotoResult(result)
+      if (document.hidden) {
+        // Android WebView ainda em resume — enfileirar para aplicar ao voltar ao foco
+        pendingPhotoResultRef.current = result
+        // NÃO chamar setPhotoLoading(false) aqui — será feito em applyPendingPhotoResult
+      } else {
+        setPhotoResult(result)
+        setPhotoLoading(false)
+      }
     } catch (err) {
       addMessage({ role: 'assistant', content: '⚠️ Não consegui processar a foto. Tente novamente ou descreva por texto.' })
       console.error('[photo]', err)
-    } finally {
       setPhotoLoading(false)
     }
   }

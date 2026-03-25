@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { PhotoFoodResult, PhotoFoodItem, PhotoAltItem } from '../hooks/useAiChat'
 import type { PendingLogItem } from '../hooks/useAiChat'
+import { estimateFoodMacros } from '../hooks/useAiChat'
 import { MEAL_LABELS } from '../hooks/useDiary'
 import type { MealKey } from '../hooks/useDiary'
 
@@ -57,6 +58,11 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
 
   const [selectedMeal, setSelectedMeal] = useState<MealKey | ''>('')
 
+  // Índices de itens cujos macros ainda estão sendo estimados via IA
+  const [estimatingIdx, setEstimatingIdx] = useState<Set<number>>(new Set())
+  // Índices de itens cuja estimativa falhou (macros ficam 0)
+  const [estimateFailedIdx, setEstimateFailedIdx] = useState<Set<number>>(new Set())
+
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   function handleGramsChange(idx: number, val: string) {
@@ -92,7 +98,7 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
     })
   }
 
-  function handleAddExtra(text: string) {
+  async function handleAddExtra(text: string) {
     if (!text.trim()) { setAddExtra(null); return }
     const newItem: PhotoFoodItem = {
       foodId: null,
@@ -110,6 +116,19 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
     setItems(prev => [...prev, newItem])
     setGramsMap(prev => ({ ...prev, [nextIdx]: '10' }))
     setAddExtra(null)
+
+    // Estimar macros via IA em background — item já aparece na lista enquanto espera
+    setEstimatingIdx(prev => new Set(prev).add(nextIdx))
+    const macros = await estimateFoodMacros(text.trim())
+    setEstimatingIdx(prev => { const s = new Set(prev); s.delete(nextIdx); return s })
+
+    if (macros) {
+      setItems(prev => prev.map((item, i) =>
+        i !== nextIdx ? item : { ...item, ...macros }
+      ))
+    } else {
+      setEstimateFailedIdx(prev => new Set(prev).add(nextIdx))
+    }
   }
 
   // ─── Totais ─────────────────────────────────────────────────────────────────
@@ -304,9 +323,19 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
                           {item.nome}
                         </span>
                       </div>
-                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
-                        P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
-                      </div>
+                      {estimatingIdx.has(i) ? (
+                        <div style={{ color: '#fbbf24', fontSize: 11 }}>
+                          ⏳ estimando macros...
+                        </div>
+                      ) : estimateFailedIdx.has(i) ? (
+                        <div style={{ color: 'rgba(239,68,68,0.7)', fontSize: 11 }}>
+                          ⚠️ macros zerados — ajuste manualmente
+                        </div>
+                      ) : (
+                        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
+                          P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
+                        </div>
+                      )}
                     </div>
 
                     {/* Input gramas */}
