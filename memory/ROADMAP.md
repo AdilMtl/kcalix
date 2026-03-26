@@ -1121,8 +1121,44 @@ body_measurements (
 | 7B-4 | IA decide intenção — unifica chat + log, remove regex do frontend | ✅ Concluída (2026-03-23) |
 | 7C | Foto para macros — GPT-4o Vision | ✅ Concluída (2026-03-24) |
 
-> ⚠️ **TODO FUTURO — Notificação de nova versão/funcionalidades para usuários**
-> Quando houver features relevantes (ex: log via IA, 7C foto), notificar todos os usuários ativos dentro do app (banner ou modal "Novidades"). Implementar após Fase 7 estável — não bloqueia nenhuma fase atual.
+> ~~⚠️ TODO FUTURO — Notificação de nova versão/funcionalidades para usuários~~
+> **Resolvido:** sistema de Broadcasts planejado — ver abaixo.
+
+---
+
+## FASE 6C — Sistema de Broadcasts (canal admin→usuário)
+
+> Spec detalhada por fase: `memory/spec-broadcasts.md`
+
+Canal de comunicação in-app extensível. Schema de duas tabelas projetado desde o início
+para crescer sem breaking changes — cada fase adiciona campos opcionais ou novos valores.
+
+| Fase | Entrega | Status | Estimativa |
+|---|---|---|---|
+| **6C-1** | Modal texto + emoji — admin publica/arquiva, aparece 1× por usuário | ⏳ Pendente | 2–3h |
+| **6C-2** | Imagem, botão CTA, segmentação por plano, expiração automática | ⏳ Pendente | 2–3h |
+| **6C-3** | Pesquisa simples (1 pergunta, múltipla escolha), resultado no painel | ⏳ Pendente | 1–2h |
+| **6C-4** | Feed "Novidades" na aba Mais + banner não-intrusivo + badge na Nav | ⏳ Pendente | 3–4h |
+
+### Fase 6C-1 — O que entrega (próxima sessão)
+- Admin cria mensagem (emoji + título + texto) no `/kcx-studio`
+- Todo usuário que abrir o app vê modal 1× na HomePage (1.5s após carregar)
+- Fechar → nunca mais aparece para aquele usuário
+- Admin arquiva → para de aparecer imediatamente
+- Admin vê `👁 X / Y usuários viram` no painel
+- Migration: `supabase/migrations/014_app_messages.sql`
+
+### Princípio de extensibilidade
+O schema criado na Fase 6C-1 já contém todos os campos das fases seguintes
+(nullable/com default). Fases 2–4 não precisam de ALTER TABLE destrutivo —
+só ativam campos que já existem e adicionam novos valores aos enums de texto.
+
+```
+app_messages        ← conteúdo da mensagem (criado 1×, lido por todos)
+app_message_events  ← estado por usuário (dismissed/cta_clicked/survey_answered)
+```
+
+> Para implementar: iniciar sessão com `/start` e dizer "implementar Fase 6C-1 de broadcasts"
 
 ### Benchmark de tokens — referência para otimizações futuras
 

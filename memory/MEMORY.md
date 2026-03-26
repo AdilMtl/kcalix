@@ -23,6 +23,9 @@
 - `/undo` — reverter com segurança
 - `/migrate` — migrar dados do app antigo
 
+## Specs pendentes para próximas sessões
+- [Broadcasts Fase 6C — spec detalhada por fase](spec-broadcasts.md) — canal admin→usuário; 4 fases (texto→imagem→survey→feed); migration 014; iniciar com "implementar Fase 6C-1"
+
 ## Metodologia de port (destilada da Sessão 2C)
 Ver detalhes em `.claude/commands/port.md`. Resumo:
 1. Ler `referência.index.html` nas linhas exatas antes de escrever
@@ -103,7 +106,8 @@ Ambient glow já adicionado em `body::before/::after`.
 
 ## Fase 7 — CONCLUÍDA (2026-03-24)
 - **7C foto para macros (v0.48.0):** `imageUtils.ts` (resize canvas), `PhotoReviewSheet.tsx` (review com ⚠️ + alternativas + checklist ingredientes ocultos), `sendPhotoToAi()` em `useAiChat.ts`, bloco `analyze-photo` isolado na Edge Function (gpt-4o-mini Vision, detail:low)
-- **7C refinamentos (v0.49.0):** flash Android corrigido via `visibilitychange` guard; alimentos extras estimam macros via `estimateFoodMacros()` → badge ⏳ + preenchimento automático
+- **7C refinamentos (v0.49.0):** alimentos extras estimam macros via `estimateFoodMacros()` → badge ⏳ + preenchimento automático; flash Android revertido (ver bug documentado)
+- **7C UX polish (v0.50.0):** pool de 12 chips sorteados (3/abertura), chips de registro preenchem input, bolha de foto com miniatura + barra de progresso, bolha "🔍 Identificando alimentos...", scroll automático ao iniciar upload
 - **⚠️ Em observação:** acurácia e estimativa de porção precisam de validação com uso real
 - **Tag estável:** `v0.48.0-ai-chat-stable`
 

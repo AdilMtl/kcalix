@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDiary, MEAL_LABELS } from '../hooks/useDiary'
 import { useSettings } from '../hooks/useSettings'
 import { useDateStore } from '../store/dateStore'
+import { useChatStore } from '../store/chatStore'
 import FoodDrawer from '../components/FoodDrawer'
 import Skeleton from '../components/Skeleton'
 import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
@@ -434,6 +435,7 @@ export default function DiarioPage() {
   const { selectedDate } = useDateStore()
   const { diary, loading, removeFood, addFoodOptimistic, getAllDiaryRows, addWaterMl, resetWaterMl } = useDiary(selectedDate)
   const { settings } = useSettings()
+  const { openChat } = useChatStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
   const [openMealId, setOpenMealId] = useState<MealKey | null>(null)
@@ -554,21 +556,34 @@ export default function DiarioPage() {
             </div>
           )}
 
-          {/* Botão: adicionar alimentos */}
+          {/* Adicionar alimentos — 3 entradas */}
           <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
-            <button
-              onClick={() => setDrawerOpen(true)}
-              style={{
-                width: '100%', padding: '10px 14px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
-                background: 'var(--surface2)', color: 'var(--text)',
-                fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600,
-                cursor: 'pointer', minHeight: '44px',
-              }}
-            >
-              🍽️ Adicionar alimento
-            </button>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+              Adicionar alimentos
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+              {[
+                { icon: '🔍', label: 'Lista',     onClick: () => setDrawerOpen(true) },
+                { icon: '✨', label: 'Descrever', onClick: () => openChat({ input: 'comi ' }) },
+                { icon: '📷', label: 'Foto',      onClick: () => openChat({ photo: true }) },
+              ].map(({ icon, label, onClick }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: '4px', padding: '10px 6px', minHeight: '60px',
+                    borderRadius: 'var(--radius-sm)', border: '1px solid rgba(124,92,255,0.35)',
+                    background: 'rgba(124,92,255,0.08)', color: 'var(--text)',
+                    fontFamily: 'var(--font)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+
           </div>
         </div>
       </div>
@@ -626,6 +641,7 @@ export default function DiarioPage() {
           onAddFood={addFoodOptimistic}
         />
       )}
+
 
       {/* DiaryHistoryModal */}
       <DiaryHistoryModal

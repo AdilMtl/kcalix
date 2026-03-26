@@ -2,6 +2,28 @@
 
 ---
 
+## [0.51.0] — 2026-03-25
+
+### Adicionado
+- [feat] Diário: 3 botões de entrada de alimento — 🔍 Lista, ✨ Descrever (IA com "comi " pré-preenchido), 📷 Foto (abre chat com popover câmera/galeria imediato)
+- [feat] `chatStore` — store Zustand global para controlar AiChatModal de qualquer página sem prop drilling
+- [feat] `installStore` — store para disparar InstallPrompt após conclusão do onboarding (não na tela de senha)
+- [feat] `AiChatModal`: props `initialShowPhoto` e `initialInput` para abrir em modo foto ou com texto pré-preenchido
+
+### Melhorado
+- [improve] `InstallPrompt` reescrito — iOS Safari: bottom sheet com 3 passos visuais (ícone compartilhar SVG real + animação); iOS Chrome/Firefox: instrução "abra no Safari"; dismiss permanente ("não mostrar novamente"); timing pós-onboarding (2s após wizard)
+- [improve] `AiChatModal` movido para fora do `<main>` no AppLayout — corrige z-index que ficava atrás da Nav quando aberto pelos botões do Diário
+- [improve] Nav — safe area iOS: botões usam `paddingTop/Bottom` inline em vez de `py-3` Tailwind; labels não cortam no iPhone 16
+- [improve] `<main>` — `pb-20` fixo → `calc(80px + env(safe-area-inset-bottom))` — conteúdo não fica atrás da Nav em iPhones com home indicator
+
+### Planejado
+- [spec] Sistema de Broadcasts (canal admin→usuário) especificado em 4 fases — `memory/spec-broadcasts.md`; Fase 6C-1 é a próxima a implementar
+
+### Notas
+- `onAddFoods` do AiChatModal agora usa `selectedDate` (dateStore) em vez de `todayISO()` — alimentos adicionados via chat vão para a data selecionada no diário
+
+---
+
 ## [0.50.0] — 2026-03-24
 
 ### Melhorado

@@ -38,9 +38,11 @@ interface Props {
   open: boolean
   onClose: () => void
   onAddFoods?: (meal: MealKey, entries: FoodEntry[]) => void
+  initialShowPhoto?: boolean
+  initialInput?: string
 }
 
-export function AiChatModal({ open, onClose, onAddFoods }: Props) {
+export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initialInput }: Props) {
   const { messages, loading, error, sendMessage, reset, pendingLog, cancelLog, addMessage } = useAiChat()
   const { saveCustomFood, findCustomFood } = useCustomFoods()
   const [input, setInput] = useState('')
@@ -68,12 +70,22 @@ export function AiChatModal({ open, onClose, onAddFoods }: Props) {
     return () => clearTimeout(t)
   }, [messages, loading, photoLoading])
 
-  // Foca o input ao abrir
+  // Foca o input ao abrir (não quando initialShowPhoto — o foco vai para o popover de foto)
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 300)
+    if (open && !initialShowPhoto) {
+      setTimeout(() => {
+        if (initialInput) setInput(initialInput)
+        inputRef.current?.focus()
+      }, 300)
     }
-  }, [open])
+  }, [open, initialShowPhoto, initialInput])
+
+  // Abre popover de foto automaticamente quando solicitado
+  useEffect(() => {
+    if (open && initialShowPhoto) {
+      setTimeout(() => setShowPhotoOptions(true), 200)
+    }
+  }, [open, initialShowPhoto])
 
   function handleClose() {
     reset()

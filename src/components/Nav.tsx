@@ -27,8 +27,12 @@ export default function Nav() {
           <button
             key={path}
             onClick={() => navigate(path)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 transition-opacity active:opacity-60"
-            style={{ color: active ? 'var(--accent)' : 'var(--text3)' }}
+            className="flex flex-1 flex-col items-center justify-center gap-1 transition-opacity active:opacity-60"
+            style={{
+              color: active ? 'var(--accent)' : 'var(--text3)',
+              paddingTop: '10px',
+              paddingBottom: '10px',
+            }}
             aria-label={label}
           >
             <Icon active={active} />

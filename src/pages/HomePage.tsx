@@ -17,6 +17,7 @@ import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
 import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
 import Skeleton from '../components/Skeleton'
+import { useInstallStore } from '../store/installStore'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -508,6 +509,7 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen]       = useState(false)
   const [wizardOpen, setWizardOpen]         = useState(false)
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
+  const { triggerInstallPrompt } = useInstallStore()
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const [evolutionOpen, setEvolutionOpen]   = useState(false)
@@ -672,7 +674,7 @@ export default function HomePage() {
         open={autoWizardOpen}
         isNewUser={true}
         initialData={null}
-        onSave={async (result) => { await saveSettings(result); setAutoWizardOpen(false) }}
+        onSave={async (result) => { await saveSettings(result); setAutoWizardOpen(false); triggerInstallPrompt() }}
         onClose={() => {
           localStorage.setItem('kcalix_onboarding_dismissed', '1')
           setAutoWizardOpen(false)

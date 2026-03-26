@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 import Nav from './components/Nav'
 import DateNavBar from './components/DateNavBar'
 import { InstallPrompt } from './components/InstallPrompt'
 import { UpdateToast } from './components/UpdateToast'
 import { AiChatModal } from './components/AiChatModal'
+import { useChatStore } from './store/chatStore'
 import { addFoodsToDiary } from './hooks/useDiary'
-import { todayISO } from './lib/dateUtils'
+import { useDateStore } from './store/dateStore'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
@@ -61,14 +62,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 // Layout com Nav inferior — usado em todas as rotas privadas com abas
 function AppLayout() {
-  const [chatOpen, setChatOpen] = useState(false)
   const { user } = useAuthStore()
+  const { open, initialShowPhoto, initialInput, openChat, closeChat } = useChatStore()
+  const { selectedDate } = useDateStore()
 
   return (
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg)' }}>
       <DateNavBar />
-      {/* Conteúdo da página — padding-bottom para não ficar atrás do Nav */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      {/* Conteúdo da página — padding-bottom para não ficar atrás do Nav + safe area iOS */}
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <Suspense fallback={<Spinner />}>
           <Outlet />
         </Suspense>
@@ -77,7 +79,7 @@ function AppLayout() {
 
       {/* FAB Kcal Coach */}
       <button
-        onClick={() => setChatOpen(true)}
+        onClick={() => openChat()}
         aria-label="Kcal Coach IA"
         style={{
           position: 'fixed',
@@ -103,10 +105,13 @@ function AppLayout() {
         🤖
       </button>
 
+      {/* Única instância do AiChatModal — fora do <main> para z-index correto */}
       <AiChatModal
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        onAddFoods={user ? (meal, entries) => addFoodsToDiary(user.id, todayISO(), meal, entries) : undefined}
+        open={open}
+        onClose={closeChat}
+        initialShowPhoto={initialShowPhoto}
+        initialInput={initialInput}
+        onAddFoods={user ? (meal, entries) => addFoodsToDiary(user.id, selectedDate, meal, entries) : undefined}
       />
     </div>
   )
