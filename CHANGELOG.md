@@ -2,6 +2,23 @@
 
 ---
 
+## [0.54.0] — 2026-03-26
+
+### Adicionado
+- [feat] Fase 6C-3 — sistema de enquetes in-app: admin cria pesquisa com múltipla escolha + pergunta aberta opcional
+- [feat] `useAppMessage.ts` — `publish()` aceita `message_type='survey'` + `metadata.options`; `dismiss()` aceita `answer?` + `comment?`; nova `loadSurveyResults()` retorna barras com %
+- [feat] `AppMessageModal.tsx` — detecta `message_type='survey'`, renderiza opções com radio visual roxo, textarea aberta opcional, botão "Responder ✓" desabilitado até selecionar opção
+- [feat] `AdminPage.tsx` — 3ª aba "📊 Enquetes" com templates clicáveis (⭐ Satisfação / 👍 Sim/Não / 📈 NPS / 🔢 1–5 / ✍️ Personalizada), inputs dinâmicos de opções (2–5), toggle pergunta aberta, pré-visualização, barras de resultado lazy por card
+- [feat] Botão "+ Me incluir" em seleção de destinatários (Mensagens e Enquetes) — admin aparece no topo da lista com destaque roxo
+- [feat] `supabase/migrations/015_survey_index.sql` — índice parcial `WHERE event_type = 'survey_answered'`
+
+### Notas
+- Schema não mudou — `message_type='survey'` e `metadata.options` usam campos já existentes (nullable JSONB)
+- Respostas gravadas como `event_type='survey_answered'` + `event_type='dismissed'` (garante que modal não reaparece)
+- Executar `015_survey_index.sql` no Supabase SQL Editor antes de usar em produção
+
+---
+
 ## [0.52.0] — 2026-03-26
 
 ### Adicionado

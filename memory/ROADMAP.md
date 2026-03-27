@@ -1137,7 +1137,7 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 |---|---|---|---|
 | **6C-1** | Modal texto + emoji — admin publica/arquiva, aparece 1× por usuário | ✅ Concluída (v0.52.0 — 2026-03-26) | 2–3h |
 | **6C-2** | Agendamento, múltiplas ativas, imagem, botão CTA, segmentação por plano, expiração automática | ➡️ Parcial (v0.53.0 — 2026-03-26) | 2–3h |
-| **6C-3** | Pesquisa simples (1 pergunta, múltipla escolha), resultado no painel | ⏳ Pendente | 1–2h |
+| **6C-3** | Pesquisa simples (1 pergunta, múltipla escolha), resultado no painel | ✅ Concluída (v0.54.0 — 2026-03-26) | 1–2h |
 | **6C-4** | Feed "Novidades" na aba Mais + banner não-intrusivo + badge na Nav | ⏳ Pendente | 3–4h |
 
 ### Fase 6C-1 — CONCLUÍDA (v0.52.0 — 2026-03-26)
@@ -1163,7 +1163,17 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 - ⏳ CTA (botão de link) — pendente
 - ⏳ Segmentação por plano (free/assinante) — pendente (planos ainda não existem)
 
-> Próxima sessão: `/start` → implementar 6C-3 (pesquisa simples) ou finalizar 6C-2 (CTA)
+### Fase 6C-3 — CONCLUÍDA (v0.54.0 — 2026-03-26)
+- ✅ Admin cria enquete (emoji + título + opções 2–5 + pergunta aberta opcional) na aba "📊 Enquetes"
+- ✅ Templates prontos: ⭐ Satisfação / 👍 Sim/Não / 📈 NPS / 🔢 1–5 / ✍️ Personalizada
+- ✅ Usuário responde no modal (radio visual roxo + textarea aberta)
+- ✅ Modal não reaparece após responder (grava dismissed + survey_answered)
+- ✅ Admin vê barras de resultado com % lazy ao expandir o card
+- ✅ Comentários livres listados abaixo das barras
+- ✅ Botão "+ Me incluir" em destinatários (Mensagens e Enquetes)
+- ✅ Migration: `supabase/migrations/015_survey_index.sql`
+
+> Próxima sessão: `/start` → implementar 6C-4 (feed "Novidades" + badge na Nav) ou finalizar 6C-2 (CTA)
 
 ### Princípio de extensibilidade
 O schema criado na Fase 6C-1 já contém todos os campos das fases seguintes
