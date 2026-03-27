@@ -8,6 +8,8 @@ import {
   setUserAtivo,
 } from '../lib/auth'
 import type { AuthorizedEmail } from '../types/auth'
+import { useAdminMessages } from '../hooks/useAppMessage'
+import { MarkdownBody } from '../components/AppMessageModal'
 
 type EmailRow = AuthorizedEmail
 
@@ -213,6 +215,9 @@ function UserCard({
 // ── AdminPage ─────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
+  const [tab, setTab] = useState<'users' | 'messages'>('users')
+
+  // ── aba Usuários ───────────────────────────────────────────────────────────
   const [emails, setEmails]       = useState<EmailRow[]>([])
   const [newEmail, setNewEmail]   = useState('')
   const [loading, setLoading]     = useState(true)
@@ -221,6 +226,30 @@ export default function AdminPage() {
   const [feedback, setFeedback]   = useState<Record<string, { type: 'ok' | 'err'; msg: string }>>({})
   const [inviting, setInviting]   = useState<string | null>(null)
   const [toggling, setToggling]   = useState<string | null>(null)
+
+  // ── aba Mensagens ──────────────────────────────────────────────────────────
+  const { active: activeMsg, history: msgHistory, loading: msgLoading, saving: msgSaving, totalUsers, publish, archive } = useAdminMessages()
+  const [msgEmoji, setMsgEmoji]   = useState('📢')
+  const [msgTitle, setMsgTitle]   = useState('')
+  const [msgBody, setMsgBody]     = useState('')
+  const [msgFeedback, setMsgFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  async function handlePublish(e: FormEvent) {
+    e.preventDefault()
+    setMsgFeedback(null)
+    await publish({ emoji: msgEmoji, title: msgTitle, body: msgBody })
+    setMsgEmoji('📢')
+    setMsgTitle('')
+    setMsgBody('')
+    setMsgFeedback({ type: 'ok', text: 'Mensagem publicada! Usuários verão na próxima abertura.' })
+    setTimeout(() => setMsgFeedback(null), 6000)
+  }
+
+  async function handleArchive(id: string) {
+    await archive(id)
+    setMsgFeedback({ type: 'ok', text: 'Mensagem arquivada.' })
+    setTimeout(() => setMsgFeedback(null), 4000)
+  }
 
   useEffect(() => { load() }, [])
 
@@ -334,106 +363,332 @@ export default function AdminPage() {
           </a>
         </div>
 
-        {/* ── KPI Stats ──────────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
-          <StatKpi label="Total"      value={total}      color="var(--text)"  />
-          <StatKpi label="Ativos"     value={ativos}     color="var(--good)"  />
-          <StatKpi label="Convidados" value={convidados} color="var(--warn)"  />
-          <StatKpi label="Pendentes"  value={pendentes}  color="var(--text3)" />
+        {/* ── Abas ────────────────────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', gap: 4, marginBottom: 20,
+          background: 'var(--surface)', border: '1px solid var(--line)',
+          borderRadius: 'var(--radius-sm)', padding: 4,
+        }}>
+          {(['users', 'messages'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: 'none', cursor: 'pointer', transition: 'all .15s',
+                background: tab === t ? 'var(--accent)' : 'transparent',
+                color: tab === t ? '#fff' : 'var(--text3)',
+              }}
+            >
+              {t === 'users' ? '👥 Usuários' : '📢 Mensagens'}
+            </button>
+          ))}
         </div>
 
-        {/* ── Formulário adicionar ────────────────────────────────────────── */}
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div className="card-header">
-            <div className="ch-info">
-              <b>Adicionar usuário</b>
-              <span>O convite será enviado por email após adicionar</span>
+        {/* ══ ABA: USUÁRIOS ══════════════════════════════════════════════ */}
+        {tab === 'users' && <>
+
+          {/* ── KPI Stats ────────────────────────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+            <StatKpi label="Total"      value={total}      color="var(--text)"  />
+            <StatKpi label="Ativos"     value={ativos}     color="var(--good)"  />
+            <StatKpi label="Convidados" value={convidados} color="var(--warn)"  />
+            <StatKpi label="Pendentes"  value={pendentes}  color="var(--text3)" />
+          </div>
+
+          {/* ── Formulário adicionar ──────────────────────────────────────── */}
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="card-header">
+              <div className="ch-info">
+                <b>Adicionar usuário</b>
+                <span>O convite será enviado por email após adicionar</span>
+              </div>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="email"
+                  required
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  placeholder="novo@email.com"
+                  style={{
+                    flex: 1,
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--radius-xs)',
+                    color: 'var(--text)',
+                    padding: '10px 12px',
+                    fontSize: 14,
+                    outline: 'none',
+                    fontFamily: 'var(--font)',
+                  }}
+                />
+                <button type="submit" className="btn primary" disabled={adding} style={{ flexShrink: 0 }}>
+                  {adding ? '⏳' : '+ Adicionar'}
+                </button>
+              </form>
+              {formError && (
+                <p style={{ marginTop: 8, fontSize: 12, color: 'var(--bad)', fontWeight: 600 }}>
+                  ❌ {formError}
+                </p>
+              )}
             </div>
           </div>
-          <div className="card-body">
-            <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8 }}>
-              <input
-                type="email"
-                required
-                value={newEmail}
-                onChange={e => setNewEmail(e.target.value)}
-                placeholder="novo@email.com"
-                style={{
-                  flex: 1,
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius-xs)',
-                  color: 'var(--text)',
-                  padding: '10px 12px',
-                  fontSize: 14,
-                  outline: 'none',
-                  fontFamily: 'var(--font)',
-                }}
-              />
-              <button type="submit" className="btn primary" disabled={adding} style={{ flexShrink: 0 }}>
-                {adding ? '⏳' : '+ Adicionar'}
-              </button>
-            </form>
-            {formError && (
-              <p style={{ marginTop: 8, fontSize: 12, color: 'var(--bad)', fontWeight: 600 }}>
-                ❌ {formError}
-              </p>
-            )}
-          </div>
-        </div>
 
-        {/* ── Lista de usuários ───────────────────────────────────────────── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-            Usuários ({total})
-          </span>
-          <button
-            className="btn sm ghost"
-            onClick={load}
-            disabled={loading}
-            style={{ fontSize: 11, minHeight: 28, padding: '4px 10px' }}
-          >
-            {loading ? '⏳' : '↻ Atualizar'}
-          </button>
-        </div>
+          {/* ── Lista de usuários ────────────────────────────────────────── */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+              Usuários ({total})
+            </span>
+            <button
+              className="btn sm ghost"
+              onClick={load}
+              disabled={loading}
+              style={{ fontSize: 11, minHeight: 28, padding: '4px 10px' }}
+            >
+              {loading ? '⏳' : '↻ Atualizar'}
+            </button>
+          </div>
 
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[1, 2, 3].map(i => (
-              <div key={i} style={{
-                height: 110, borderRadius: 'var(--radius)',
-                background: 'var(--surface)', border: '1px solid var(--line)',
-                animation: 'pulse 1.5s ease-in-out infinite',
-                opacity: 1 - i * 0.15,
-              }} />
-            ))}
-          </div>
-        ) : emails.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: '40px 20px',
-            background: 'var(--surface)', border: '1px solid var(--line)',
-            borderRadius: 'var(--radius)', color: 'var(--text3)', fontSize: 13,
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>👤</div>
-            Nenhum usuário na lista ainda.<br />
-            Adicione um email acima para começar.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {emails.map(item => (
-              <UserCard
-                key={item.id}
-                item={item}
-                feedback={feedback[item.email]}
-                inviting={inviting === item.email}
-                toggling={toggling === item.email}
-                onInvite={() => handleInvite(item.email)}
-                onToggle={() => handleToggleAtivo(item.email, item.ativo !== false)}
-                onRemove={() => handleRemove(item.id)}
-              />
-            ))}
-          </div>
-        )}
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{
+                  height: 110, borderRadius: 'var(--radius)',
+                  background: 'var(--surface)', border: '1px solid var(--line)',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                  opacity: 1 - i * 0.15,
+                }} />
+              ))}
+            </div>
+          ) : emails.length === 0 ? (
+            <div style={{
+              textAlign: 'center', padding: '40px 20px',
+              background: 'var(--surface)', border: '1px solid var(--line)',
+              borderRadius: 'var(--radius)', color: 'var(--text3)', fontSize: 13,
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>👤</div>
+              Nenhum usuário na lista ainda.<br />
+              Adicione um email acima para começar.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {emails.map(item => (
+                <UserCard
+                  key={item.id}
+                  item={item}
+                  feedback={feedback[item.email]}
+                  inviting={inviting === item.email}
+                  toggling={toggling === item.email}
+                  onInvite={() => handleInvite(item.email)}
+                  onToggle={() => handleToggleAtivo(item.email, item.ativo !== false)}
+                  onRemove={() => handleRemove(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>}
+
+        {/* ══ ABA: MENSAGENS ═════════════════════════════════════════════ */}
+        {tab === 'messages' && <>
+
+          {/* Feedback global */}
+          {msgFeedback && (
+            <div style={{
+              marginBottom: 16, padding: '10px 14px', borderRadius: 10,
+              background: msgFeedback.type === 'ok' ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)',
+              border: `1px solid ${msgFeedback.type === 'ok' ? 'rgba(52,211,153,.25)' : 'rgba(248,113,113,.25)'}`,
+              fontSize: 13, fontWeight: 600,
+              color: msgFeedback.type === 'ok' ? 'var(--good)' : 'var(--bad)',
+            }}>
+              {msgFeedback.type === 'ok' ? '✅' : '❌'} {msgFeedback.text}
+            </div>
+          )}
+
+          {msgLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1, 2].map(i => (
+                <div key={i} style={{
+                  height: 80, borderRadius: 'var(--radius)',
+                  background: 'var(--surface)', border: '1px solid var(--line)',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                  opacity: 1 - i * 0.2,
+                }} />
+              ))}
+            </div>
+          ) : activeMsg ? (
+            /* ── Mensagem ativa: preview + arquivar ── */
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--good)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                🟢 Mensagem ativa
+              </div>
+              <div style={{
+                background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+                border: '1px solid rgba(52,211,153,.2)',
+                borderRadius: 'var(--radius)',
+                overflow: 'hidden',
+              }}>
+                {/* Preview */}
+                <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 28, flexShrink: 0 }}>{activeMsg.emoji}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                      {activeMsg.title}
+                    </div>
+                    <MarkdownBody
+                      text={activeMsg.body.length > 120 ? activeMsg.body.slice(0, 120) + '…' : activeMsg.body}
+                      style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}
+                    />
+                  </div>
+                </div>
+                {/* Métricas + ação */}
+                <div style={{
+                  padding: '10px 16px',
+                  borderTop: '1px solid var(--line)',
+                  background: 'rgba(0,0,0,.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: 8,
+                }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>
+                    👁 <b style={{ color: 'var(--text2)' }}>{activeMsg.dismissed_count}</b>
+                    {' / '}
+                    <b style={{ color: 'var(--text2)' }}>{totalUsers}</b>
+                    {' usuários viram'}
+                    <span style={{ marginLeft: 10, color: 'var(--text3)' }}>
+                      · {new Date(activeMsg.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                    </span>
+                  </div>
+                  <button
+                    className="btn sm ghost"
+                    onClick={() => handleArchive(activeMsg.id)}
+                    style={{ color: 'var(--warn)', borderColor: 'rgba(251,191,36,.25)', fontSize: 12 }}
+                  >
+                    📦 Arquivar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ── Formulário criar nova mensagem ── */
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div className="card-header">
+                <div className="ch-info">
+                  <b>Nova mensagem</b>
+                  <span>Aparece 1× para cada usuário na próxima abertura</span>
+                </div>
+              </div>
+              <div className="card-body">
+                <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Emoji + Título na mesma linha */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      required
+                      maxLength={4}
+                      value={msgEmoji}
+                      onChange={e => setMsgEmoji(e.target.value)}
+                      placeholder="📢"
+                      style={{
+                        width: 52, textAlign: 'center', fontSize: 20,
+                        background: 'var(--surface2)', border: '1px solid var(--line)',
+                        borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                        padding: '8px 4px', outline: 'none', fontFamily: 'var(--font)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <input
+                      type="text"
+                      required
+                      value={msgTitle}
+                      onChange={e => setMsgTitle(e.target.value)}
+                      placeholder="Título da mensagem"
+                      style={{
+                        flex: 1,
+                        background: 'var(--surface2)', border: '1px solid var(--line)',
+                        borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                        padding: '8px 12px', fontSize: 14, outline: 'none',
+                        fontFamily: 'var(--font)',
+                      }}
+                    />
+                  </div>
+                  {/* Corpo */}
+                  <textarea
+                    required
+                    rows={4}
+                    value={msgBody}
+                    onChange={e => setMsgBody(e.target.value)}
+                    placeholder={"Texto da mensagem.\n\nUse **negrito**, *itálico*, `código` e Enter para quebras de linha."}
+                    style={{
+                      background: 'var(--surface2)', border: '1px solid var(--line)',
+                      borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                      padding: '10px 12px', fontSize: 13, outline: 'none',
+                      fontFamily: 'var(--font)', resize: 'vertical', lineHeight: 1.6,
+                    }}
+                  />
+                  {/* Preview ao vivo */}
+                  {msgBody.trim() && (
+                    <div style={{
+                      background: 'var(--surface)', border: '1px solid var(--line)',
+                      borderRadius: 'var(--radius-xs)', padding: '10px 12px',
+                    }}>
+                      <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>
+                        Preview
+                      </div>
+                      <MarkdownBody text={msgBody} style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }} />
+                    </div>
+                  )}
+                  <button type="submit" className="btn primary" disabled={msgSaving}>
+                    {msgSaving ? '⏳ Publicando…' : '📢 Publicar para todos'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ── Histórico das últimas 5 arquivadas ── */}
+          {msgHistory.length > 0 && (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                Histórico
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {msgHistory.map(m => (
+                  <div key={m.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 14px',
+                    background: 'var(--surface)', border: '1px solid var(--line)',
+                    borderRadius: 'var(--radius-sm)', opacity: 0.7,
+                  }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>{m.emoji}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {m.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+                        {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                        {' · '}
+                        👁 {m.dismissed_count} viram
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Estado vazio */}
+          {!msgLoading && !activeMsg && msgHistory.length === 0 && (
+            <div style={{
+              textAlign: 'center', padding: '40px 20px',
+              color: 'var(--text3)', fontSize: 13,
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📢</div>
+              Nenhuma mensagem ainda.<br />
+              Crie uma acima para começar.
+            </div>
+          )}
+        </>}
 
       </div>
     </div>

@@ -18,6 +18,8 @@ import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
 import Skeleton from '../components/Skeleton'
 import { useInstallStore } from '../store/installStore'
+import { useAppMessage } from '../hooks/useAppMessage'
+import AppMessageModal from '../components/AppMessageModal'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -510,6 +512,8 @@ export default function HomePage() {
   const [wizardOpen, setWizardOpen]         = useState(false)
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
   const { triggerInstallPrompt } = useInstallStore()
+  const { message: appMessage, loading: appMessageLoading, dismiss: dismissAppMessage } = useAppMessage()
+  const [appMessageOpen, setAppMessageOpen] = useState(false)
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const [evolutionOpen, setEvolutionOpen]   = useState(false)
@@ -533,6 +537,13 @@ export default function HomePage() {
       setWorkoutKcalByDate(map)
     })
   }, [user])
+
+  // Broadcast: abre 1.5s após carregar, só se não tiver onboarding pendente
+  useEffect(() => {
+    if (appMessageLoading || !appMessage || autoWizardOpen) return
+    const t = setTimeout(() => setAppMessageOpen(true), 1500)
+    return () => clearTimeout(t)
+  }, [appMessageLoading, appMessage, autoWizardOpen])
 
   // Onboarding automático: abre wizard na primeira visita
   // Condições: settings carregou (loadingSettings=false) + perfil nunca configurado (settings===null)
@@ -705,6 +716,14 @@ export default function HomePage() {
         bmr={bmr}
         kcalTarget={kcalTarget}
       />
+
+      {/* Broadcast — aparece 1× por mensagem, 1.5s após carregar */}
+      {appMessageOpen && appMessage && (
+        <AppMessageModal
+          message={appMessage}
+          onDismiss={() => { setAppMessageOpen(false); dismissAppMessage() }}
+        />
+      )}
     </div>
   )
 }

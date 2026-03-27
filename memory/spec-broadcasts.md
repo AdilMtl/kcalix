@@ -73,8 +73,8 @@ CREATE POLICY "app_messages_read_active" ON app_messages
 
 CREATE POLICY "app_messages_admin_all" ON app_messages
   FOR ALL
-  USING     (auth.jwt() ->> 'email' = current_setting('app.admin_email', true))
-  WITH CHECK(auth.jwt() ->> 'email' = current_setting('app.admin_email', true));
+  USING     ((auth.jwt() ->> 'email') = 'adilson.matioli@gmail.com')
+  WITH CHECK((auth.jwt() ->> 'email') = 'adilson.matioli@gmail.com');
 
 
 -- ── Tabela 2: eventos por usuário ─────────────────────────────────────────
@@ -98,7 +98,7 @@ CREATE POLICY "app_message_events_own" ON app_message_events
 
 CREATE POLICY "app_message_events_admin_read" ON app_message_events
   FOR SELECT
-  USING (auth.jwt() ->> 'email' = current_setting('app.admin_email', true));
+  USING ((auth.jwt() ->> 'email') = 'adilson.matioli@gmail.com');
 
 -- Deduplicação: usuário não gera dois 'dismissed' para o mesmo broadcast
 -- (cta_clicked e survey_answered podem repetir — sem índice único neles)
@@ -200,7 +200,7 @@ useEffect(() => {
 }, [loading, message, autoWizardOpen])
 ```
 
-### Admin — seção "📢 Mensagens" na AdminPage
+### Admin — aba "📢 Mensagens" na AdminPage (segunda aba, ao lado de "👥 Usuários")
 
 **Sem mensagem ativa:**
 - Formulário: Emoji (1 char) + Título + Corpo (textarea)
