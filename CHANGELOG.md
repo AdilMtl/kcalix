@@ -2,6 +2,23 @@
 
 ---
 
+## [0.52.0] — 2026-03-26
+
+### Adicionado
+- [feat] Sistema de broadcasts Fase 6C-1 — canal admin→usuário in-app
+- [feat] `supabase/migrations/014_app_messages.sql` — tabelas `app_messages` + `app_message_events`, RLS com email admin hardcoded, índice único `dismissed` por usuário/mensagem
+- [feat] `src/hooks/useAppMessage.ts` — `useAppMessage()` (busca mensagem ativa não dispensada + dismiss optimistic) + `useAdminMessages()` (CRUD + métricas "X / Y viram")
+- [feat] `src/components/AppMessageModal.tsx` — modal z-index 350 com parser Markdown seguro (**negrito**, *itálico*, `código`); sem dangerouslySetInnerHTML
+- [feat] `src/pages/AdminPage.tsx` — abas 👥 Usuários / 📢 Mensagens; form criar com preview ao vivo, card mensagem ativa com métrica, botão arquivar, histórico das últimas 5
+- [feat] `src/pages/HomePage.tsx` — broadcast abre 1.5s após carregar, prioridade após onboarding
+
+### Notas
+- 1 mensagem ativa por vez — publicar arquiva automaticamente as anteriores (design Fase 1)
+- Agendamento e múltiplas ativas simultâneas já estão no schema — UI nas próximas fases (6C-2+)
+- Contador "Y usuários" baseia-se em `authorized_emails` com `accepted_at` — admin não entra no denominador
+
+---
+
 ## [0.51.0] — 2026-03-25
 
 ### Adicionado

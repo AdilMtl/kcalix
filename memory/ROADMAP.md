@@ -1135,18 +1135,25 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 
 | Fase | Entrega | Status | Estimativa |
 |---|---|---|---|
-| **6C-1** | Modal texto + emoji — admin publica/arquiva, aparece 1× por usuário | ⏳ Pendente | 2–3h |
-| **6C-2** | Imagem, botão CTA, segmentação por plano, expiração automática | ⏳ Pendente | 2–3h |
+| **6C-1** | Modal texto + emoji — admin publica/arquiva, aparece 1× por usuário | ✅ Concluída (v0.52.0 — 2026-03-26) | 2–3h |
+| **6C-2** | Agendamento, múltiplas ativas, imagem, botão CTA, segmentação por plano, expiração automática | ⏳ Pendente | 2–3h |
 | **6C-3** | Pesquisa simples (1 pergunta, múltipla escolha), resultado no painel | ⏳ Pendente | 1–2h |
 | **6C-4** | Feed "Novidades" na aba Mais + banner não-intrusivo + badge na Nav | ⏳ Pendente | 3–4h |
 
-### Fase 6C-1 — O que entrega (próxima sessão)
-- Admin cria mensagem (emoji + título + texto) no `/kcx-studio`
-- Todo usuário que abrir o app vê modal 1× na HomePage (1.5s após carregar)
-- Fechar → nunca mais aparece para aquele usuário
-- Admin arquiva → para de aparecer imediatamente
-- Admin vê `👁 X / Y usuários viram` no painel
-- Migration: `supabase/migrations/014_app_messages.sql`
+### Fase 6C-1 — CONCLUÍDA (v0.52.0 — 2026-03-26)
+- ✅ Admin cria mensagem (emoji + título + texto com Markdown) no `/kcx-studio`
+- ✅ Todo usuário que abrir o app vê modal 1× na HomePage (1.5s após carregar)
+- ✅ Fechar → nunca mais aparece para aquele usuário
+- ✅ Admin arquiva → para de aparecer imediatamente
+- ✅ Admin vê `👁 X / Y usuários viram` no painel
+- ✅ Migration: `supabase/migrations/014_app_messages.sql`
+- ✅ Parser Markdown seguro no modal (sem dangerouslySetInnerHTML)
+- ✅ Preview ao vivo no formulário admin
+
+### Fase 6C-2 — próxima sessão
+- Agendamento: campo `starts_at` futuro no formulário (já no schema)
+- Múltiplas mensagens ativas simultâneas por prioridade (já no schema)
+- Imagem, CTA, segmentação por plano, expiração automática
 
 ### Princípio de extensibilidade
 O schema criado na Fase 6C-1 já contém todos os campos das fases seguintes
@@ -1158,7 +1165,7 @@ app_messages        ← conteúdo da mensagem (criado 1×, lido por todos)
 app_message_events  ← estado por usuário (dismissed/cta_clicked/survey_answered)
 ```
 
-> Para implementar: iniciar sessão com `/start` e dizer "implementar Fase 6C-1 de broadcasts"
+> Para implementar 6C-2: iniciar sessão com `/start` e dizer "implementar Fase 6C-2 de broadcasts"
 
 ### Benchmark de tokens — referência para otimizações futuras
 
