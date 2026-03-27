@@ -3,6 +3,7 @@ import type { AppMessage } from '../hooks/useAppMessage'
 interface Props {
   message: AppMessage
   onDismiss: () => void
+  adminMode?: boolean   // true = botão "Fechar" em vez de "Entendido ✓"
 }
 
 // ── Parser Markdown leve ──────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ export function MarkdownBody({ text, style }: { text: string; style?: React.CSSP
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
-export default function AppMessageModal({ message, onDismiss }: Props) {
+export default function AppMessageModal({ message, onDismiss, adminMode = false }: Props) {
   return (
     <>
       {/* Overlay */}
@@ -102,8 +103,21 @@ export default function AppMessageModal({ message, onDismiss }: Props) {
           ✕
         </button>
 
+        {/* Imagem (se houver) */}
+        {message.image_url && (
+          <img
+            src={message.image_url}
+            alt=""
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            style={{
+              width: '100%', maxHeight: 180,
+              objectFit: 'cover', display: 'block',
+            }}
+          />
+        )}
+
         {/* Corpo */}
-        <div style={{ padding: '32px 24px 24px', textAlign: 'center' }}>
+        <div style={{ padding: message.image_url ? '24px 24px 24px' : '32px 24px 24px', textAlign: 'center' }}>
           {/* Emoji */}
           <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 16 }}>
             {message.emoji}
@@ -128,11 +142,11 @@ export default function AppMessageModal({ message, onDismiss }: Props) {
 
           {/* Botão confirmar */}
           <button
-            className="btn primary"
+            className={adminMode ? 'btn ghost' : 'btn primary'}
             onClick={onDismiss}
             style={{ width: '100%' }}
           >
-            Entendido ✓
+            {adminMode ? 'Fechar' : 'Entendido ✓'}
           </button>
         </div>
       </div>

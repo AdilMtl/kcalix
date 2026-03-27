@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
@@ -514,6 +514,7 @@ export default function HomePage() {
   const { triggerInstallPrompt } = useInstallStore()
   const { message: appMessage, loading: appMessageLoading, dismiss: dismissAppMessage } = useAppMessage()
   const [appMessageOpen, setAppMessageOpen] = useState(false)
+  const appMessageShown = useRef(false)
   const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const [evolutionOpen, setEvolutionOpen]   = useState(false)
@@ -539,8 +540,11 @@ export default function HomePage() {
   }, [user])
 
   // Broadcast: abre 1.5s após carregar, só se não tiver onboarding pendente
+  // Guard appMessageShown evita reabrir se appMessage mudar de referência na mesma sessão
   useEffect(() => {
     if (appMessageLoading || !appMessage || autoWizardOpen) return
+    if (appMessageShown.current) return
+    appMessageShown.current = true
     const t = setTimeout(() => setAppMessageOpen(true), 1500)
     return () => clearTimeout(t)
   }, [appMessageLoading, appMessage, autoWizardOpen])

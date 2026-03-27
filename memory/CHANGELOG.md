@@ -1,5 +1,25 @@
 # Kcalix — CHANGELOG
 
+## [v0.53.0] — 2026-03-26
+
+### Adicionado
+- [feat] Fase 6C-2: múltiplas mensagens ativas simultâneas — `publish()` deixa de arquivar tudo automaticamente; admin controla coexistência individualmente (`useAppMessage.ts`)
+- [feat] Fase 6C-2: agendamento com `starts_at` e expiração com `expires_at` (data + hora) no formulário admin — ativa campos já existentes no schema 014 sem migration (`AdminPage.tsx`)
+- [feat] Fase 6C-2: prioridade manual por mensagem — campo numérico no formulário; `useAppMessage` ordena por `priority DESC` (`AdminPage.tsx`, `useAppMessage.ts`)
+- [feat] Fase 6C-2: imagem via URL no modal de broadcast — renderiza acima do emoji; `onError` oculta silenciosamente se URL inválida (`AppMessageModal.tsx`)
+- [feat] Fase 6C-2: segmentação por email — `targeting: { emails: [...] }` filtra destinatários no frontend; toggle "Todos / Selecionar" com checkboxes de usuários ativos (`AdminPage.tsx`, `useAppMessage.ts`)
+- [feat] Fase 6C-2: badges de status nos cards admin — ativa (verde) / agendada (roxo) / expirada / arquivada com datas de agendamento e expiração visíveis (`AdminPage.tsx`)
+- [feat] Fase 6C-2: botão "Pré-visualizar" no formulário — abre `AppMessageModal` real com dados em tempo real; placeholder `picsum.photos` quando sem imagem (`AdminPage.tsx`)
+- [feat] Fase 6C-2: botão "Ver" em todos os cards — admin vê a mensagem exatamente como o usuário vê, com "Fechar" no lugar de "Entendido ✓" (`AdminPage.tsx`, `AppMessageModal.tsx`)
+
+### Corrigido
+- [fix] Modal broadcast reabrindo na mesma sessão ao trocar de aba ou re-render — adicionado guard `useRef appMessageShown` no `useEffect` (`HomePage.tsx`)
+
+### Notas
+- Sem migration: todos os campos (`starts_at`, `expires_at`, `priority`, `image_url`, `targeting`) já existiam no schema 014 como nullable/com default
+- Segmentação por email é filtrada no frontend (todos os usuários são confiáveis/convidados); mover para RLS quando app for público
+- CTA (botão de link) e segmentação por plano ficam para 6C-3+
+
 ## [v0.45.0] — 2026-03-23
 
 ### Adicionado

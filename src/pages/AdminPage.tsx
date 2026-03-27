@@ -9,7 +9,8 @@ import {
 } from '../lib/auth'
 import type { AuthorizedEmail } from '../types/auth'
 import { useAdminMessages } from '../hooks/useAppMessage'
-import { MarkdownBody } from '../components/AppMessageModal'
+import type { AppMessageWithStats } from '../hooks/useAppMessage'
+import AppMessageModal, { MarkdownBody } from '../components/AppMessageModal'
 
 type EmailRow = AuthorizedEmail
 
@@ -212,6 +213,108 @@ function UserCard({
   )
 }
 
+// ── MsgCard — card de mensagem na lista do admin ──────────────────────────────
+
+type BadgeStatus = 'ativa' | 'agendada' | 'expirada' | 'arquivada'
+
+const BADGE_STYLE: Record<BadgeStatus, { color: string; bg: string; border: string; icon: string }> = {
+  ativa:     { color: 'var(--good)',   bg: 'rgba(52,211,153,.08)',   border: 'rgba(52,211,153,.2)',   icon: '🟢' },
+  agendada:  { color: 'var(--accent2)',bg: 'rgba(167,139,250,.08)',  border: 'rgba(167,139,250,.2)',  icon: '🕐' },
+  expirada:  { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',   border: 'var(--line)',           icon: '⏰' },
+  arquivada: { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',   border: 'var(--line)',           icon: '📦' },
+}
+
+function MsgCard({
+  m, totalUsers, onArchive, onView, badge,
+}: {
+  m: AppMessageWithStats
+  totalUsers: number
+  onArchive: (id: string) => void
+  onView: (m: AppMessageWithStats) => void
+  badge: BadgeStatus
+}) {
+  const bs = BADGE_STYLE[badge]
+  const canArchive = badge === 'ativa' || badge === 'agendada'
+  const targeting = m.targeting as { emails?: string[] }
+  const isTargeted = targeting.emails && targeting.emails.length > 0
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+      border: `1px solid ${bs.border}`,
+      borderRadius: 'var(--radius)', overflow: 'hidden',
+    }}>
+      {/* Cabeçalho: badge + info de agendamento */}
+      <div style={{
+        padding: '8px 14px', borderBottom: '1px solid var(--line)',
+        background: 'rgba(0,0,0,.1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: bs.color, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+          {bs.icon} {badge}
+          {isTargeted && <span style={{ marginLeft: 8, color: 'var(--accent2)', fontWeight: 600, textTransform: 'none' }}>· 👤 {targeting.emails!.length} usuário{targeting.emails!.length > 1 ? 's' : ''}</span>}
+        </span>
+        <span style={{ fontSize: 10, color: 'var(--text3)' }}>
+          {badge === 'agendada' && m.starts_at && (
+            <>Publicar: {new Date(m.starts_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
+          )}
+          {m.expires_at && badge !== 'arquivada' && (
+            <> · Expira: {new Date(m.expires_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
+          )}
+          {badge === 'arquivada' && (
+            <>{new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</>
+          )}
+        </span>
+      </div>
+
+      {/* Preview */}
+      <div style={{ padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{ fontSize: 24, flexShrink: 0 }}>{m.emoji}</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{m.title}</div>
+          <MarkdownBody
+            text={m.body.length > 100 ? m.body.slice(0, 100) + '…' : m.body}
+            style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}
+          />
+        </div>
+      </div>
+
+      {/* Rodapé: métricas + ação */}
+      <div style={{
+        padding: '8px 14px', borderTop: '1px solid var(--line)',
+        background: 'rgba(0,0,0,.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
+      }}>
+        <div style={{ fontSize: 11, color: 'var(--text3)' }}>
+          👁 <b style={{ color: 'var(--text2)' }}>{m.dismissed_count}</b>
+          {' / '}
+          <b style={{ color: 'var(--text2)' }}>{isTargeted ? targeting.emails!.length : totalUsers}</b>
+          {' viram'}
+          {m.priority > 0 && <span style={{ marginLeft: 8 }}>· P{m.priority}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            className="btn sm ghost"
+            onClick={() => onView(m)}
+            style={{ fontSize: 11 }}
+          >
+            Ver
+          </button>
+          {canArchive && (
+            <button
+              className="btn sm ghost"
+              onClick={() => onArchive(m.id)}
+              style={{ color: 'var(--warn)', borderColor: 'rgba(251,191,36,.25)', fontSize: 11 }}
+            >
+              Arquivar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── AdminPage ─────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -228,20 +331,51 @@ export default function AdminPage() {
   const [toggling, setToggling]   = useState<string | null>(null)
 
   // ── aba Mensagens ──────────────────────────────────────────────────────────
-  const { active: activeMsg, history: msgHistory, loading: msgLoading, saving: msgSaving, totalUsers, publish, archive } = useAdminMessages()
-  const [msgEmoji, setMsgEmoji]   = useState('📢')
-  const [msgTitle, setMsgTitle]   = useState('')
-  const [msgBody, setMsgBody]     = useState('')
-  const [msgFeedback, setMsgFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const { activeMessages, scheduled, history: msgHistory, loading: msgLoading, saving: msgSaving, totalUsers, publish, archive, resolvedStatus } = useAdminMessages()
+  const [msgEmoji, setMsgEmoji]         = useState('📢')
+  const [msgTitle, setMsgTitle]         = useState('')
+  const [msgBody, setMsgBody]           = useState('')
+  const [msgImageUrl, setMsgImageUrl]   = useState('')
+  const [msgStartsAt, setMsgStartsAt]   = useState('')   // datetime-local string
+  const [msgExpiresAt, setMsgExpiresAt] = useState('')   // datetime-local string
+  const [msgPriority, setMsgPriority]   = useState(0)
+  const [msgTargetAll, setMsgTargetAll] = useState(true)
+  const [msgTargetEmails, setMsgTargetEmails] = useState<string[]>([])
+  const [msgFeedback, setMsgFeedback]         = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [msgPreviewOpen, setMsgPreviewOpen]   = useState(false)
+  const [msgViewing, setMsgViewing]           = useState<AppMessageWithStats | null>(null)
+
+  // helper: converte datetime-local (sem fuso) para ISO com fuso local
+  function localToISO(val: string) {
+    if (!val) return new Date().toISOString()
+    return new Date(val).toISOString()
+  }
 
   async function handlePublish(e: FormEvent) {
     e.preventDefault()
     setMsgFeedback(null)
-    await publish({ emoji: msgEmoji, title: msgTitle, body: msgBody })
+    const targeting = msgTargetAll ? {} : { emails: msgTargetEmails }
+    await publish({
+      emoji:      msgEmoji,
+      title:      msgTitle,
+      body:       msgBody,
+      starts_at:  msgStartsAt ? localToISO(msgStartsAt) : new Date().toISOString(),
+      expires_at: msgExpiresAt ? localToISO(msgExpiresAt) : null,
+      priority:   msgPriority,
+      image_url:  msgImageUrl.trim() || null,
+      targeting,
+    })
     setMsgEmoji('📢')
     setMsgTitle('')
     setMsgBody('')
-    setMsgFeedback({ type: 'ok', text: 'Mensagem publicada! Usuários verão na próxima abertura.' })
+    setMsgImageUrl('')
+    setMsgStartsAt('')
+    setMsgExpiresAt('')
+    setMsgPriority(0)
+    setMsgTargetAll(true)
+    setMsgTargetEmails([])
+    const isScheduled = msgStartsAt && new Date(msgStartsAt) > new Date()
+    setMsgFeedback({ type: 'ok', text: isScheduled ? 'Mensagem agendada! Será exibida no horário configurado.' : 'Mensagem publicada! Usuários verão na próxima abertura.' })
     setTimeout(() => setMsgFeedback(null), 6000)
   }
 
@@ -249,6 +383,12 @@ export default function AdminPage() {
     await archive(id)
     setMsgFeedback({ type: 'ok', text: 'Mensagem arquivada.' })
     setTimeout(() => setMsgFeedback(null), 4000)
+  }
+
+  function toggleTargetEmail(email: string) {
+    setMsgTargetEmails(prev =>
+      prev.includes(email) ? prev.filter(x => x !== email) : [...prev, email]
+    )
   }
 
   useEffect(() => { load() }, [])
@@ -517,176 +657,320 @@ export default function AdminPage() {
                 }} />
               ))}
             </div>
-          ) : activeMsg ? (
-            /* ── Mensagem ativa: preview + arquivar ── */
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--good)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-                🟢 Mensagem ativa
-              </div>
-              <div style={{
-                background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
-                border: '1px solid rgba(52,211,153,.2)',
-                borderRadius: 'var(--radius)',
-                overflow: 'hidden',
-              }}>
-                {/* Preview */}
-                <div style={{ padding: '16px 16px 12px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: 28, flexShrink: 0 }}>{activeMsg.emoji}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
-                      {activeMsg.title}
-                    </div>
-                    <MarkdownBody
-                      text={activeMsg.body.length > 120 ? activeMsg.body.slice(0, 120) + '…' : activeMsg.body}
-                      style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}
-                    />
-                  </div>
-                </div>
-                {/* Métricas + ação */}
-                <div style={{
-                  padding: '10px 16px',
-                  borderTop: '1px solid var(--line)',
-                  background: 'rgba(0,0,0,.15)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  flexWrap: 'wrap', gap: 8,
-                }}>
-                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-                    👁 <b style={{ color: 'var(--text2)' }}>{activeMsg.dismissed_count}</b>
-                    {' / '}
-                    <b style={{ color: 'var(--text2)' }}>{totalUsers}</b>
-                    {' usuários viram'}
-                    <span style={{ marginLeft: 10, color: 'var(--text3)' }}>
-                      · {new Date(activeMsg.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                    </span>
-                  </div>
-                  <button
-                    className="btn sm ghost"
-                    onClick={() => handleArchive(activeMsg.id)}
-                    style={{ color: 'var(--warn)', borderColor: 'rgba(251,191,36,.25)', fontSize: 12 }}
-                  >
-                    📦 Arquivar
-                  </button>
-                </div>
-              </div>
-            </div>
           ) : (
-            /* ── Formulário criar nova mensagem ── */
-            <div className="card" style={{ marginBottom: 20 }}>
-              <div className="card-header">
-                <div className="ch-info">
-                  <b>Nova mensagem</b>
-                  <span>Aparece 1× para cada usuário na próxima abertura</span>
+            <>
+              {/* ── Mensagens ativas ── */}
+              {activeMessages.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--good)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                    🟢 Ativas ({activeMessages.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {activeMessages.map(m => (
+                      <MsgCard key={m.id} m={m} totalUsers={totalUsers} onArchive={handleArchive} onView={setMsgViewing} badge="ativa" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Mensagens agendadas ── */}
+              {scheduled.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                    🕐 Agendadas ({scheduled.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {scheduled.map(m => (
+                      <MsgCard key={m.id} m={m} totalUsers={totalUsers} onArchive={handleArchive} onView={setMsgViewing} badge="agendada" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Formulário nova mensagem ── */}
+              <div className="card" style={{ marginBottom: 20 }}>
+                <div className="card-header">
+                  <div className="ch-info">
+                    <b>Nova mensagem</b>
+                    <span>Aparece 1× para cada destinatário</span>
+                  </div>
+                </div>
+                <div className="card-body">
+                  <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                    {/* Emoji + Título */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="text" required maxLength={4}
+                        value={msgEmoji} onChange={e => setMsgEmoji(e.target.value)}
+                        placeholder="📢"
+                        style={{
+                          width: 52, textAlign: 'center', fontSize: 20, flexShrink: 0,
+                          background: 'var(--surface2)', border: '1px solid var(--line)',
+                          borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                          padding: '8px 4px', outline: 'none', fontFamily: 'var(--font)',
+                        }}
+                      />
+                      <input
+                        type="text" required
+                        value={msgTitle} onChange={e => setMsgTitle(e.target.value)}
+                        placeholder="Título da mensagem"
+                        style={{
+                          flex: 1, background: 'var(--surface2)', border: '1px solid var(--line)',
+                          borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                          padding: '8px 12px', fontSize: 14, outline: 'none', fontFamily: 'var(--font)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Corpo */}
+                    <textarea
+                      required rows={4}
+                      value={msgBody} onChange={e => setMsgBody(e.target.value)}
+                      placeholder={"Texto da mensagem.\n\nUse **negrito**, *itálico*, `código` e Enter para quebras de linha."}
+                      style={{
+                        background: 'var(--surface2)', border: '1px solid var(--line)',
+                        borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                        padding: '10px 12px', fontSize: 13, outline: 'none',
+                        fontFamily: 'var(--font)', resize: 'vertical', lineHeight: 1.6,
+                      }}
+                    />
+
+                    {/* Preview ao vivo */}
+                    {msgBody.trim() && (
+                      <div style={{
+                        background: 'var(--surface)', border: '1px solid var(--line)',
+                        borderRadius: 'var(--radius-xs)', padding: '10px 12px',
+                      }}>
+                        <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>
+                          Preview do texto
+                        </div>
+                        <MarkdownBody text={msgBody} style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }} />
+                      </div>
+                    )}
+
+                    {/* Imagem (URL) */}
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                        Imagem (opcional)
+                      </div>
+                      <input
+                        type="url"
+                        value={msgImageUrl} onChange={e => setMsgImageUrl(e.target.value)}
+                        placeholder="https://… (URL da imagem)"
+                        style={{
+                          width: '100%', background: 'var(--surface2)', border: '1px solid var(--line)',
+                          borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                          padding: '8px 12px', fontSize: 13, outline: 'none', fontFamily: 'var(--font)',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      {msgImageUrl.trim() && (
+                        <img
+                          src={msgImageUrl}
+                          alt="preview"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          style={{ marginTop: 8, width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8 }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Agendamento */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                          Publicar em
+                        </div>
+                        <input
+                          type="datetime-local"
+                          value={msgStartsAt} onChange={e => setMsgStartsAt(e.target.value)}
+                          style={{
+                            width: '100%', background: 'var(--surface2)', border: '1px solid var(--line)',
+                            borderRadius: 'var(--radius-xs)', color: msgStartsAt ? 'var(--text)' : 'var(--text3)',
+                            padding: '8px 10px', fontSize: 12, outline: 'none', fontFamily: 'var(--font)',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                        <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>Vazio = agora</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                          Expirar em
+                        </div>
+                        <input
+                          type="datetime-local"
+                          value={msgExpiresAt} onChange={e => setMsgExpiresAt(e.target.value)}
+                          style={{
+                            width: '100%', background: 'var(--surface2)', border: '1px solid var(--line)',
+                            borderRadius: 'var(--radius-xs)', color: msgExpiresAt ? 'var(--text)' : 'var(--text3)',
+                            padding: '8px 10px', fontSize: 12, outline: 'none', fontFamily: 'var(--font)',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                        <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>Vazio = nunca expira</div>
+                      </div>
+                    </div>
+
+                    {/* Prioridade */}
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                        Prioridade (maior = aparece primeiro)
+                      </div>
+                      <input
+                        type="number" min={0} max={100}
+                        value={msgPriority} onChange={e => setMsgPriority(Number(e.target.value))}
+                        style={{
+                          width: 80, background: 'var(--surface2)', border: '1px solid var(--line)',
+                          borderRadius: 'var(--radius-xs)', color: 'var(--text)',
+                          padding: '8px 12px', fontSize: 13, outline: 'none', fontFamily: 'var(--font)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Destinatários */}
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                        Destinatários
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        {(['all', 'specific'] as const).map(opt => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => { setMsgTargetAll(opt === 'all'); setMsgTargetEmails([]) }}
+                            style={{
+                              padding: '6px 14px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+                              background: (opt === 'all') === msgTargetAll ? 'var(--accent)' : 'var(--surface2)',
+                              border: `1px solid ${(opt === 'all') === msgTargetAll ? 'var(--accent)' : 'var(--line)'}`,
+                              color: (opt === 'all') === msgTargetAll ? '#fff' : 'var(--text2)',
+                              fontFamily: 'var(--font)',
+                            }}
+                          >
+                            {opt === 'all' ? '🌐 Todos' : '👤 Selecionar'}
+                          </button>
+                        ))}
+                      </div>
+                      {!msgTargetAll && (
+                        <div style={{
+                          maxHeight: 180, overflowY: 'auto',
+                          background: 'var(--surface)', border: '1px solid var(--line)',
+                          borderRadius: 'var(--radius-xs)', padding: '4px 0',
+                        }}>
+                          {emails.filter(e => e.accepted_at && e.ativo !== false).map(e => (
+                            <label
+                              key={e.id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: '8px 12px', cursor: 'pointer',
+                                borderBottom: '1px solid var(--line)',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={msgTargetEmails.includes(e.email)}
+                                onChange={() => toggleTargetEmail(e.email)}
+                                style={{ accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
+                              />
+                              <span style={{ fontSize: 13, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {e.email}
+                              </span>
+                            </label>
+                          ))}
+                          {emails.filter(e => e.accepted_at && e.ativo !== false).length === 0 && (
+                            <div style={{ padding: '12px', fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
+                              Nenhum usuário ativo ainda.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {!msgTargetAll && msgTargetEmails.length > 0 && (
+                        <div style={{ fontSize: 11, color: 'var(--accent2)', marginTop: 6 }}>
+                          {msgTargetEmails.length} usuário{msgTargetEmails.length > 1 ? 's' : ''} selecionado{msgTargetEmails.length > 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        disabled={!msgTitle.trim() || !msgBody.trim()}
+                        onClick={() => setMsgPreviewOpen(true)}
+                        style={{ flex: '0 0 auto' }}
+                      >
+                        Pré-visualizar
+                      </button>
+                      <button
+                        type="submit" className="btn primary"
+                        disabled={msgSaving || (!msgTargetAll && msgTargetEmails.length === 0)}
+                        style={{ flex: 1 }}
+                      >
+                        {msgSaving ? '⏳ Publicando…' : msgStartsAt && new Date(msgStartsAt) > new Date() ? 'Agendar mensagem' : 'Publicar agora'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
-              <div className="card-body">
-                <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {/* Emoji + Título na mesma linha */}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="text"
-                      required
-                      maxLength={4}
-                      value={msgEmoji}
-                      onChange={e => setMsgEmoji(e.target.value)}
-                      placeholder="📢"
-                      style={{
-                        width: 52, textAlign: 'center', fontSize: 20,
-                        background: 'var(--surface2)', border: '1px solid var(--line)',
-                        borderRadius: 'var(--radius-xs)', color: 'var(--text)',
-                        padding: '8px 4px', outline: 'none', fontFamily: 'var(--font)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <input
-                      type="text"
-                      required
-                      value={msgTitle}
-                      onChange={e => setMsgTitle(e.target.value)}
-                      placeholder="Título da mensagem"
-                      style={{
-                        flex: 1,
-                        background: 'var(--surface2)', border: '1px solid var(--line)',
-                        borderRadius: 'var(--radius-xs)', color: 'var(--text)',
-                        padding: '8px 12px', fontSize: 14, outline: 'none',
-                        fontFamily: 'var(--font)',
-                      }}
-                    />
-                  </div>
-                  {/* Corpo */}
-                  <textarea
-                    required
-                    rows={4}
-                    value={msgBody}
-                    onChange={e => setMsgBody(e.target.value)}
-                    placeholder={"Texto da mensagem.\n\nUse **negrito**, *itálico*, `código` e Enter para quebras de linha."}
-                    style={{
-                      background: 'var(--surface2)', border: '1px solid var(--line)',
-                      borderRadius: 'var(--radius-xs)', color: 'var(--text)',
-                      padding: '10px 12px', fontSize: 13, outline: 'none',
-                      fontFamily: 'var(--font)', resize: 'vertical', lineHeight: 1.6,
-                    }}
-                  />
-                  {/* Preview ao vivo */}
-                  {msgBody.trim() && (
-                    <div style={{
-                      background: 'var(--surface)', border: '1px solid var(--line)',
-                      borderRadius: 'var(--radius-xs)', padding: '10px 12px',
-                    }}>
-                      <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>
-                        Preview
-                      </div>
-                      <MarkdownBody text={msgBody} style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }} />
-                    </div>
-                  )}
-                  <button type="submit" className="btn primary" disabled={msgSaving}>
-                    {msgSaving ? '⏳ Publicando…' : '📢 Publicar para todos'}
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
 
-          {/* ── Histórico das últimas 5 arquivadas ── */}
-          {msgHistory.length > 0 && (
-            <>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-                Histórico
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {msgHistory.map(m => (
-                  <div key={m.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '10px 14px',
-                    background: 'var(--surface)', border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-sm)', opacity: 0.7,
-                  }}>
-                    <span style={{ fontSize: 20, flexShrink: 0 }}>{m.emoji}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {m.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
-                        {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                        {' · '}
-                        👁 {m.dismissed_count} viram
-                      </div>
-                    </div>
+              {/* ── Histórico (arquivadas + expiradas) ── */}
+              {msgHistory.length > 0 && (
+                <>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                    Histórico
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {msgHistory.map(m => (
+                      <MsgCard key={m.id} m={m} totalUsers={totalUsers} onArchive={handleArchive} onView={setMsgViewing} badge={resolvedStatus(m)} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Estado vazio */}
+              {activeMessages.length === 0 && scheduled.length === 0 && msgHistory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text3)', fontSize: 13 }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>📢</div>
+                  Nenhuma mensagem ainda.<br />
+                  Crie uma acima para começar.
+                </div>
+              )}
+
+              {/* Modal de visualização (ver mensagem publicada) */}
+              {msgViewing && (
+                <AppMessageModal
+                  message={msgViewing}
+                  onDismiss={() => setMsgViewing(null)}
+                  adminMode
+                />
+              )}
+
+              {/* Modal de preview (formulário) */}
+              {msgPreviewOpen && (
+                <AppMessageModal
+                  message={{
+                    id: '__preview__',
+                    created_at: new Date().toISOString(),
+                    title:          msgTitle || 'Título da mensagem',
+                    body:           msgBody  || 'Corpo da mensagem.',
+                    emoji:          msgEmoji || '📢',
+                    image_url:      msgImageUrl.trim() || 'https://picsum.photos/600/200',
+                    message_type:   'announcement',
+                    display_format: 'modal',
+                    status:         'active',
+                    starts_at:      new Date().toISOString(),
+                    expires_at:     null,
+                    targeting:      {},
+                    priority:       0,
+                    max_shows:      1,
+                    dismissible:    true,
+                    cta_label:      null,
+                    cta_url:        null,
+                    metadata:       {},
+                  }}
+                  onDismiss={() => setMsgPreviewOpen(false)}
+                />
+              )}
             </>
-          )}
-
-          {/* Estado vazio */}
-          {!msgLoading && !activeMsg && msgHistory.length === 0 && (
-            <div style={{
-              textAlign: 'center', padding: '40px 20px',
-              color: 'var(--text3)', fontSize: 13,
-            }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>📢</div>
-              Nenhuma mensagem ainda.<br />
-              Crie uma acima para começar.
-            </div>
           )}
         </>}
 

@@ -1136,7 +1136,7 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 | Fase | Entrega | Status | Estimativa |
 |---|---|---|---|
 | **6C-1** | Modal texto + emoji — admin publica/arquiva, aparece 1× por usuário | ✅ Concluída (v0.52.0 — 2026-03-26) | 2–3h |
-| **6C-2** | Agendamento, múltiplas ativas, imagem, botão CTA, segmentação por plano, expiração automática | ⏳ Pendente | 2–3h |
+| **6C-2** | Agendamento, múltiplas ativas, imagem, botão CTA, segmentação por plano, expiração automática | ➡️ Parcial (v0.53.0 — 2026-03-26) | 2–3h |
 | **6C-3** | Pesquisa simples (1 pergunta, múltipla escolha), resultado no painel | ⏳ Pendente | 1–2h |
 | **6C-4** | Feed "Novidades" na aba Mais + banner não-intrusivo + badge na Nav | ⏳ Pendente | 3–4h |
 
@@ -1150,10 +1150,20 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 - ✅ Parser Markdown seguro no modal (sem dangerouslySetInnerHTML)
 - ✅ Preview ao vivo no formulário admin
 
-### Fase 6C-2 — próxima sessão
-- Agendamento: campo `starts_at` futuro no formulário (já no schema)
-- Múltiplas mensagens ativas simultâneas por prioridade (já no schema)
-- Imagem, CTA, segmentação por plano, expiração automática
+### Fase 6C-2 — PARCIAL (v0.53.0 — 2026-03-26)
+- ✅ Múltiplas mensagens ativas simultâneas — coexistência controlada pelo admin
+- ✅ Agendamento: `starts_at` com data + hora no formulário
+- ✅ Expiração automática: `expires_at` com data + hora no formulário
+- ✅ Imagem via URL externa no modal
+- ✅ Segmentação por email (toggle Todos / Selecionar usuários)
+- ✅ Prioridade manual por mensagem
+- ✅ Badges de status: ativa / agendada / expirada / arquivada
+- ✅ Pré-visualizar modal antes de publicar
+- ✅ Botão "Ver" nos cards para admin visualizar mensagem publicada
+- ⏳ CTA (botão de link) — pendente
+- ⏳ Segmentação por plano (free/assinante) — pendente (planos ainda não existem)
+
+> Próxima sessão: `/start` → implementar 6C-3 (pesquisa simples) ou finalizar 6C-2 (CTA)
 
 ### Princípio de extensibilidade
 O schema criado na Fase 6C-1 já contém todos os campos das fases seguintes

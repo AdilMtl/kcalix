@@ -26,7 +26,8 @@ export interface AppMessage {
 }
 
 // ── Hook: usuário ─────────────────────────────────────────────────────────────
-// Busca a mensagem ativa não dispensada pelo usuário atual
+// Busca a mensagem ativa não dispensada pelo usuário atual.
+// Filtra targeting.user_ids no frontend (todos os usuários são confiáveis).
 
 export function useAppMessage() {
   const { user } = useAuthStore()
@@ -41,7 +42,7 @@ export function useAppMessage() {
   async function load() {
     setLoading(true)
 
-    // Busca mensagens ativas
+    // Busca mensagens ativas (RLS já filtra status=active + starts_at <= now + expires_at)
     const { data: messages } = await supabase
       .from('app_messages')
       .select('*')
@@ -56,8 +57,22 @@ export function useAppMessage() {
       return
     }
 
+    // Filtro de targeting por email (frontend — todos os usuários são confiáveis)
+    const userEmail = user!.email ?? ''
+    const targeted = (messages as AppMessage[]).filter(m => {
+      const emails = (m.targeting as { emails?: string[] }).emails
+      if (!emails || emails.length === 0) return true    // sem restrição → todos
+      return emails.includes(userEmail)
+    })
+
+    if (targeted.length === 0) {
+      setMessage(null)
+      setLoading(false)
+      return
+    }
+
     // Busca eventos 'dismissed' do usuário para essas mensagens
-    const ids = messages.map(m => m.id)
+    const ids = targeted.map(m => m.id)
     const { data: events } = await supabase
       .from('app_message_events')
       .select('message_id')
@@ -66,8 +81,8 @@ export function useAppMessage() {
       .in('message_id', ids)
 
     const dismissed = new Set((events ?? []).map(e => e.message_id))
-    const next = messages.find(m => !dismissed.has(m.id)) ?? null
-    setMessage(next as AppMessage | null)
+    const next = targeted.find(m => !dismissed.has(m.id)) ?? null
+    setMessage(next)
     setLoading(false)
   }
 
@@ -86,16 +101,26 @@ export function useAppMessage() {
 }
 
 // ── Hook: admin ───────────────────────────────────────────────────────────────
-// CRUD de mensagens + métricas para o painel /kcx-studio
 
 export interface AppMessageWithStats extends AppMessage {
   dismissed_count: number
 }
 
+export type PublishFields = {
+  emoji: string
+  title: string
+  body: string
+  starts_at: string        // ISO string
+  expires_at: string | null
+  priority: number
+  image_url: string | null
+  targeting: Record<string, unknown>  // {} = todos; { emails: [...] } = específicos
+}
+
 export function useAdminMessages() {
-  const [messages, setMessages] = useState<AppMessageWithStats[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
+  const [messages, setMessages]     = useState<AppMessageWithStats[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [saving, setSaving]         = useState(false)
   const [totalUsers, setTotalUsers] = useState(0)
 
   useEffect(() => { load() }, [])
@@ -103,14 +128,14 @@ export function useAdminMessages() {
   async function load() {
     setLoading(true)
 
-    // Mensagens (admin vê todas via RLS admin_all)
+    // Admin vê todas as mensagens via RLS admin_all (sem filtro de status)
     const { data: msgs } = await supabase
       .from('app_messages')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(30)
 
-    // Contagem total de usuários autorizados (para métrica "X / Y viram")
+    // Total de usuários ativos para métrica "X / Y viram"
     const { count } = await supabase
       .from('authorized_emails')
       .select('*', { count: 'exact', head: true })
@@ -146,24 +171,21 @@ export function useAdminMessages() {
     setLoading(false)
   }
 
-  async function publish(fields: { emoji: string; title: string; body: string }) {
+  async function publish(fields: PublishFields) {
     setSaving(true)
-
-    // Arquivar todas as ativas antes de publicar nova
-    await supabase
-      .from('app_messages')
-      .update({ status: 'archived' })
-      .eq('status', 'active')
-
     await supabase
       .from('app_messages')
       .insert({
-        emoji: fields.emoji,
-        title: fields.title,
-        body: fields.body,
-        status: 'active',
+        emoji:      fields.emoji,
+        title:      fields.title,
+        body:       fields.body,
+        status:     'active',
+        starts_at:  fields.starts_at,
+        expires_at: fields.expires_at ?? null,
+        priority:   fields.priority,
+        image_url:  fields.image_url ?? null,
+        targeting:  fields.targeting,
       })
-
     await load()
     setSaving(false)
   }
@@ -176,8 +198,18 @@ export function useAdminMessages() {
     await load()
   }
 
-  const active   = messages.find(m => m.status === 'active') ?? null
-  const history  = messages.filter(m => m.status === 'archived').slice(0, 5)
+  // Helpers de status derivado (para badge na UI)
+  function resolvedStatus(m: AppMessage): 'agendada' | 'ativa' | 'expirada' | 'arquivada' {
+    if (m.status === 'archived') return 'arquivada'
+    const now = new Date()
+    if (new Date(m.starts_at) > now) return 'agendada'
+    if (m.expires_at && new Date(m.expires_at) < now) return 'expirada'
+    return 'ativa'
+  }
 
-  return { active, history, loading, saving, totalUsers, publish, archive }
+  const activeMessages  = messages.filter(m => resolvedStatus(m) === 'ativa')
+  const scheduled       = messages.filter(m => resolvedStatus(m) === 'agendada')
+  const history         = messages.filter(m => resolvedStatus(m) === 'arquivada' || resolvedStatus(m) === 'expirada').slice(0, 5)
+
+  return { messages, activeMessages, scheduled, history, loading, saving, totalUsers, publish, archive, resolvedStatus }
 }
