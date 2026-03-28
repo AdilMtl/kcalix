@@ -620,7 +620,7 @@ function formatDiary(rows: DiaryRow[], settings: SettingsData | null): string {
 
 // ─── PASSO 3b: Formatar treinos ───────────────────────────────────────────────
 
-function formatWorkouts(rows: WorkoutRow[]): string {
+function formatWorkouts(rows: WorkoutRow[], exMap: Record<string, { nome: string; grupo: string }> = EX_MAP): string {
   if (!rows.length) return 'Treinos: sem registros nos últimos 30 dias.'
 
   const cutoff = new Date()
@@ -647,7 +647,7 @@ function formatWorkouts(rows: WorkoutRow[]): string {
       if (!setsValidos.length) continue
 
       // FIX 2: resolver nome/grupo via mapa (built-in + custom do usuário)
-      const exInfo = localExMap[ex.exercicioId]
+      const exInfo = exMap[ex.exercicioId]
       const nome = exInfo?.nome ?? 'Exercício personalizado'
       const grupo = exInfo?.grupo ?? 'Outros'
 
@@ -911,7 +911,7 @@ Deno.serve(async (req) => {
     }
 
     if (intent.needsDiary) contextParts.push(formatDiary(diaryRows, settings))
-    if (intent.needsWorkout) contextParts.push(formatWorkouts(workoutRows))
+    if (intent.needsWorkout) contextParts.push(formatWorkouts(workoutRows, localExMap))
     if (intent.needsBody) contextParts.push(formatBody(bodyRows, checkinRows))
 
     // Indicar ao modelo quais dados NÃO foram buscados (evita alucinação)
