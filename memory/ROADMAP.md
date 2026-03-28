@@ -220,7 +220,7 @@ supabase/migrations/
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
-| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (itens 1, 2, 3, 4 concluídos — 2026-03-15) |
+| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (itens 1–10 + hidratação concluídos; v0.55.0 melhorias treino — 2026-03-28) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
 | 6E | CI/CD + Loading states + OG Tags | Planejada |
@@ -1173,6 +1173,7 @@ para crescer sem breaking changes — cada fase adiciona campos opcionais ou nov
 - ✅ Botão "+ Me incluir" em destinatários (Mensagens e Enquetes)
 - ✅ Migration: `supabase/migrations/015_survey_index.sql`
 
+> v0.55.0 (2026-03-28): warmup marker + pré-preenchimento + recomendação de sessão + aba Sessões redesenhada + fixes broadcast + ai-chat custom exercises
 > Próxima sessão: `/start` → implementar 6C-4 (feed "Novidades" + badge na Nav) ou finalizar 6C-2 (CTA)
 
 ### Princípio de extensibilidade

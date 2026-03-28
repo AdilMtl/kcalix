@@ -2,6 +2,30 @@
 
 ---
 
+## [0.55.0] — 2026-03-28
+
+### Adicionado
+- [feat] Série de aquecimento (warmup marker): botão "W" âmbar em cada série do treino — marca a série como aquecimento, excluída do volume/MEV/kcal
+- [feat] Pré-preenchimento automático de séries: ao adicionar exercício, busca a última sessão e preenche reps/carga do histórico como ponto de partida
+- [feat] Recomendação de sessão (💡): sheet com barras de progresso MEV por grupo muscular para guiar o treino do dia
+
+### Melhorado
+- [improve] Aba "📅 Sessões" em `TemplateHistoryModal`: substituiu "Por treino" por cards cronológicos com contribuição de volume por grupo muscular + barras MEV
+- [improve] `useMuscleVolume`: filtros de warmup em `calcMuscleVolume`, `calcFrequencyAlert`, `getAllExSessions` e cálculo de volume de templates
+- [improve] `FoodPortionModal`: botão "Adicionar" agora responde a `safe-area-inset-bottom` — não fica mais atrás da barra de navegação inferior no iOS
+
+### Corrigido
+- [fix] Admin não gerava eventos falsos de visualização de broadcast (guard `user.email === VITE_ADMIN_EMAIL` na HomePage)
+- [fix] Edge Function `ai-chat` 500 após suporte a exercícios customizados — `localExMap` passado como parâmetro para `formatWorkouts` (evita ReferenceError de escopo de módulo Deno)
+- [fix] IA duplicava grupos musculares e exibia `MEV=?` — adicionados grupos ausentes (Glúteos, Core, Abdômen, variantes de capitalização) + hint explícito para não recalcular
+- [fix] Migration 016 — diagnosticada constraint `app_message_events_dedup` já correta (sem cláusula WHERE parcial); migration convertida para no-op documentado
+
+### Notas
+- `WorkoutSet.warmup?: boolean` — campo opcional persistido no JSONB; nenhuma migration necessária
+- Exercícios customizados agora incluídos no contexto da IA via `localExMap` (query `custom_exercises` por request)
+
+---
+
 ## [0.54.0] — 2026-03-26
 
 ### Adicionado
