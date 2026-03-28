@@ -541,13 +541,15 @@ export default function HomePage() {
 
   // Broadcast: abre 1.5s após carregar, só se não tiver onboarding pendente
   // Guard appMessageShown evita reabrir se appMessage mudar de referência na mesma sessão
+  // Admin nunca vê o modal automaticamente — só via botão "Ver" no painel (sem gravar eventos reais)
   useEffect(() => {
     if (appMessageLoading || !appMessage || autoWizardOpen) return
     if (appMessageShown.current) return
+    if (user?.email === import.meta.env.VITE_ADMIN_EMAIL) return
     appMessageShown.current = true
     const t = setTimeout(() => setAppMessageOpen(true), 1500)
     return () => clearTimeout(t)
-  }, [appMessageLoading, appMessage, autoWizardOpen])
+  }, [appMessageLoading, appMessage, autoWizardOpen, user])
 
   // Onboarding automático: abre wizard na primeira visita
   // Condições: settings carregou (loadingSettings=false) + perfil nunca configurado (settings===null)

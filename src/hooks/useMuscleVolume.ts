@@ -128,7 +128,7 @@ export function calcMuscleVolume(
     for (const ex of row.exercicios) {
       const primary   = resolvePrimaryGroup(ex.exercicioId, customExercises)
       const secondary = getSecondaryGroups(ex.exercicioId, customExercises)
-      const validSets = ex.series.filter(s => (Number(s.reps) || 0) > 0).length
+      const validSets = ex.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0).length
       if (validSets === 0) continue
 
       if (primary && result[primary]) {
@@ -179,7 +179,7 @@ export function calcFrequencyAlert(
     const grupoSets: Partial<Record<MuscleGroup, number>> = {}
     for (const ex of row.exercicios) {
       const pg       = resolvePrimaryGroup(ex.exercicioId, customExercises)
-      const validSets = ex.series.filter(s => (Number(s.reps) || 0) > 0).length
+      const validSets = ex.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0).length
       if (pg && validSets > 0) grupoSets[pg] = (grupoSets[pg] ?? 0) + validSets
     }
     for (const [g, sets] of Object.entries(grupoSets) as [MuscleGroup, number][]) {
@@ -201,7 +201,7 @@ export function getAllExSessions(
     if (results.length >= limit) break
     const found = row.exercicios.find(e => e.exercicioId === exercicioId)
     if (!found) continue
-    const filledSeries = found.series.filter(s => (Number(s.reps) || 0) > 0)
+    const filledSeries = found.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0)
     if (filledSeries.length === 0) continue
     const maxCarga = Math.max(0, ...filledSeries.map(s => Number(s.carga) || 0))
     const volume   = filledSeries.reduce((acc, s) => acc + (Number(s.reps) || 0) * (Number(s.carga) || 0), 0)
@@ -231,7 +231,7 @@ export function getAllTmplSessions(
     for (const ex of row.exercicios) {
       for (const s of ex.series) {
         const r = Number(s.reps) || 0, c = Number(s.carga) || 0
-        if (r > 0) { series++; vol += r * c }
+        if (r > 0 && !s.warmup) { series++; vol += r * c }
       }
     }
     if (series === 0) continue

@@ -2,8 +2,9 @@
 // Fiel ao modelo de dados do app original (contexto-port.md — FASE 3)
 
 export type WorkoutSet = {
-  reps:  string; // string para aceitar "falha", "10-12", etc.
-  carga: string; // string para aceitar "corpo", "60", etc.
+  reps:   string; // string para aceitar "falha", "10-12", etc.
+  carga:  string; // string para aceitar "corpo", "60", etc.
+  warmup?: boolean; // série de aquecimento — não conta para volume/MEV/kcal
 };
 
 export type WorkoutExercise = {

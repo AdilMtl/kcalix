@@ -646,9 +646,9 @@ function formatWorkouts(rows: WorkoutRow[]): string {
       })
       if (!setsValidos.length) continue
 
-      // FIX 2: resolver nome/grupo via mapa inline (não existem no JSONB do banco)
-      const exInfo = EX_MAP[ex.exercicioId]
-      const nome = exInfo?.nome ?? ex.exercicioId
+      // FIX 2: resolver nome/grupo via mapa (built-in + custom do usuário)
+      const exInfo = localExMap[ex.exercicioId]
+      const nome = exInfo?.nome ?? 'Exercício personalizado'
       const grupo = exInfo?.grupo ?? 'Outros'
 
       const resumo = setsValidos.map(s => {
@@ -767,6 +767,23 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
+
+    // ── Mesclar exercícios customizados do usuário no EX_MAP ─────────────────────
+    // Exercícios custom têm IDs UUID — não estão no EX_MAP estático
+    // Query leve: poucos registros por usuário, só campos necessários
+    const localExMap: Record<string, { nome: string; grupo: string }> = { ...EX_MAP }
+    try {
+      const { data: customExs } = await supabase
+        .from('custom_exercises')
+        .select('id, nome, grupo')
+        .eq('user_id', user.id)
+        .eq('arquivado', false)
+      if (customExs) {
+        for (const e of customExs) {
+          localExMap[e.id] = { nome: e.nome, grupo: e.grupo ?? 'Outros' }
+        }
+      }
+    } catch { /* falha silenciosa — continua com EX_MAP estático */ }
 
     const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string; image?: string; mimeType?: string }
 

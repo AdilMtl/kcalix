@@ -6,7 +6,6 @@
 import { useState, useEffect } from 'react'
 import { todayISO } from '../lib/dateUtils'
 import {
-  getAllTmplSessions,
   getAllExSessions,
   calcMuscleVolume,
   calcMuscleAvg4weeks,
@@ -15,7 +14,7 @@ import {
   resolveExName,
   resolvePrimaryGroup,
 } from '../hooks/useMuscleVolume'
-import type { TmplSession, ExSession, Insight } from '../hooks/useMuscleVolume'
+import type { ExSession, Insight } from '../hooks/useMuscleVolume'
 import { MUSCLE_ORDER, MUSCLE_LANDMARKS } from '../data/exerciseDb'
 import type { CustomExercise, WorkoutDayData, WorkoutTemplate } from '../types/workout'
 
@@ -32,7 +31,7 @@ function fmtVol(v: number): string {
   return v > 999 ? (v / 1000).toFixed(1) + 'k' : String(v)
 }
 
-type ThTab = 'treino' | 'equip' | 'grupo'
+type ThTab = 'sessoes' | 'equip' | 'grupo'
 
 interface Props {
   open:            boolean
@@ -44,169 +43,143 @@ interface Props {
   onOpenExProg:    (exercicioId: string) => void
 }
 
-// ── sub-componente: aba Por Treino ──────────────────────────────────────
+// ── sub-componente: aba Sessões ─────────────────────────────────────────
 
-interface PanelTreinoProps {
-  sessions: TmplSession[]
+interface PanelSessoesProps {
+  workoutRows:     (WorkoutDayData & { date: string })[]
+  activeTmplId:    string | null
   customExercises: CustomExercise[]
-  onOpenExProg: (id: string) => void
+  onOpenExProg:    (id: string) => void
 }
 
-function PanelTreino({ sessions, customExercises, onOpenExProg }: PanelTreinoProps) {
+function PanelSessoes({ workoutRows, activeTmplId, customExercises, onOpenExProg }: PanelSessoesProps) {
+  const [expandedDate, setExpandedDate] = useState<string | null>(null)
+
+  // Filtra sessões do template ativo (ou todas se Histórico Geral)
+  const rows = activeTmplId
+    ? workoutRows.filter(r => r.templateId === activeTmplId)
+    : workoutRows
+
+  const sessions = rows.slice(0, 20) // máx 20 sessões
+
   if (sessions.length === 0) {
     return (
       <p style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center', padding: '16px 0' }}>
-        Sem treinos registrados.
+        Sem sessões registradas.
       </p>
     )
   }
 
-  const maxVol    = Math.max(...sessions.map(s => s.volume))
-  const avgVol    = Math.round(sessions.reduce((a, s) => a + s.volume, 0) / sessions.length)
-  const totalKcal = sessions.reduce((a, s) => a + s.kcal, 0)
-
-  // Tabela de progressão por exercício (máx 6 sessões mais recentes)
-  const displaySessions = sessions.slice(0, 6)
-  const exIdSet = new Set<string>()
-  const allExIds: string[] = []
-  for (const sess of sessions) {
-    for (const ex of sess.exercicios) {
-      if (!exIdSet.has(ex.exercicioId)) { exIdSet.add(ex.exercicioId); allExIds.push(ex.exercicioId) }
-    }
-  }
-
-  // bestForEx: carga máxima de cada exercício entre as sessões exibidas
-  const bestForEx: Record<string, number> = {}
-  for (const exId of allExIds) {
-    let best = 0
-    for (const sess of displaySessions) {
-      const found = sess.exercicios.find(e => e.exercicioId === exId)
-      if (found) {
-        const mc = Math.max(0, ...found.series.filter(s => (Number(s.reps) || 0) > 0).map(s => Number(s.carga) || 0))
-        if (mc > best) best = mc
-      }
-    }
-    bestForEx[exId] = best
-  }
-
   return (
-    <>
-      {/* KPI summary */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {[
-          { val: String(sessions.length), lbl: 'Sessões' },
-          { val: fmtVol(maxVol),          lbl: 'Vol max' },
-          { val: fmtVol(avgVol),          lbl: 'Vol médio' },
-          { val: String(totalKcal),       lbl: '🔥 Total kcal' },
-        ].map(({ val, lbl }) => (
-          <div key={lbl} style={{
-            flex: 1, background: 'var(--surface2)', borderRadius: 'var(--radius-xs)',
-            padding: '8px 4px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{val}</div>
-            <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{lbl}</div>
-          </div>
-        ))}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {sessions.map(row => {
+        const isOpen = expandedDate === row.date
 
-      {/* Tabela de sessões */}
-      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>Sessões:</div>
-      <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-          <thead>
-            <tr style={{ color: 'var(--text3)', fontSize: 11 }}>
-              <th style={{ textAlign: 'left',   padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>Data</th>
-              <th style={{ textAlign: 'center', padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>Séries</th>
-              <th style={{ textAlign: 'center', padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>Volume</th>
-              <th style={{ textAlign: 'center', padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>kcal</th>
-              <th style={{ textAlign: 'center', padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>Δ vol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((s, i) => {
-              const prev = sessions[i + 1]
-              let delta = <span style={{ color: 'var(--text3)' }}>—</span>
-              if (prev && prev.volume > 0) {
-                const diff = s.volume - prev.volume
-                const pct  = Math.round((diff / prev.volume) * 100)
-                if (diff > 0)      delta = <span style={{ color: 'var(--good)' }}>▲+{pct}%</span>
-                else if (diff < 0) delta = <span style={{ color: 'var(--bad)' }}>▼{pct}%</span>
-                else               delta = <span style={{ color: 'var(--text3)' }}>=</span>
-              }
-              return (
-                <tr key={s.date} style={{ borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-                  <td style={{ padding: '6px', fontFamily: 'monospace', fontSize: 11 }}>{s.date.slice(5)}</td>
-                  <td style={{ padding: '6px', textAlign: 'center' }}>{s.series}</td>
-                  <td style={{ padding: '6px', textAlign: 'center' }}>{fmtVol(s.volume)}</td>
-                  <td style={{ padding: '6px', textAlign: 'center' }}>{s.kcal}</td>
-                  <td style={{ padding: '6px', textAlign: 'center' }}>{delta}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+        // Grupos musculares treinados nessa sessão (sem warmup)
+        const grupoSets: Record<string, number> = {}
+        for (const ex of row.exercicios) {
+          const pg = resolvePrimaryGroup(ex.exercicioId, customExercises)
+          if (!pg) continue
+          const validSets = ex.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0).length
+          if (validSets > 0) grupoSets[pg] = (grupoSets[pg] ?? 0) + validSets
+        }
 
-      {/* Tabela progressão por exercício (≥ 2 sessões) */}
-      {sessions.length >= 2 && allExIds.length > 0 && (
-        <>
-          <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>
-            Progressão por exercício (carga max):
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead>
-                <tr style={{ color: 'var(--text3)', fontSize: 11 }}>
-                  <th style={{ textAlign: 'left', padding: '4px 6px', borderBottom: '1px solid var(--line)' }}>Exercício</th>
-                  {displaySessions.map(sess => (
-                    <th key={sess.date} style={{ textAlign: 'center', padding: '4px 6px', borderBottom: '1px solid var(--line)', whiteSpace: 'nowrap' }}>
-                      {sess.date.slice(5)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {allExIds.map(exId => {
-                  const nome = resolveExName(exId, customExercises).split('(')[0].trim()
-                  const best = bestForEx[exId] ?? 0
+        const grupos = Object.entries(grupoSets).sort((a, b) => b[1] - a[1])
+        const totalSeries = Object.values(grupoSets).reduce((a, b) => a + b, 0)
+
+        // Data legível
+        const [y, m, d] = row.date.split('-')
+        const dt = new Date(Number(y), Number(m) - 1, Number(d))
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+        const dateLabel = `${diasSemana[dt.getDay()]} ${d}/${m}`
+
+        return (
+          <div
+            key={row.date}
+            style={{
+              background: 'var(--surface2)',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--line)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header do card — clicável */}
+            <div
+              onClick={() => setExpandedDate(isOpen ? null : row.date)}
+              style={{
+                padding: '10px 12px', cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: grupos.length > 0 ? 8 : 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{dateLabel}</span>
+                <span style={{ fontSize: 11, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{totalSeries} séries</span>
+                  {row.kcal > 0 && <span>🔥{row.kcal}</span>}
+                  <span style={{ fontSize: 12, color: 'var(--text3)', transition: 'transform .2s', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
+                </span>
+              </div>
+
+              {/* Grupos musculares com mini barras de contribuição */}
+              {grupos.map(([grupo, sets]) => {
+                const lm  = MUSCLE_LANDMARKS[grupo as keyof typeof MUSCLE_LANDMARKS]
+                if (!lm) return null
+                const pct     = Math.min(sets / lm.mrv, 1) * 100
+                const mevPct  = Math.min(lm.mev / lm.mrv, 1) * 100
+                let barColor  = '#fbbf24' // amarelo = abaixo MEV
+                if (sets >= lm.mrv)      barColor = 'var(--bad)'
+                else if (sets >= lm.mev) barColor = 'var(--good)'
+                return (
+                  <div key={grupo} style={{ marginBottom: 5 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text2)', fontWeight: 600 }}>{grupo}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>{sets}/{lm.mev} MEV</span>
+                    </div>
+                    <div style={{ position: 'relative', height: 5, background: 'var(--line)', borderRadius: 3, overflow: 'visible' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: barColor }} />
+                      <div style={{ position: 'absolute', top: -2, left: `${mevPct}%`, width: 2, height: 9, background: 'var(--accent)', borderRadius: 1 }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Detalhe expandido — exercícios + carga máx */}
+            {isOpen && (
+              <div style={{ borderTop: '1px solid var(--line)', padding: '8px 12px 10px' }}>
+                {row.exercicios.map((ex, i) => {
+                  const nome = resolveExName(ex.exercicioId, customExercises).split('(')[0].trim()
+                  const workSets = ex.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0)
+                  const warmSets = ex.series.filter(s => s.warmup && (Number(s.reps) || 0) > 0)
+                  const maxCarga = workSets.length > 0 ? Math.max(0, ...workSets.map(s => Number(s.carga) || 0)) : 0
+                  if (workSets.length === 0 && warmSets.length === 0) return null
                   return (
-                    <tr
-                      key={exId}
-                      onClick={() => onOpenExProg(exId)}
+                    <div
+                      key={i}
+                      onClick={() => onOpenExProg(ex.exercicioId)}
                       style={{
-                        borderBottom: '1px solid rgba(255,255,255,.04)',
-                        cursor: 'pointer',
-                        WebkitTapHighlightColor: 'transparent',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,.04)',
+                        cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                       }}
                     >
-                      <td style={{ padding: '6px', color: 'var(--text)', fontWeight: 600, fontSize: 11 }}>{nome}</td>
-                      {displaySessions.map(sess => {
-                        const found  = sess.exercicios.find(e => e.exercicioId === exId)
-                        let mc = 0
-                        if (found) {
-                          const filled = found.series.filter(s => (Number(s.reps) || 0) > 0)
-                          mc = Math.max(0, ...filled.map(s => Number(s.carga) || 0))
-                        }
-                        const isBest = mc > 0 && mc === best
-                        return (
-                          <td key={sess.date} style={{
-                            padding: '6px', textAlign: 'center',
-                            color: isBest ? 'var(--good)' : mc > 0 ? 'var(--text2)' : 'var(--text3)',
-                            fontWeight: isBest ? 700 : 400,
-                          }}>
-                            {mc > 0 ? `${mc}kg` : '—'}
-                          </td>
-                        )
-                      })}
-                    </tr>
+                      <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{nome}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)', display: 'flex', gap: 8 }}>
+                        {warmSets.length > 0 && <span style={{ color: '#fbbf24' }}>W×{warmSets.length}</span>}
+                        <span>{workSets.length} séries{maxCarga > 0 ? ` · ${maxCarga}kg` : ''}</span>
+                      </span>
+                    </div>
                   )
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        </>
-      )}
-    </>
+        )
+      })}
+      <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 4 }}>
+        Linha roxa = MEV semanal. Barra amarela = abaixo do MEV · Verde = na faixa.
+      </div>
+    </div>
   )
 }
 
@@ -503,11 +476,11 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
 export function TemplateHistoryModal({
   open, activeTmplId, templates, workoutRows, customExercises, onClose, onOpenExProg,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<ThTab>('treino')
+  const [activeTab, setActiveTab] = useState<ThTab>('sessoes')
 
-  // Sempre abre na aba "Por treino"
+  // Sempre abre na aba "Sessões"
   useEffect(() => {
-    if (open) setActiveTab('treino')
+    if (open) setActiveTab('sessoes')
   }, [open])
 
   if (!open) return null
@@ -517,13 +490,10 @@ export function TemplateHistoryModal({
     ? `📊 ${tmpl.nome.includes('—') ? tmpl.nome.split('—')[0].trim() : tmpl.nome}`
     : '📊 Histórico geral'
 
-  // Sessões para a aba "Por treino"
-  const sessions = getAllTmplSessions(workoutRows, activeTmplId, 12)
-
   const TABS: { id: ThTab; label: string }[] = [
-    { id: 'treino', label: '📋 Por treino' },
-    { id: 'equip',  label: '🏋️ Por exercício' },
-    { id: 'grupo',  label: '💪 Por grupo' },
+    { id: 'sessoes', label: '📅 Sessões' },
+    { id: 'equip',   label: '🏋️ Por exercício' },
+    { id: 'grupo',   label: '💪 Por grupo' },
   ]
 
   return (
@@ -599,9 +569,10 @@ export function TemplateHistoryModal({
 
         {/* corpo rolável */}
         <div style={{ overflowY: 'auto', flex: 1, padding: '0 16px 24px', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-          {activeTab === 'treino' && (
-            <PanelTreino
-              sessions={sessions}
+          {activeTab === 'sessoes' && (
+            <PanelSessoes
+              workoutRows={workoutRows}
+              activeTmplId={activeTmplId}
               customExercises={customExercises}
               onOpenExProg={onOpenExProg}
             />

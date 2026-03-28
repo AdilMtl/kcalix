@@ -8,8 +8,10 @@ import { useWorkout } from '../hooks/useWorkout'
 import { useCustomExercises } from '../hooks/useCustomExercises'
 import { useDateStore } from '../store/dateStore'
 import { useHabits } from '../hooks/useHabits'
-import { exById, CARDIO_TYPES } from '../data/exerciseDb'
+import { exById, CARDIO_TYPES, MUSCLE_ORDER, MUSCLE_LANDMARKS } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
+import { calcMuscleVolume } from '../hooks/useMuscleVolume'
+import { todayISO } from '../lib/dateUtils'
 import ExerciseSelector from '../components/ExerciseSelector'
 import { CustomExerciseModal } from '../components/CustomExerciseModal'
 import { TemplateEditorModal } from '../components/TemplateEditorModal'
@@ -148,6 +150,9 @@ export default function TreinoPage() {
     setTmplEditing(null)
   }
 
+  // RecommendSheet state
+  const [recommendOpen, setRecommendOpen] = useState(false)
+
   // Prev-ref cache: exercicioId → último treino
   const [prevData, setPrevData] = useState<Record<string, WorkoutSet[] | null>>({})
 
@@ -236,13 +241,14 @@ export default function TreinoPage() {
 
   // ── Workout summary ───────────────────────────────────────
   const totalSeries    = state.exercicios.reduce((acc, ex) =>
-    acc + ex.series.filter(s => (Number(s.reps) || 0) > 0).length, 0)
+    acc + ex.series.filter(s => !s.warmup && (Number(s.reps) || 0) > 0).length, 0)
   const totalVolume    = state.exercicios.reduce((acc, ex) =>
-    acc + ex.series.reduce((a, s) => a + (Number(s.reps) || 0) * (Number(s.carga) || 0), 0), 0)
+    acc + ex.series.reduce((a, s) => a + (s.warmup ? 0 : (Number(s.reps) || 0) * (Number(s.carga) || 0)), 0), 0)
   const totalCardioMin = state.cardio.reduce((acc, c) => acc + c.minutos, 0)
   const totalKcal      = Math.round(
     state.exercicios.reduce((acc, ex) =>
       acc + ex.series.reduce((a, s) => {
+        if (s.warmup) return a
         const r = Number(s.reps) || 0
         if (r === 0) return a
         return a + Math.max(5, Math.min(14, r * 0.5 + (Number(s.carga) || 0) * 0.03))
@@ -263,9 +269,21 @@ export default function TreinoPage() {
     setExSelOpen(true)
   }
 
-  const handleExSelect = (exercicioId: string, _nome: string) => {
+  const handleExSelect = async (exercicioId: string, _nome: string) => {
     if (exSelMode === 'add') {
-      addExercise(exercicioId)
+      // Pré-preencher com última sessão se existir
+      const last = await getLastWorkoutForExercise(exercicioId)
+      if (last?.series && last.series.length > 0) {
+        // Preserva reps/carga/warmup da última sessão — usuário só ajusta o que mudou
+        const prefilled = last.series.map(s => ({
+          reps:   s.reps,
+          carga:  s.carga,
+          warmup: s.warmup,
+        }))
+        addExercise(exercicioId, prefilled)
+      } else {
+        addExercise(exercicioId)
+      }
     } else if (exSelMode === 'swap' && exSelSwapIdx !== null) {
       // Troca exercicioId in-place mantendo séries (original L6571–6576)
       swapExercise(exSelSwapIdx, exercicioId)
@@ -278,6 +296,13 @@ export default function TreinoPage() {
   const updateSet = (exIdx: number, setIdx: number, field: 'reps' | 'carga', value: string) => {
     const sets = state.exercicios[exIdx].series.map((s, i) =>
       i === setIdx ? { ...s, [field]: value } : s
+    )
+    updateSeries(exIdx, sets)
+  }
+
+  const toggleWarmup = (exIdx: number, setIdx: number) => {
+    const sets = state.exercicios[exIdx].series.map((s, i) =>
+      i === setIdx ? { ...s, warmup: !s.warmup } : s
     )
     updateSeries(exIdx, sets)
   }
@@ -376,6 +401,70 @@ export default function TreinoPage() {
         open={coachGuideOpen}
         onClose={() => setCoachGuideOpen(false)}
       />
+
+      {/* ── RecommendSheet — z-index 310/311 ───────────────── */}
+      {recommendOpen && (() => {
+        const today = todayISO()
+        const d = new Date(today + 'T00:00:00')
+        d.setDate(d.getDate() - 6)
+        const weekStart = d.toISOString().slice(0, 10)
+        const vol = calcMuscleVolume(workoutRows, weekStart, today, customExercises)
+        return (
+          <>
+            <div
+              onClick={() => setRecommendOpen(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 310 }}
+            />
+            <div style={{
+              position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 311,
+              background: 'linear-gradient(180deg, #1a2035, #121828)',
+              borderRadius: '18px 18px 0 0',
+              border: '1px solid var(--line)',
+              maxHeight: '80dvh', display: 'flex', flexDirection: 'column',
+            }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.15)', margin: '12px auto 0', flexShrink: 0 }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px', flexShrink: 0 }}>
+                <b style={{ fontSize: 15, color: 'var(--text)' }}>💡 O que treinar hoje?</b>
+                <button type="button" onClick={() => setRecommendOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer', padding: '4px 8px', fontFamily: 'var(--font)' }}>✕</button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', padding: '0 16px 10px', flexShrink: 0 }}>
+                Volume acumulado nos últimos 7 dias vs. MEV semanal
+              </div>
+              <div style={{ overflowY: 'auto', flex: 1, padding: '0 16px 24px' }}>
+                {MUSCLE_ORDER.map(grupo => {
+                  const v   = vol[grupo]
+                  const lm  = MUSCLE_LANDMARKS[grupo]
+                  const sets = Math.round(v.total * 2) / 2
+                  const pct  = Math.min(sets / lm.mrv, 1) * 100
+                  const mevPct = Math.min(lm.mev / lm.mrv, 1) * 100
+                  let barColor = 'var(--text3)'
+                  let status   = ''
+                  let statusColor = 'var(--text3)'
+                  if (sets === 0) { status = 'não treinou'; statusColor = 'var(--text3)' }
+                  else if (sets >= lm.mrv) { barColor = 'var(--bad)'; status = 'limite atingido'; statusColor = 'var(--bad)' }
+                  else if (sets >= lm.mev) { barColor = 'var(--good)'; status = 'na faixa ✓'; statusColor = 'var(--good)' }
+                  else { barColor = '#fbbf24'; status = `precisa +${Math.ceil(lm.mev - sets)} sets`; statusColor = '#fbbf24' }
+                  return (
+                    <div key={grupo} style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{grupo}</span>
+                        <span style={{ fontSize: 11, color: statusColor, fontWeight: 600 }}>{sets} sets — {status}</span>
+                      </div>
+                      <div style={{ position: 'relative', height: 6, background: 'var(--line)', borderRadius: 3, overflow: 'visible' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: barColor, transition: 'width .3s' }} />
+                        <div style={{ position: 'absolute', top: -3, left: `${mevPct}%`, width: 2, height: 12, background: 'var(--accent)', borderRadius: 1 }} title={`MEV: ${lm.mev}`} />
+                      </div>
+                    </div>
+                  )
+                })}
+                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text3)' }}>
+                  Linha roxa = MEV (mínimo efetivo). Amarelo = abaixo do MEV. Verde = na faixa ideal.
+                </div>
+              </div>
+            </div>
+          </>
+        )
+      })()}
 
       {/* ── Card principal ─────────────────────────────────── */}
       <div style={{
@@ -516,6 +605,25 @@ export default function TreinoPage() {
               >+ Nova rotina</button>
             </div>
           )}
+
+          {/* ── Botão recomendação ─────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => { reloadWorkoutRows(); setRecommendOpen(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              width: '100%', padding: '9px 12px', marginBottom: 10,
+              borderRadius: 'var(--radius-xs)',
+              border: '1px solid rgba(124,92,255,.2)',
+              background: 'rgba(124,92,255,.07)',
+              color: 'var(--accent2)', fontFamily: 'var(--font)',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <span>💡</span>
+            <span>O que treinar hoje?</span>
+          </button>
 
           {/* ── ex-list ────────────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -669,6 +777,7 @@ export default function TreinoPage() {
                             <th style={{ width: 28, fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>#</th>
                             <th style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>Reps</th>
                             <th style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>Carga (kg)</th>
+                            <th style={{ width: 30, fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }} title="Aquecimento — não conta para volume/MEV">W</th>
                             <th style={{ width: 34, padding: '3px 2px' }}></th>
                           </tr>
                         </thead>
@@ -697,6 +806,22 @@ export default function TreinoPage() {
                                   onFocus={e => setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)}
                                   className="set-input"
                                 />
+                              </td>
+                              <td style={{ padding: '3px 2px', textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  title="Marcar como aquecimento (não conta para volume/MEV)"
+                                  onClick={() => toggleWarmup(exIdx, si)}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: '50%',
+                                    border: `1px solid ${s.warmup ? 'rgba(251,191,36,.4)' : 'rgba(255,255,255,.1)'}`,
+                                    background: s.warmup ? 'rgba(251,191,36,.15)' : 'transparent',
+                                    color: s.warmup ? '#fbbf24' : 'var(--text3)',
+                                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontFamily: 'var(--font)',
+                                  }}
+                                >W</button>
                               </td>
                               <td style={{ padding: '3px 2px', textAlign: 'center' }}>
                                 <button

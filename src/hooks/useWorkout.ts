@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import { DEFAULT_TEMPLATES } from '../data/exerciseDb'
 import { todayISO } from '../lib/dateUtils'
 import type {
+  WorkoutSet,
   WorkoutState,
   WorkoutDayData,
   WorkoutTemplate,
@@ -23,7 +24,7 @@ export function kcalPerSet(reps: string, carga: string): number {
 
 function calcWorkoutKcal(state: WorkoutState): number {
   const fromSets = state.exercicios.reduce((acc, ex) =>
-    acc + ex.series.reduce((a, s) => a + kcalPerSet(s.reps, s.carga), 0), 0)
+    acc + ex.series.reduce((a, s) => a + (s.warmup ? 0 : kcalPerSet(s.reps, s.carga)), 0), 0)
   const fromCardio = state.cardio.reduce((acc, c) => acc + c.minutos * c.kcalPerMin, 0)
   return Math.round(fromSets + fromCardio)
 }
@@ -65,7 +66,7 @@ interface UseWorkoutReturn {
   // edição do estado local (sem persistir — persistido só no saveWorkout)
   setTemplateId:   (id: string | null) => void
   setNota:         (nota: string) => void
-  addExercise:     (exercicioId: string) => void
+  addExercise:     (exercicioId: string, prefilled?: WorkoutSet[]) => void
   removeExercise:  (index: number) => void
   swapExercise:    (index: number, newExercicioId: string) => void
   updateSeries:    (exIndex: number, sets: WorkoutExercise['series']) => void
@@ -169,10 +170,13 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
     setState(s => ({ ...s, nota }))
   }, [])
 
-  const addExercise = useCallback((exercicioId: string) => {
+  const addExercise = useCallback((exercicioId: string, prefilled?: WorkoutSet[]) => {
+    const series = prefilled && prefilled.length > 0
+      ? prefilled
+      : [{ reps: '', carga: '' }, { reps: '', carga: '' }, { reps: '', carga: '' }]
     setState(s => ({
       ...s,
-      exercicios: [...s.exercicios, { exercicioId, series: [{ reps: '', carga: '' }, { reps: '', carga: '' }, { reps: '', carga: '' }] }],
+      exercicios: [...s.exercicios, { exercicioId, series }],
     }))
   }, [])
 
