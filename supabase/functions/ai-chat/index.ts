@@ -639,8 +639,9 @@ function formatWorkouts(rows: WorkoutRow[], exMap: Record<string, { nome: string
 
     const exLines: string[] = []
     for (const ex of exercicios) {
-      // FIX 1: reps é string — usar parseFloat para comparar; "falha" também é série válida
+      // FIX 1: reps é string — usar parseFloat; "falha" válido; warmup não conta
       const setsValidos = (ex.series ?? []).filter(s => {
+        if (s.warmup) return false
         const r = s.reps?.toString().trim() ?? ''
         return r === 'falha' || parseFloat(r) > 0
       })
@@ -670,23 +671,35 @@ function formatWorkouts(rows: WorkoutRow[], exMap: Record<string, { nome: string
     }
   }
 
-  // Resumo de volume semanal
+  // Resumo de volume semanal — todos os grupos com MEV/MAV definidos
   if (Object.keys(volumeByGroup).length) {
     const MEV: Record<string, number> = {
       Peito: 10, Costas: 10, Quad: 8, 'Posterior de coxa': 6,
-      Glúteos: 15, Ombros: 6, Bíceps: 6, Tríceps: 6, Core: 4,
+      'Posterior de Coxa': 6, Glúteos: 15, Ombros: 6,
+      Bíceps: 6, Tríceps: 6, Core: 4, Abdômen: 4,
     }
     const MAV: Record<string, number> = {
       Peito: 15, Costas: 15, Quad: 14, 'Posterior de coxa': 12,
-      Glúteos: 20, Ombros: 12, Bíceps: 12, Tríceps: 12, Core: 10,
+      'Posterior de Coxa': 12, Glúteos: 20, Ombros: 12,
+      Bíceps: 12, Tríceps: 12, Core: 10, Abdômen: 10,
     }
-    const volLines = Object.entries(volumeByGroup).map(([g, s]) => {
-      const mev = MEV[g] ?? '?'
-      const mav = MAV[g] ?? '?'
-      const status = typeof mev === 'number' && s < mev ? '⚠️ abaixo MEV' : typeof mav === 'number' && s >= mav ? '✓ MAV+' : '✓ ok'
-      return `  ${g}: ${s}s (MEV=${mev}, MAV=${mav}) ${status}`
-    })
-    lines.push('Volume últimos 7 dias:')
+    // Consolidar grupos (evitar duplicatas por capitalização)
+    const consolidated: Record<string, number> = {}
+    for (const [g, s] of Object.entries(volumeByGroup)) {
+      const key = g
+      consolidated[key] = (consolidated[key] ?? 0) + s
+    }
+    const volLines = Object.entries(consolidated)
+      .sort((a, b) => b[1] - a[1])
+      .map(([g, s]) => {
+        const mev = MEV[g]
+        const mav = MAV[g]
+        const mevStr = mev ?? '?'
+        const mavStr = mav ?? '?'
+        const status = mev && s < mev ? '⚠️ abaixo MEV' : mav && s >= mav ? '✓ MAV+' : '✓ ok'
+        return `  ${g}: ${s}s (MEV=${mevStr}, MAV=${mavStr}) ${status}`
+      })
+    lines.push(`\nVolume últimos 7 dias (USE APENAS ESTE RESUMO — não recalcule):`)
     lines.push(...volLines)
   }
 
