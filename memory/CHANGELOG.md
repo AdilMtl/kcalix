@@ -1,5 +1,16 @@
 # Kcalix — CHANGELOG
 
+## [v0.56.0] — 2026-03-29
+
+### Corrigido
+- [fix] `FoodPortionModal`: modal ficava atrás da navbar ao abrir — `bottom: 0` → `bottom: calc(56px + env(safe-area-inset-bottom))` igual ao FoodDrawer (`FoodPortionModal.tsx`)
+- [fix] `FoodDrawer`: encolhia quando lista de busca retornava poucos itens — adicionado `minHeight: 70dvh` (`FoodDrawer.tsx`)
+- [fix] `TemplateHistoryModal`: aba "Por exercício" ficava pequenininha quando vazia — adicionado `minHeight: 70dvh` (`TemplateHistoryModal.tsx`)
+- [fix] Enquetes: respostas nunca eram gravadas no banco — `onDismiss` em `HomePage.tsx` não repassava `answer`/`comment` para `dismissAppMessage()`; respostas anteriores ao fix não recuperáveis (`HomePage.tsx`)
+
+### Notas
+- Commit d14fada — já deployado via /deploy mid-session
+
 ## [v0.53.0] — 2026-03-26
 
 ### Adicionado
