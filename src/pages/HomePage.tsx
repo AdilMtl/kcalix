@@ -727,7 +727,7 @@ export default function HomePage() {
       {appMessageOpen && appMessage && (
         <AppMessageModal
           message={appMessage}
-          onDismiss={() => { setAppMessageOpen(false); dismissAppMessage() }}
+          onDismiss={(answer, comment) => { setAppMessageOpen(false); dismissAppMessage(answer, comment) }}
         />
       )}
     </div>

@@ -511,7 +511,7 @@ export function TemplateHistoryModal({
       {/* modal full-sheet */}
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0,
-        maxHeight: '92dvh',
+        minHeight: '70dvh', maxHeight: '92dvh',
         background: 'linear-gradient(180deg, #1a2035, #121828)',
         borderRadius: '18px 18px 0 0',
         border: '1px solid var(--line)',

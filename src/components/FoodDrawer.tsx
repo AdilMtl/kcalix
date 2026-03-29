@@ -68,7 +68,7 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 'calc(56px + env(safe-area-inset-bottom))', zIndex: 60,
           maxWidth: '600px', margin: '0 auto',
-          maxHeight: '85dvh',
+          minHeight: '70dvh', maxHeight: '85dvh',
           background: 'linear-gradient(180deg, #1a2035, #121828)',
           border: '1px solid var(--line)', borderBottom: 'none',
           borderRadius: '20px 20px 0 0',

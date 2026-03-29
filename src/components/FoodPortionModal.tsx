@@ -49,7 +49,7 @@ export default function FoodPortionModal({ food, onAddFood, onClose, onCancel }:
       {/* Bottom sheet */}
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 63,
+          position: 'fixed', left: 0, right: 0, bottom: 'calc(56px + env(safe-area-inset-bottom))', zIndex: 63,
           maxWidth: '600px', margin: '0 auto',
           background: 'linear-gradient(180deg, #1a2035, #121828)',
           border: '1px solid var(--line)', borderBottom: 'none',
