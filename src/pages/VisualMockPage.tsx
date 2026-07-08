@@ -18,9 +18,9 @@ type Direction = {
 const directions: Direction[] = [
   {
     id: 'aurora',
-    name: 'Aurora Vitral',
-    label: 'Ousado, translucido, premium e mais sensorial',
-    premise: 'Mais camadas, textura sutil, cards tipo vidro e accents quentes para dar vida sem perder leitura.',
+    name: 'Aurora Glass',
+    label: 'Identidade premium, mais disruptiva e sensorial',
+    premise: 'Layout em cockpit assimetrico, fundo com textura leve em outra camada e cards mais solidos para nao poluir leitura.',
     titleFont: 'Bricolage Grotesque',
     bodyFont: 'Instrument Sans',
     dataFont: 'Azeret Mono',
@@ -28,9 +28,9 @@ const directions: Direction[] = [
   },
   {
     id: 'ember',
-    name: 'Ember Cockpit',
-    label: 'Performance tecnica, treino rapido e menos ornamental',
-    premise: 'Mesmo DNA quente, porem mais orientado a execucao: metricas compactas, contraste alto e cards mais diretos.',
+    name: 'Ember Training',
+    label: 'Treino limpo, rapido e tecnico',
+    premise: 'Fluxo mais direto para academia: exercicio atual, carga, reps, descanso e lista compacta com alto contraste.',
     titleFont: 'Sora',
     bodyFont: 'Inter',
     dataFont: 'IBM Plex Mono',
@@ -71,7 +71,7 @@ export default function VisualMockPage() {
     <div className={`visual-mock vm-${direction.id}`}>
       <header className="vm-topbar">
         <div>
-          <span className="vm-eyebrow">Kcalix Visual Lab v2</span>
+          <span className="vm-eyebrow">Kcalix Visual Lab v3</span>
           <h1>Performance pessoal com cockpit tecnico, coach discreto e dark mode vivo.</h1>
         </div>
         <a className="vm-back" href="/home">Voltar ao app</a>
@@ -131,12 +131,13 @@ export default function VisualMockPage() {
             <MockHeader activeTab={activeTab} />
             <CommandRail activeTab={activeTab} />
             <div className="vm-screen">
-              {activeTab === 'home' && <HomeMock />}
-              {activeTab === 'diario' && <DiaryMock />}
+              {activeTab === 'home' && <HomeMock direction={direction.id} />}
+              {activeTab === 'diario' && <DiaryMock direction={direction.id} />}
               {activeTab === 'treino' && <WorkoutMock direction={direction.id} />}
-              {activeTab === 'corpo' && <BodyMock />}
-              {activeTab === 'coach' && <CoachMock />}
+              {activeTab === 'corpo' && <BodyMock direction={direction.id} />}
+              {activeTab === 'coach' && <CoachMock direction={direction.id} />}
             </div>
+            <button className="vm-floating-coach" type="button">AI</button>
             <nav className="vm-nav" aria-label="Abas do mock">
               {tabs.map(tab => (
                 <button
@@ -191,7 +192,60 @@ function CommandRail({ activeTab }: { activeTab: MockTab }) {
   )
 }
 
-function HomeMock() {
+function HomeMock({ direction }: { direction: DirectionId }) {
+  if (direction === 'aurora') {
+    return (
+      <div className="vm-aurora-home">
+        <section className="vm-focus-panel">
+          <div>
+            <span className="vm-chip">Cockpit do dia</span>
+            <h2>Plano em controle</h2>
+            <p>Treino pesado, nutri com margem e medidas seguindo tendencia.</p>
+          </div>
+          <strong>78</strong>
+        </section>
+
+        <div className="vm-signal-grid">
+          <article>
+            <small>Nutri</small>
+            <strong>508 kcal</strong>
+            <span>livres</span>
+          </article>
+          <article>
+            <small>Treino</small>
+            <strong>9.8t</strong>
+            <span>volume</span>
+          </article>
+          <article>
+            <small>Corpo</small>
+            <strong>-0.8kg</strong>
+            <span>14 dias</span>
+          </article>
+        </div>
+
+        <section className="vm-habit-strip">
+          <div className="vm-section-head">
+            <strong>Habitos</strong>
+            <span>5/6 ativos</span>
+          </div>
+          <div>
+            {['agua', 'creatina', 'sono', 'passos', 'mobilidade', 'check-in'].map((item, idx) => (
+              <i key={item} className={idx < 5 ? 'on' : ''}>{item.slice(0, 1).toUpperCase()}</i>
+            ))}
+          </div>
+        </section>
+
+        <section className="vm-coach-strip aurora">
+          <span>AI</span>
+          <div>
+            <strong>Insight inteligente</strong>
+            <p>Se mantiver carbo no jantar, amanha o treino de pernas fica melhor sem quebrar o deficit semanal.</p>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <>
       <section className="vm-hero-card">
@@ -234,7 +288,38 @@ function HomeMock() {
   )
 }
 
-function DiaryMock() {
+function DiaryMock({ direction }: { direction: DirectionId }) {
+  if (direction === 'aurora') {
+    return (
+      <div className="vm-aurora-diary">
+        <section className="vm-food-command">
+          <span className="vm-chip">Lancamento rapido</span>
+          <h2>Almoco</h2>
+          <p>Digite alimento, fale com o Coach ou use favoritos.</p>
+          <button type="button">+ Refeicao</button>
+        </section>
+
+        <div className="vm-macro-orbits">
+          <Metric label="Proteina" value="146g" progress={86} />
+          <Metric label="Carbo" value="192g" progress={72} />
+          <Metric label="Gordura" value="58g" progress={64} />
+        </div>
+
+        <div className="vm-meal-list">
+          {meals.map(meal => (
+            <article key={meal.name} className="vm-meal-card">
+              <div>
+                <strong>{meal.name}</strong>
+                <small>{meal.p}P / {meal.c}C / {meal.g}G</small>
+              </div>
+              <span>{meal.kcal}</span>
+            </article>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <section className="vm-kcal-panel">
@@ -269,13 +354,57 @@ function DiaryMock() {
 }
 
 function WorkoutMock({ direction }: { direction: DirectionId }) {
+  if (direction === 'aurora') {
+    return (
+      <div className="vm-aurora-workout">
+        <section className="vm-current-lift">
+          <span className="vm-chip">Set atual</span>
+          <h2>Supino inclinado</h2>
+          <p>Set 3 de 4 / referencia anterior: 32 kg x 8</p>
+          <div className="vm-lift-inputs">
+            <button type="button">-</button>
+            <strong>34 kg</strong>
+            <strong>8 reps</strong>
+            <button type="button">+</button>
+          </div>
+          <button className="vm-primary-action" type="button">Salvar serie</button>
+        </section>
+
+        <div className="vm-aurora-side">
+          <section className="vm-rest-tile">
+            <small>Descanso</small>
+            <strong>1:18</strong>
+            <span>proximo set</span>
+          </section>
+          <section className="vm-rest-tile hot">
+            <small>Volume</small>
+            <strong>9.8t</strong>
+            <span>+6% vs media</span>
+          </section>
+        </div>
+
+        <div className="vm-workout-list aurora-list">
+          {workout.map(item => (
+            <article key={item.name}>
+              <div>
+                <strong>{item.name}</strong>
+                <small>{item.sets} / {item.load}</small>
+              </div>
+              <span>{item.trend}</span>
+            </article>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
-      <section className="vm-workout-hero">
+      <section className="vm-ember-live">
         <div>
-          <span className="vm-chip">Sessao ativa</span>
-          <h2>Peito + Costas</h2>
-          <p>Proximo set: Supino inclinado. Carga sugerida 34-36 kg.</p>
+          <span className="vm-chip">Treino ativo</span>
+          <h2>Supino inclinado</h2>
+          <p>Set 3/4 / ultima serie 34 kg x 8</p>
         </div>
         <div className="vm-rest-timer">
           <small>Descanso</small>
@@ -283,21 +412,21 @@ function WorkoutMock({ direction }: { direction: DirectionId }) {
         </div>
       </section>
 
-      <div className="vm-workout-summary">
-        <Metric label="Series" value="18" progress={75} />
-        <Metric label="Volume" value="9.8t" progress={82} />
-        <Metric label="Intens." value="RPE 8" progress={68} />
-      </div>
-
-      <section className="vm-active-set">
-        <div>
-          <small>Entrada rapida</small>
-          <strong>34 kg x 8 reps</strong>
-        </div>
-        <button type="button">{direction === 'aurora' ? 'Salvar set' : 'OK'}</button>
+      <section className="vm-set-entry">
+        <label>
+          <span>Carga</span>
+          <strong>34</strong>
+          <small>kg</small>
+        </label>
+        <label>
+          <span>Reps</span>
+          <strong>8</strong>
+          <small>reps</small>
+        </label>
+        <button type="button">Salvar</button>
       </section>
 
-      <div className="vm-workout-list">
+      <div className="vm-workout-list ember-list">
         {workout.map(item => (
           <article key={item.name}>
             <div>
@@ -312,7 +441,31 @@ function WorkoutMock({ direction }: { direction: DirectionId }) {
   )
 }
 
-function BodyMock() {
+function BodyMock({ direction }: { direction: DirectionId }) {
+  if (direction === 'aurora') {
+    return (
+      <>
+        <section className="vm-body-panel aurora-body">
+          <div>
+            <span className="vm-chip">Tendencia corporal</span>
+            <h2>82,4 kg</h2>
+            <p>Cintura estavel, peso em queda e check-ins consistentes.</p>
+          </div>
+          <div className="vm-body-grid">
+            <span><b>14,8%</b> BF</span>
+            <span><b>84cm</b> cintura</span>
+            <span><b>92%</b> aderencia</span>
+          </div>
+        </section>
+        <section className="vm-glow-chart">
+          {[68, 76, 72, 84, 79, 90, 86].map((height, idx) => (
+            <i key={idx} style={{ height: `${height}%` }} />
+          ))}
+        </section>
+      </>
+    )
+  }
+
   return (
     <>
       <section className="vm-body-panel">
@@ -344,7 +497,28 @@ function BodyMock() {
   )
 }
 
-function CoachMock() {
+function CoachMock({ direction }: { direction: DirectionId }) {
+  if (direction === 'aurora') {
+    return (
+      <>
+        <section className="vm-coach-hero aurora-coach">
+          <span>AI</span>
+          <h2>Coach discreto</h2>
+          <p>Um painel de pergunta rapida, sem personagem e sem tomar a tela.</p>
+        </section>
+        <div className="vm-prompt-box">
+          <span>O que voce quer ajustar?</span>
+          <strong>treino / refeicao / medidas</strong>
+        </div>
+        <div className="vm-chat">
+          <p className="assistant">Seu melhor ajuste hoje e carbo controlado no jantar. Mantem performance sem perder deficit.</p>
+          <p className="user">E se eu treinar pernas amanha?</p>
+          <p className="assistant">Eu elevaria carbo hoje em 35-55g e manteria gordura abaixo de 15g.</p>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <section className="vm-coach-hero">
