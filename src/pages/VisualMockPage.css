@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@500;700;800&family=Sora:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@500;600;700&family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600&family=Instrument+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Sora:wght@500;700;800&display=swap');
 
 .visual-mock {
   --vm-bg: #08090d;
@@ -8,18 +8,19 @@
   --vm-text: #f8f6f2;
   --vm-muted: rgba(248,246,242,.62);
   --vm-faint: rgba(248,246,242,.4);
+  --vm-violet: #7a5cff;
   --vm-hot: #ff7a3d;
   --vm-pink: #ff3f8e;
-  --vm-violet: #8b5cf6;
-  --vm-green: #17d3a2;
-  --vm-title-font: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --vm-body-font: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --vm-data-font: "JetBrains Mono", ui-monospace, monospace;
+  --vm-green: #21d4b4;
+  --vm-title-font: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --vm-body-font: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --vm-data-font: "Azeret Mono", ui-monospace, monospace;
   min-height: 100dvh;
   padding: 24px;
   background:
-    radial-gradient(circle at 16% 4%, color-mix(in srgb, var(--vm-hot) 26%, transparent), transparent 30%),
-    radial-gradient(circle at 90% 16%, color-mix(in srgb, var(--vm-pink) 22%, transparent), transparent 34%),
+    radial-gradient(circle at 16% 4%, color-mix(in srgb, var(--vm-violet) 26%, transparent), transparent 28%),
+    radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--vm-hot) 21%, transparent), transparent 32%),
+    radial-gradient(circle at 92% 58%, color-mix(in srgb, var(--vm-pink) 18%, transparent), transparent 34%),
     linear-gradient(145deg, #06070b 0%, var(--vm-bg) 54%, #11131b 100%);
   color: var(--vm-text);
   font-family: var(--vm-body-font);
@@ -38,24 +39,15 @@
   mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 72%);
 }
 
-.vm-graphite {
-  --vm-bg: #070b10;
-  --vm-hot: #9b7bff;
-  --vm-pink: #21d4b4;
-  --vm-violet: #e9ff70;
-  --vm-green: #ff8a5b;
-  --vm-title-font: "Sora", ui-sans-serif, system-ui, sans-serif;
-  --vm-data-font: "IBM Plex Mono", ui-monospace, monospace;
-}
-
 .vm-ember {
-  --vm-bg: #0d0908;
+  --vm-bg: #09090f;
+  --vm-violet: #6d5dfc;
   --vm-hot: #ff5c35;
   --vm-pink: #ff2f7d;
-  --vm-violet: #35c2ff;
   --vm-green: #ffd166;
-  --vm-title-font: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --vm-data-font: "JetBrains Mono", ui-monospace, monospace;
+  --vm-title-font: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --vm-body-font: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --vm-data-font: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 .vm-topbar,
@@ -110,12 +102,18 @@
   margin-bottom: 22px;
 }
 
+.vm-direction-strip.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .vm-direction-card {
-  min-height: 122px;
+  min-height: 128px;
   padding: 15px;
   border: 1px solid var(--vm-line);
   border-radius: 8px;
-  background: rgba(255,255,255,.055);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.032)),
+    color-mix(in srgb, var(--vm-violet) 8%, transparent);
   color: var(--vm-text);
   text-align: left;
   cursor: pointer;
@@ -169,14 +167,22 @@
   padding: 18px;
   border: 1px solid var(--vm-line);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.035)),
+    color-mix(in srgb, var(--vm-violet) 8%, transparent);
   backdrop-filter: blur(20px);
 }
 
 .vm-spec-panel h2 {
-  margin: 8px 0 18px;
+  margin: 8px 0 8px;
   font-family: var(--vm-title-font);
   font-size: 28px;
+}
+
+.vm-premise {
+  margin: 0 0 18px;
+  color: var(--vm-muted);
+  line-height: 1.55;
 }
 
 .vm-spec-panel dl {
@@ -228,6 +234,26 @@
   line-height: 1.65;
 }
 
+.vm-layout-notes {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--vm-line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.055);
+}
+
+.vm-layout-notes strong {
+  font-family: var(--vm-title-font);
+  font-size: 13px;
+}
+
+.vm-layout-notes span {
+  color: var(--vm-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .vm-phone-shell {
   display: grid;
   place-items: center;
@@ -242,9 +268,10 @@
   border-radius: 28px;
   padding: 14px;
   background:
-    linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+    linear-gradient(160deg, rgba(255,255,255,.105), rgba(255,255,255,.025)),
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--vm-violet) 18%, transparent), transparent 45%),
     #080a10;
-  box-shadow: 0 30px 100px rgba(0,0,0,.45);
+  box-shadow: 0 34px 110px rgba(0,0,0,.52);
   overflow: hidden;
 }
 
@@ -252,13 +279,35 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 4%, color-mix(in srgb, var(--vm-hot) 28%, transparent), transparent 34%),
-    radial-gradient(circle at 100% 8%, color-mix(in srgb, var(--vm-pink) 24%, transparent), transparent 32%);
+    radial-gradient(circle at 18% 2%, color-mix(in srgb, var(--vm-violet) 28%, transparent), transparent 32%),
+    radial-gradient(circle at 100% 8%, color-mix(in srgb, var(--vm-hot) 20%, transparent), transparent 31%),
+    radial-gradient(circle at 72% 48%, color-mix(in srgb, var(--vm-pink) 16%, transparent), transparent 40%);
   opacity: .9;
   animation: vm-breathe 6s ease-in-out infinite alternate;
 }
 
+.vm-texture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .22;
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(255,255,255,.16) 19%, transparent 20% 46%, rgba(255,255,255,.08) 47%, transparent 48%),
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.28) 0 1px, transparent 1.4px);
+  background-size: 160px 160px, 18px 18px;
+  mix-blend-mode: screen;
+}
+
+.vm-ember .vm-texture {
+  opacity: .11;
+  background:
+    linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 .vm-app-header,
+.vm-command-rail,
 .vm-screen,
 .vm-nav {
   position: relative;
@@ -283,6 +332,31 @@
   margin-top: 2px;
   font-family: var(--vm-title-font);
   font-size: 22px;
+}
+
+.vm-command-rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--vm-hot) 32%, var(--vm-line));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--vm-hot) 14%, transparent), color-mix(in srgb, var(--vm-pink) 10%, transparent)),
+    rgba(255,255,255,.05);
+}
+
+.vm-command-rail span {
+  color: var(--vm-muted);
+  font-size: 12px;
+}
+
+.vm-command-rail strong {
+  color: var(--vm-text);
+  font-family: var(--vm-data-font);
+  font-size: 12px;
 }
 
 .vm-date-pill {
@@ -319,6 +393,7 @@
 }
 
 .vm-hero-card,
+.vm-workout-hero,
 .vm-kcal-panel,
 .vm-week-card,
 .vm-body-panel,
@@ -326,10 +401,14 @@
 .vm-coach-hero {
   border: 1px solid var(--vm-line);
   border-radius: 8px;
-  background: linear-gradient(145deg, rgba(255,255,255,.115), rgba(255,255,255,.04));
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.135), rgba(255,255,255,.04)),
+    linear-gradient(90deg, color-mix(in srgb, var(--vm-violet) 14%, transparent), color-mix(in srgb, var(--vm-hot) 7%, transparent));
+  box-shadow: inset 0 1px rgba(255,255,255,.12);
 }
 
-.vm-hero-card {
+.vm-hero-card,
+.vm-workout-hero {
   display: flex;
   justify-content: space-between;
   gap: 14px;
@@ -338,11 +417,16 @@
   overflow: hidden;
 }
 
+.vm-workout-hero {
+  min-height: 164px;
+}
+
 .vm-hero-card.compact {
   min-height: 148px;
 }
 
 .vm-hero-card h2,
+.vm-workout-hero h2,
 .vm-body-panel h2,
 .vm-coach-hero h2 {
   margin: 10px 0 8px;
@@ -352,11 +436,37 @@
 }
 
 .vm-hero-card p,
+.vm-workout-hero p,
 .vm-body-panel p,
 .vm-coach-hero p {
   margin: 0;
   color: var(--vm-muted);
   line-height: 1.45;
+}
+
+.vm-rest-timer {
+  width: 96px;
+  height: 96px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--vm-hot) 40%, transparent);
+  border-radius: 8px;
+  background: rgba(0,0,0,.22);
+}
+
+.vm-rest-timer small {
+  color: var(--vm-faint);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.vm-rest-timer strong {
+  color: var(--vm-green);
+  font-family: var(--vm-data-font);
+  font-size: 24px;
 }
 
 .vm-orbit {
@@ -386,7 +496,10 @@
   padding: 12px;
   border: 1px solid var(--vm-line);
   border-radius: 8px;
-  background: rgba(255,255,255,.055);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035)),
+    color-mix(in srgb, var(--vm-violet) 8%, transparent);
+  box-shadow: inset 0 1px rgba(255,255,255,.1);
 }
 
 .vm-metric small {
@@ -525,7 +638,8 @@
   padding: 13px;
   border: 1px solid var(--vm-line);
   border-radius: 8px;
-  background: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.062);
+  box-shadow: inset 0 1px rgba(255,255,255,.09);
 }
 
 .vm-meal-card small,
@@ -543,12 +657,54 @@
   font-weight: 800;
 }
 
+.vm-meal-card em {
+  color: var(--vm-faint);
+  font-size: 10px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
 .vm-primary-action {
   min-height: 48px;
   border: 0;
   border-radius: 8px;
   background: linear-gradient(135deg, var(--vm-hot), var(--vm-pink));
   color: #fff;
+  font-weight: 800;
+}
+
+.vm-active-set {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--vm-green) 36%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vm-green) 10%, transparent);
+}
+
+.vm-active-set small {
+  display: block;
+  color: var(--vm-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.vm-active-set strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--vm-data-font);
+}
+
+.vm-active-set button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: linear-gradient(135deg, var(--vm-hot), var(--vm-pink));
+  color: white;
+  font: inherit;
   font-weight: 800;
 }
 
@@ -716,6 +872,7 @@
   }
 
   .vm-hero-card h2,
+  .vm-workout-hero h2,
   .vm-body-panel h2,
   .vm-coach-hero h2 {
     font-size: 36px;

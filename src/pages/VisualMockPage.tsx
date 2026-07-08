@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import './VisualMockPage.css'
 
-type DirectionId = 'aurora' | 'graphite' | 'ember'
+type DirectionId = 'aurora' | 'ember'
 type MockTab = 'home' | 'diario' | 'treino' | 'corpo' | 'coach'
 
 type Direction = {
   id: DirectionId
   name: string
   label: string
+  premise: string
   titleFont: string
   bodyFont: string
   dataFont: string
@@ -17,56 +18,49 @@ type Direction = {
 const directions: Direction[] = [
   {
     id: 'aurora',
-    name: 'Aurora Control',
-    label: 'Premium quente, magenta e violeta',
-    titleFont: 'Space Grotesk',
-    bodyFont: 'Inter',
-    dataFont: 'JetBrains Mono',
-    palette: ['#ff7a3d', '#ff3f8e', '#8b5cf6', '#17d3a2'],
-  },
-  {
-    id: 'graphite',
-    name: 'Graphite Coach',
-    label: 'Tecnico, escuro, preciso e calmo',
-    titleFont: 'Sora',
-    bodyFont: 'Inter',
-    dataFont: 'IBM Plex Mono',
-    palette: ['#9b7bff', '#21d4b4', '#e9ff70', '#ff8a5b'],
+    name: 'Aurora Vitral',
+    label: 'Ousado, translucido, premium e mais sensorial',
+    premise: 'Mais camadas, textura sutil, cards tipo vidro e accents quentes para dar vida sem perder leitura.',
+    titleFont: 'Bricolage Grotesque',
+    bodyFont: 'Instrument Sans',
+    dataFont: 'Azeret Mono',
+    palette: ['#7a5cff', '#ff7a3d', '#ff3f8e', '#21d4b4'],
   },
   {
     id: 'ember',
-    name: 'Ember Performance',
-    label: 'Energia, treino e progresso',
-    titleFont: 'Manrope',
+    name: 'Ember Cockpit',
+    label: 'Performance tecnica, treino rapido e menos ornamental',
+    premise: 'Mesmo DNA quente, porem mais orientado a execucao: metricas compactas, contraste alto e cards mais diretos.',
+    titleFont: 'Sora',
     bodyFont: 'Inter',
-    dataFont: 'JetBrains Mono',
-    palette: ['#ff5c35', '#ff2f7d', '#35c2ff', '#ffd166'],
+    dataFont: 'IBM Plex Mono',
+    palette: ['#6d5dfc', '#ff5c35', '#ff2f7d', '#ffd166'],
   },
 ]
 
 const tabs: { id: MockTab; label: string; glyph: string }[] = [
-  { id: 'home', label: 'Home', glyph: '⌂' },
-  { id: 'diario', label: 'Diario', glyph: '◫' },
-  { id: 'treino', label: 'Treino', glyph: '▥' },
-  { id: 'corpo', label: 'Corpo', glyph: '⌁' },
-  { id: 'coach', label: 'Coach', glyph: '✦' },
+  { id: 'home', label: 'Home', glyph: 'H' },
+  { id: 'diario', label: 'Diario', glyph: 'D' },
+  { id: 'treino', label: 'Treino', glyph: 'T' },
+  { id: 'corpo', label: 'Corpo', glyph: 'C' },
+  { id: 'coach', label: 'Coach', glyph: 'AI' },
 ]
 
 const meals = [
-  { name: 'Cafe', kcal: 430, p: 34, c: 42, g: 14 },
-  { name: 'Almoco', kcal: 720, p: 58, c: 78, g: 18 },
-  { name: 'Jantar', kcal: 610, p: 48, c: 52, g: 22 },
+  { name: 'Cafe', kcal: 430, p: 34, c: 42, g: 14, state: 'ok' },
+  { name: 'Almoco', kcal: 720, p: 58, c: 78, g: 18, state: 'feito' },
+  { name: 'Jantar', kcal: 610, p: 48, c: 52, g: 22, state: 'proximo' },
 ]
 
 const workout = [
-  { name: 'Supino inclinado', sets: '4 x 8', load: '34 kg', trend: '+6%' },
-  { name: 'Remada baixa', sets: '3 x 10', load: '61 kg', trend: '+3%' },
-  { name: 'Agachamento livre', sets: '5 x 5', load: '92 kg', trend: 'PR' },
+  { name: 'Supino inclinado', sets: '4 x 8', load: '34 kg', trend: '+6%', rest: '1:18' },
+  { name: 'Remada baixa', sets: '3 x 10', load: '61 kg', trend: '+3%', rest: '2:00' },
+  { name: 'Agachamento livre', sets: '5 x 5', load: '92 kg', trend: 'PR', rest: '3:00' },
 ]
 
 export default function VisualMockPage() {
   const [directionId, setDirectionId] = useState<DirectionId>('aurora')
-  const [activeTab, setActiveTab] = useState<MockTab>('home')
+  const [activeTab, setActiveTab] = useState<MockTab>('treino')
 
   const direction = useMemo(
     () => directions.find(item => item.id === directionId) ?? directions[0],
@@ -77,13 +71,13 @@ export default function VisualMockPage() {
     <div className={`visual-mock vm-${direction.id}`}>
       <header className="vm-topbar">
         <div>
-          <span className="vm-eyebrow">Kcalix Visual Lab</span>
-          <h1>Direcoes visuais para um app de controle, performance e coach pessoal.</h1>
+          <span className="vm-eyebrow">Kcalix Visual Lab v2</span>
+          <h1>Performance pessoal com cockpit tecnico, coach discreto e dark mode vivo.</h1>
         </div>
         <a className="vm-back" href="/home">Voltar ao app</a>
       </header>
 
-      <section className="vm-direction-strip" aria-label="Direcoes visuais">
+      <section className="vm-direction-strip two" aria-label="Direcoes visuais">
         {directions.map(item => (
           <button
             key={item.id}
@@ -102,8 +96,9 @@ export default function VisualMockPage() {
 
       <main className="vm-stage">
         <aside className="vm-spec-panel">
-          <span className="vm-panel-kicker">Sistema visual</span>
+          <span className="vm-panel-kicker">Modelo selecionado</span>
           <h2>{direction.name}</h2>
+          <p className="vm-premise">{direction.premise}</p>
           <dl>
             <div>
               <dt>Titulo</dt>
@@ -123,20 +118,22 @@ export default function VisualMockPage() {
               <span key={color} style={{ background: color }}>{color}</span>
             ))}
           </div>
-          <p>
-            Mantem dark mode e abas atuais, mas melhora ritmo, contraste, calor visual,
-            leitura de metricas e presenca do coach.
-          </p>
+          <div className="vm-layout-notes">
+            <strong>Inputs aplicados</strong>
+            <span>Roxo como base em 30%, laranja/magenta como acento, foco em treino, leitura tecnica e coach discreto.</span>
+          </div>
         </aside>
 
         <section className="vm-phone-shell" aria-label="Mock clicavel">
           <div className="vm-phone">
             <div className="vm-ambient" />
+            <div className="vm-texture" />
             <MockHeader activeTab={activeTab} />
+            <CommandRail activeTab={activeTab} />
             <div className="vm-screen">
               {activeTab === 'home' && <HomeMock />}
               {activeTab === 'diario' && <DiaryMock />}
-              {activeTab === 'treino' && <WorkoutMock />}
+              {activeTab === 'treino' && <WorkoutMock direction={direction.id} />}
               {activeTab === 'corpo' && <BodyMock />}
               {activeTab === 'coach' && <CoachMock />}
             </div>
@@ -165,14 +162,31 @@ function MockHeader({ activeTab }: { activeTab: MockTab }) {
   return (
     <div className="vm-app-header">
       <div>
-        <small>Hoje, 08/07</small>
+        <small>Qua, 08/07</small>
         <strong>{tab?.label ?? 'Home'}</strong>
       </div>
       <div className="vm-date-pill">
-        <button type="button">‹</button>
-        <span>Qua</span>
-        <button type="button">›</button>
+        <button type="button">Prev</button>
+        <span>Hoje</span>
+        <button type="button">Next</button>
       </div>
+    </div>
+  )
+}
+
+function CommandRail({ activeTab }: { activeTab: MockTab }) {
+  const label = activeTab === 'treino'
+    ? 'Treino ativo'
+    : activeTab === 'diario'
+      ? 'Registrar refeicao'
+      : activeTab === 'coach'
+        ? 'Perguntar ao Coach'
+        : 'Resumo objetivo'
+
+  return (
+    <div className="vm-command-rail">
+      <span>{label}</span>
+      <strong>{activeTab === 'treino' ? 'Descanso 1:18' : 'Abrir acao'}</strong>
     </div>
   )
 }
@@ -182,26 +196,26 @@ function HomeMock() {
     <>
       <section className="vm-hero-card">
         <div>
-          <span className="vm-chip">Controle diario</span>
-          <h2>1.842 kcal</h2>
-          <p>Meta de 2.350 kcal com margem inteligente para treino.</p>
+          <span className="vm-chip">Cockpit do dia</span>
+          <h2>78%</h2>
+          <p>Nutri, treino e medidas em uma leitura operacional.</p>
         </div>
         <div className="vm-orbit">
-          <span>78%</span>
+          <span>OK</span>
         </div>
       </section>
 
       <div className="vm-metric-row">
-        <Metric label="Proteina" value="146g" progress={86} />
-        <Metric label="Carbo" value="192g" progress={72} />
-        <Metric label="Gordura" value="58g" progress={64} />
+        <Metric label="Kcal" value="1.842" progress={78} />
+        <Metric label="Volume" value="9.8t" progress={82} />
+        <Metric label="Peso" value="-0.8" progress={62} />
       </div>
 
       <section className="vm-coach-strip">
-        <span>✦</span>
+        <span>AI</span>
         <div>
           <strong>Coach insight</strong>
-          <p>Voce esta 320 kcal abaixo do alvo. Melhor janela: jantar ou ceia.</p>
+          <p>Seu dia pede carbo no jantar: treino pesado, saldo controlado e proteina ja bem encaminhada.</p>
         </div>
       </section>
 
@@ -230,9 +244,9 @@ function DiaryMock() {
         </div>
         <div className="vm-progress-line"><i style={{ width: '76%' }} /></div>
         <div className="vm-pill-row">
-          <span>+42g P</span>
-          <span>-36g C</span>
-          <span>+8g G</span>
+          <span>146g P</span>
+          <span>192g C</span>
+          <span>58g G</span>
         </div>
       </section>
 
@@ -241,41 +255,54 @@ function DiaryMock() {
           <article key={meal.name} className="vm-meal-card">
             <div>
               <strong>{meal.name}</strong>
-              <small>{meal.p}P · {meal.c}C · {meal.g}G</small>
+              <small>{meal.p}P / {meal.c}C / {meal.g}G</small>
             </div>
             <span>{meal.kcal}</span>
+            <em>{meal.state}</em>
           </article>
         ))}
       </div>
 
-      <button className="vm-primary-action" type="button">Adicionar alimento</button>
+      <button className="vm-primary-action" type="button">Registrar refeicao</button>
     </>
   )
 }
 
-function WorkoutMock() {
+function WorkoutMock({ direction }: { direction: DirectionId }) {
   return (
     <>
-      <section className="vm-hero-card compact">
+      <section className="vm-workout-hero">
         <div>
-          <span className="vm-chip">Performance</span>
+          <span className="vm-chip">Sessao ativa</span>
           <h2>Peito + Costas</h2>
-          <p>Volume dentro do alvo. Uma progressao detectada.</p>
+          <p>Proximo set: Supino inclinado. Carga sugerida 34-36 kg.</p>
+        </div>
+        <div className="vm-rest-timer">
+          <small>Descanso</small>
+          <strong>1:18</strong>
         </div>
       </section>
 
       <div className="vm-workout-summary">
         <Metric label="Series" value="18" progress={75} />
         <Metric label="Volume" value="9.8t" progress={82} />
-        <Metric label="Cardio" value="22m" progress={44} />
+        <Metric label="Intens." value="RPE 8" progress={68} />
       </div>
+
+      <section className="vm-active-set">
+        <div>
+          <small>Entrada rapida</small>
+          <strong>34 kg x 8 reps</strong>
+        </div>
+        <button type="button">{direction === 'aurora' ? 'Salvar set' : 'OK'}</button>
+      </section>
 
       <div className="vm-workout-list">
         {workout.map(item => (
           <article key={item.name}>
             <div>
               <strong>{item.name}</strong>
-              <small>{item.sets} · {item.load}</small>
+              <small>{item.sets} / {item.load} / rest {item.rest}</small>
             </div>
             <span>{item.trend}</span>
           </article>
@@ -292,12 +319,12 @@ function BodyMock() {
         <div>
           <span className="vm-chip">Composicao</span>
           <h2>82,4 kg</h2>
-          <p>-0,8 kg em 14 dias</p>
+          <p>-0,8 kg em 14 dias, cintura estavel e BF descendo.</p>
         </div>
         <div className="vm-body-grid">
           <span><b>14,8%</b> BF</span>
           <span><b>84cm</b> cintura</span>
-          <span><b>+2,1%</b> aderencia</span>
+          <span><b>92%</b> aderencia</span>
         </div>
       </section>
 
@@ -321,20 +348,20 @@ function CoachMock() {
   return (
     <>
       <section className="vm-coach-hero">
-        <span>✦</span>
+        <span>AI</span>
         <h2>Kcalix Coach</h2>
-        <p>Assistente pessoal para comer melhor, treinar melhor e entender sua evolucao.</p>
+        <p>IA discreta para tirar duvida, interpretar dados e sugerir ajustes sem virar mascote.</p>
       </section>
 
       <div className="vm-chat">
-        <p className="assistant">Seu treino gerou margem de 260 kcal. Quer redistribuir para carbo no jantar?</p>
-        <p className="user">Sim, mantendo proteina alta.</p>
-        <p className="assistant">Sugestao: +55g carbo, +8g gordura e manter 45g proteina.</p>
+        <p className="assistant">Treino pesado hoje. Voce pode usar parte do saldo para carbo e manter gordura moderada.</p>
+        <p className="user">Quero jantar sem passar da meta.</p>
+        <p className="assistant">Use +55g carbo, 45g proteina e limite gordura em 12g. Fecho diario continua verde.</p>
       </div>
 
       <div className="vm-suggestion-grid">
-        <button type="button">Analisar prato</button>
-        <button type="button">Ajustar meta</button>
+        <button type="button">Analisar refeicao</button>
+        <button type="button">Ajustar treino</button>
         <button type="button">Resumo semanal</button>
       </div>
     </>
