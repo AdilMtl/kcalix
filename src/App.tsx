@@ -19,6 +19,7 @@ const DiarioPage = lazy(() => import('./pages/DiarioPage'))
 const TreinoPage = lazy(() => import('./pages/TreinoPage'))
 const CorpoPage  = lazy(() => import('./pages/CorpoPage'))
 const MaisPage   = lazy(() => import('./pages/MaisPage'))
+const VisualMockPage = lazy(() => import('./pages/VisualMockPage'))
 
 function Spinner() {
   return (
@@ -135,6 +136,16 @@ export default function App() {
 
         {/* Acessivel sem login — vem do link do email de convite/reset */}
         <Route path="/set-password" element={<SetPasswordPage />} />
+
+        {/* Laboratorio visual isolado — mock clicavel, sem dados reais */}
+        <Route
+          path="/visual-mock"
+          element={
+            <Suspense fallback={<Spinner />}>
+              <VisualMockPage />
+            </Suspense>
+          }
+        />
 
         {/* Admin — so o email definido em VITE_ADMIN_EMAIL */}
         <Route
