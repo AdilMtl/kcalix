@@ -24,6 +24,7 @@
 - `/migrate` — migrar dados do app antigo
 
 ## Specs pendentes para próximas sessões
+- [Migração Visual Ember Design System](spec-visual-ember-design-system.md) — migrar o app real para a direção visual Ember escolhida no VisualMock; iniciar em branch `feature/ember-design-system`, sem merge em `main` até validação visual completa
 - [Broadcasts Fase 6C — spec detalhada por fase](spec-broadcasts.md) — canal admin→usuário; 4 fases (texto→imagem→survey→feed); migration 014; iniciar com "implementar Fase 6C-1"
 
 ## Metodologia de port (destilada da Sessão 2C)
