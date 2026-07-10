@@ -63,36 +63,6 @@ export default function CustomFoodModal({ onSave, onClose, initialValues }: Cust
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    border: 0,
-    outline: 'none',
-    background: 'transparent',
-    color: 'var(--text)',
-    fontFamily: 'var(--font)',
-    fontSize: '15px',
-    fontWeight: 700,
-    minHeight: '28px',
-    boxSizing: 'border-box',
-  }
-
-  const formRowStyle: React.CSSProperties = {
-    background: 'rgba(0,0,0,.12)',
-    border: '1px solid var(--line)',
-    borderRadius: 'var(--radius-sm)',
-    padding: '10px 12px 8px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '11px',
-    color: 'var(--text3)',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '.3px',
-    marginBottom: '2px',
-  }
-
   return (
     <>
       {/* Overlay */}
@@ -103,35 +73,29 @@ export default function CustomFoodModal({ onSave, onClose, initialValues }: Cust
 
       {/* Sheet */}
       <div
-        style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61,
-          maxWidth: '600px', margin: '0 auto',
-          background: 'linear-gradient(180deg, #1a2035, #121828)',
-          border: '1px solid var(--line)', borderBottom: 'none',
-          borderRadius: '20px 20px 0 0',
-        }}
+        className="food-sheet custom"
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
-        <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,.15)', borderRadius: '999px', margin: '10px auto 6px' }} />
+        <div className="food-grip" />
 
         {/* Header */}
-        <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line)' }}>
-          <b style={{ fontSize: '15px', color: 'var(--text)' }}>{initialValues ? '✏️ Editar alimento' : '➕ Alimento personalizado'}</b>
+        <div className="food-sheet-header" style={{ paddingTop: '8px' }}>
+          <b className="food-sheet-title">{initialValues ? 'Editar alimento' : 'Alimento personalizado'}</b>
           <button
             onClick={onClose}
-            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--line)', background: 'var(--surface2)', color: 'var(--text2)', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font)' }}
+            className="food-close-btn"
           >✕</button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '14px 16px 24px' }}>
+        <div className="food-custom-body">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             {/* Nome — ocupa as 2 colunas */}
-            <div style={{ ...formRowStyle, gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Nome</label>
+            <div className="food-field-row" style={{ gridColumn: '1 / -1' }}>
+              <label className="food-field-label">Nome</label>
               <input
-                style={inputStyle}
+                className="food-field-input"
                 placeholder="Ex: Barra de cereal"
                 value={nome}
                 onChange={e => { setNome(e.target.value); setErro('') }}
@@ -139,33 +103,33 @@ export default function CustomFoodModal({ onSave, onClose, initialValues }: Cust
               />
             </div>
 
-            <div style={formRowStyle}>
-              <label style={labelStyle}>Porção</label>
-              <input style={inputStyle} placeholder="Ex: 1 un (25g)" value={porcao} onChange={e => setPorcao(e.target.value)} />
+            <div className="food-field-row">
+              <label className="food-field-label">Porção</label>
+              <input className="food-field-input" placeholder="Ex: 1 un (25g)" value={porcao} onChange={e => setPorcao(e.target.value)} />
             </div>
 
-            <div style={formRowStyle}>
-              <label style={labelStyle}>Proteína (g)</label>
-              <input style={inputStyle} inputMode="decimal" placeholder="0" value={p} onChange={e => handleMacroChange(setP, 'p', e.target.value)} />
+            <div className="food-field-row">
+              <label className="food-field-label">Proteína (g)</label>
+              <input className="food-field-input" inputMode="decimal" placeholder="0" value={p} onChange={e => handleMacroChange(setP, 'p', e.target.value)} />
             </div>
 
-            <div style={formRowStyle}>
-              <label style={labelStyle}>Carbo (g)</label>
-              <input style={inputStyle} inputMode="decimal" placeholder="0" value={c} onChange={e => handleMacroChange(setC, 'c', e.target.value)} />
+            <div className="food-field-row">
+              <label className="food-field-label">Carbo (g)</label>
+              <input className="food-field-input" inputMode="decimal" placeholder="0" value={c} onChange={e => handleMacroChange(setC, 'c', e.target.value)} />
             </div>
 
-            <div style={formRowStyle}>
-              <label style={labelStyle}>Gordura (g)</label>
-              <input style={inputStyle} inputMode="decimal" placeholder="0" value={g} onChange={e => handleMacroChange(setG, 'g', e.target.value)} />
+            <div className="food-field-row">
+              <label className="food-field-label">Gordura (g)</label>
+              <input className="food-field-input" inputMode="decimal" placeholder="0" value={g} onChange={e => handleMacroChange(setG, 'g', e.target.value)} />
             </div>
 
-            <div style={{ ...formRowStyle, gridColumn: '1 / -1' }}>
-              <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+            <div className="food-field-row" style={{ gridColumn: '1 / -1' }}>
+              <label className="food-field-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>kcal</span>
-                {kcalManual && <span style={{ fontWeight: 600, color: 'var(--accent2)', textTransform: 'none', letterSpacing: 0 }} onClick={() => { setKcalManual(false); setKcal(calcKcal(p, c, g)) }}>↺ recalcular</span>}
+                {kcalManual && <span style={{ fontWeight: 700, color: 'var(--ember)', textTransform: 'none', letterSpacing: 0 }} onClick={() => { setKcalManual(false); setKcal(calcKcal(p, c, g)) }}>recalcular</span>}
               </label>
               <input
-                style={inputStyle}
+                className="food-field-input"
                 inputMode="decimal"
                 placeholder="calculado automaticamente"
                 value={kcal}
@@ -181,14 +145,8 @@ export default function CustomFoodModal({ onSave, onClose, initialValues }: Cust
           <button
             onClick={handleSave}
             disabled={saving}
-            style={{ opacity: saving ? 0.6 : 1,
-              width: '100%', marginTop: '12px',
-              padding: '14px', borderRadius: 'var(--radius-sm)',
-              border: '1px solid rgba(124,92,255,.3)',
-              background: 'linear-gradient(135deg, var(--accent), rgba(124,92,255,.6))',
-              color: '#fff', fontFamily: 'var(--font)', fontSize: '14px', fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            className="food-primary-btn"
+            style={{ opacity: saving ? 0.6 : 1, marginTop: '12px' }}
           >{saving ? 'Salvando...' : initialValues ? 'Salvar alterações' : 'Salvar alimento'}</button>
         </div>
       </div>

@@ -28,12 +28,12 @@ function AdherenceChip({ kcal, kcalTarget }: { kcal: number; kcalTarget: number 
   if (kcalTarget <= 0 || kcal <= 0) return null
   const ratio = kcal / kcalTarget
   if (ratio >= 0.9 && ratio <= 1.1) {
-    return <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--good)', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.25)', borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>✅ meta</span>
+    return <span className="diary-adherence" style={{ color: 'var(--good)', background: 'color-mix(in srgb, var(--good) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--good) 26%, transparent)' }}>meta</span>
   }
   if (ratio > 1.1) {
-    return <span style={{ fontSize: 10, fontWeight: 700, color: '#f87171', background: 'rgba(248,113,113,.12)', border: '1px solid rgba(248,113,113,.25)', borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>🔥 surplus</span>
+    return <span className="diary-adherence" style={{ color: 'var(--bad)', background: 'color-mix(in srgb, var(--bad) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--bad) 26%, transparent)' }}>surplus</span>
   }
-  return <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--warn)', background: 'rgba(251,191,36,.10)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>⚠️ abaixo</span>
+  return <span className="diary-adherence" style={{ color: 'var(--warn)', background: 'color-mix(in srgb, var(--warn) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 26%, transparent)' }}>abaixo</span>
 }
 
 // Barra segmentada — P/C/G proporcional ao kcal total do dia
@@ -49,13 +49,13 @@ function MacroBar({ p, c, g }: { p: number; c: number; g: number }) {
   return (
     <div style={{ marginTop: 8 }}>
       {/* barra segmentada — largura total */}
-      <div style={{ width: '100%', height: 6, borderRadius: 3, overflow: 'hidden', display: 'flex', gap: 1, background: 'var(--line)' }}>
-        <div style={{ width: `${pPct}%`, height: '100%', background: 'var(--pColor)', borderRadius: '3px 0 0 3px', flexShrink: 0 }} />
+      <div className="diary-history-bar">
+        <div style={{ width: `${pPct}%`, height: '100%', background: 'var(--pColor)', borderRadius: '999px 0 0 999px', flexShrink: 0 }} />
         <div style={{ width: `${cPct}%`, height: '100%', background: 'var(--cColor)', flexShrink: 0 }} />
-        <div style={{ width: `${gPct}%`, height: '100%', background: 'var(--gColor)', borderRadius: '0 3px 3px 0', flexShrink: 0 }} />
+        <div style={{ width: `${gPct}%`, height: '100%', background: 'var(--gColor)', borderRadius: '0 999px 999px 0', flexShrink: 0 }} />
       </div>
       {/* legenda abaixo — centralizada */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 5 }}>
+      <div className="diary-history-legend">
         <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--pColor)' }}>P {Math.round(p)}g</span>
         <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--cColor)' }}>C {Math.round(c)}g</span>
         <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gColor)' }}>G {Math.round(g)}g</span>
@@ -72,11 +72,21 @@ export function DiaryHistoryModal({ open, onClose, getAllDiaryRows, kcalTarget }
   // Carrega lazy ao abrir
   useEffect(() => {
     if (!open) return
-    setLoading(true)
-    getAllDiaryRows().then(data => {
-      setRows(data)
-      setLoading(false)
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+      setLoading(true)
+      getAllDiaryRows().then(data => {
+        if (cancelled) return
+        setRows(data)
+        setLoading(false)
+      })
     })
+
+    return () => { cancelled = true }
+    // getAllDiaryRows vem do hook/página e pode mudar entre renders; o modal carrega ao abrir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const handleDayClick = (date: string) => {
@@ -93,47 +103,27 @@ export function DiaryHistoryModal({ open, onClose, getAllDiaryRows, kcalTarget }
       {/* overlay */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 310 }}
+        className="diary-history-overlay"
       />
 
       {/* bottom sheet */}
-      <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0,
-        zIndex: 311,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
-        maxHeight: '88dvh',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+      <div className="diary-history-sheet">
         {/* handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.15)' }} />
-        </div>
+        <div className="diary-history-grip" />
 
         {/* header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--line)',
-          flexShrink: 0,
-        }}>
-          <b style={{ fontSize: 15 }}>📋 Histórico de dias</b>
+        <div className="diary-history-header2">
+          <b className="diary-history-title2">Histórico de dias</b>
           <button
             type="button"
             onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: '50%',
-              border: '1px solid var(--line)', background: 'var(--surface2)',
-              color: 'var(--text)', fontSize: 14, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font)',
-            }}
+            className="food-close-btn"
+            style={{ width: 32, height: 32, fontSize: 14 }}
           >✕</button>
         </div>
 
         {/* body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 32px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="diary-history-body">
 
           {loading && (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text3)', fontSize: 13 }}>
@@ -154,14 +144,7 @@ export function DiaryHistoryModal({ open, onClose, getAllDiaryRows, kcalTarget }
               <div
                 key={row.date}
                 onClick={() => handleDayClick(row.date)}
-                style={{
-                  background: 'var(--surface2)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 12,
-                  padding: '12px 14px',
-                  cursor: 'pointer',
-                  WebkitTapHighlightColor: 'transparent',
-                }}
+                className="diary-history-row"
               >
                 {/* linha superior: data + kcal + chip */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -170,7 +153,7 @@ export function DiaryHistoryModal({ open, onClose, getAllDiaryRows, kcalTarget }
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {t.kcal > 0 && (
-                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text2)' }}>
+                      <span className="diary-history-kcal" style={{ fontSize: 13, fontWeight: 800, color: 'var(--text2)' }}>
                         ~{Math.round(t.kcal)} kcal
                       </span>
                     )}

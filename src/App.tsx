@@ -29,7 +29,7 @@ function Spinner() {
     >
       <div
         className="h-8 w-8 animate-spin rounded-full border-2 border-transparent"
-        style={{ borderTopColor: 'var(--accent)' }}
+        style={{ borderTopColor: 'var(--ember)' }}
       />
     </div>
   )
@@ -78,30 +78,10 @@ function AppLayout() {
       </main>
       <Nav />
 
-      {/* FAB Kcal Coach */}
       <button
         onClick={() => openChat()}
         aria-label="Kcal Coach IA"
-        style={{
-          position: 'fixed',
-          bottom: 76,
-          right: 16,
-          zIndex: 200,
-          width: 50,
-          height: 50,
-          borderRadius: '50%',
-          border: 'none',
-          background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
-          boxShadow: '0 4px 20px rgba(124,92,255,0.5)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 22,
-          transition: 'transform 0.15s, box-shadow 0.15s',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
-        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+        className="coach-fab"
       >
         🤖
       </button>

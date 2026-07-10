@@ -27,6 +27,14 @@ function formatDateLabel(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
+function trendText(rows: BodyRow[], key: 'weightKg' | 'waistCm' | 'bfPct', unit: string): string {
+  const points = rows.filter(r => r[key] != null)
+  if (points.length < 2) return 'sem base'
+  const diff = Number(points[0][key]) - Number(points[Math.min(points.length - 1, 6)][key])
+  if (Math.abs(diff) < 0.05) return `0 ${unit}`
+  return `${diff > 0 ? '+' : ''}${diff.toFixed(1)} ${unit}`
+}
+
 // ── sub-componentes internos ──────────────────────────────────────────────────
 
 interface AccordionProps {
@@ -39,56 +47,17 @@ interface AccordionProps {
 function Accordion({ id, title, defaultOpen = false, children }: AccordionProps) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div
-      id={id}
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius-sm)',
-        marginBottom: 8,
-        overflow: 'hidden',
-      }}
-    >
+    <div id={id} className={`body-accordion${open ? ' open' : ''}`}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-          padding: '12px 14px',
-          background: 'none',
-          border: 'none',
-          color: 'var(--text)',
-          fontFamily: 'var(--font)',
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: 'pointer',
-          WebkitTapHighlightColor: 'transparent',
-        }}
+        className="body-accordion-trigger"
       >
-        {title}
-        <span
-          style={{
-            color: 'var(--text3)',
-            fontSize: 12,
-            transition: 'transform .2s ease',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
-        >
-          ▾
-        </span>
+        <span>{title}</span>
+        <span className="body-accordion-chevron">▾</span>
       </button>
-      <div
-        style={{
-          maxHeight: open ? 3000 : 0,
-          overflow: 'hidden',
-          transition: 'max-height .3s ease',
-        }}
-      >
-        <div style={{ padding: '0 14px 14px' }}>{children}</div>
+      <div className="body-accordion-content">
+        <div className="body-accordion-inner">{children}</div>
       </div>
     </div>
   )
@@ -104,36 +73,16 @@ interface FormRowProps {
 
 function FormRow({ label, hint, children }: FormRowProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: 'var(--text3)',
-          textTransform: 'uppercase',
-          letterSpacing: '.06em',
-        }}
-      >
-        {label}
-      </label>
+    <div className="body-form-row">
+      <label>{label}</label>
       {children}
-      {hint && (
-        <small style={{ fontSize: 10, color: 'var(--text3)' }}>{hint}</small>
-      )}
+      {hint && <small>{hint}</small>}
     </div>
   )
 }
 
 const inputStyle: React.CSSProperties = {
-  background: 'var(--surface2)',
-  border: '1px solid var(--line)',
-  borderRadius: 'var(--radius-xs)',
-  color: 'var(--text)',
-  fontFamily: 'var(--font)',
-  fontSize: 16,
-  padding: '8px 10px',
-  width: '100%',
-  boxSizing: 'border-box',
+  fontFamily: 'var(--font-data)',
 }
 
 // ── CorpoPage ─────────────────────────────────────────────────────────────────
@@ -166,19 +115,24 @@ export default function CorpoPage() {
   // preenche form quando muda data ou carrega medição
   useEffect(() => {
     if (loading) return
-    const m = measurement
-    setWeight(m?.weightKg != null ? String(m.weightKg) : '')
-    setWaist(m?.waistCm   != null ? String(m.waistCm)  : '')
-    setBf(m?.bfPct        != null ? String(m.bfPct)    : '')
-    setNote(m?.note ?? '')
-    const sf = m?.skinfolds
-    setChest(sf?.chest != null ? String(sf.chest) : '')
-    setAx(sf?.ax       != null ? String(sf.ax)    : '')
-    setTri(sf?.tri     != null ? String(sf.tri)   : '')
-    setSub(sf?.sub     != null ? String(sf.sub)   : '')
-    setAb(sf?.ab       != null ? String(sf.ab)    : '')
-    setSup(sf?.sup     != null ? String(sf.sup)   : '')
-    setTh(sf?.th       != null ? String(sf.th)    : '')
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const m = measurement
+      setWeight(m?.weightKg != null ? String(m.weightKg) : '')
+      setWaist(m?.waistCm   != null ? String(m.waistCm)  : '')
+      setBf(m?.bfPct        != null ? String(m.bfPct)    : '')
+      setNote(m?.note ?? '')
+      const sf = m?.skinfolds
+      setChest(sf?.chest != null ? String(sf.chest) : '')
+      setAx(sf?.ax       != null ? String(sf.ax)    : '')
+      setTri(sf?.tri     != null ? String(sf.tri)   : '')
+      setSub(sf?.sub     != null ? String(sf.sub)   : '')
+      setAb(sf?.ab       != null ? String(sf.ab)    : '')
+      setSup(sf?.sup     != null ? String(sf.sup)   : '')
+      setTh(sf?.th       != null ? String(sf.th)    : '')
+    })
+    return () => { cancelled = true }
   }, [measurement, loading, selectedDate])
 
   // carrega histórico ao montar e ao salvar
@@ -226,122 +180,85 @@ export default function CorpoPage() {
   }
 
   const last14 = rows.slice(0, 14)
+  const latest = rows[0]
 
   return (
-    <div style={{ padding: '0 0 80px' }}>
+    <div className="body-page">
 
       {/* Toast */}
       {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 90,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(30,40,60,.97)',
-            border: '1px solid var(--line)',
-            borderRadius: 999,
-            padding: '8px 20px',
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--text)',
-            zIndex: 400,
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <div className="body-toast">
           {toast}
         </div>
       )}
 
       {/* Card principal */}
-      <div
-        style={{
-          background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
-          border: '1px solid var(--line)',
-          borderRadius: 'var(--radius)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow)',
-          marginBottom: 12,
-        }}
-      >
+      <div className="body-card">
         {/* Card header */}
-        <div
-          style={{
-            padding: '14px 16px 12px',
-            borderBottom: '1px solid var(--line)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 10,
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="body-card-header">
           <div>
-            <b style={{ fontSize: 14, fontWeight: 700 }}>📏 Medição diária</b>
-            <span style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+            <b>Medição corporal</b>
+            <span>
               Peso, cintura, tendência.
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="body-header-actions">
             <button
               type="button"
               onClick={handleSave}
-              style={{
-                background: 'var(--accent)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 'var(--radius-xs)',
-                fontFamily: 'var(--font)',
-                fontSize: 12,
-                fontWeight: 700,
-                padding: '7px 14px',
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+              className="btn sm primary"
             >
               Salvar
             </button>
             <button
               type="button"
               onClick={handleClear}
-              style={{
-                background: 'transparent',
-                color: 'var(--text2)',
-                border: '1px solid var(--line)',
-                borderRadius: 'var(--radius-xs)',
-                fontFamily: 'var(--font)',
-                fontSize: 12,
-                fontWeight: 700,
-                padding: '7px 14px',
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+              className="btn sm ghost"
             >
-              Limpar dia
+              Limpar
             </button>
           </div>
         </div>
 
         {/* Card body */}
-        <div style={{ padding: '14px 16px 16px' }}>
+        <div className="body-card-body">
 
           {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="body-skeleton-stack">
               <Skeleton height="52px" />
               <Skeleton height="52px" />
               <Skeleton height="52px" />
             </div>
           ) : <>
 
+          <section className="body-trend-panel">
+            <div className="body-trend-main">
+              <span className="body-eyebrow">Última leitura</span>
+              <strong>{latest ? formatDateLabel(latest.date) : 'Sem dados'}</strong>
+              <p>Tendência importa mais que um ponto isolado.</p>
+            </div>
+            <div className="body-metric-grid">
+              <div className="body-metric">
+                <span>Peso</span>
+                <b>{fmt(latest?.weightKg)}{latest?.weightKg != null ? <small>kg</small> : null}</b>
+                <em>{trendText(rows, 'weightKg', 'kg')}</em>
+              </div>
+              <div className="body-metric">
+                <span>Cintura</span>
+                <b>{fmt(latest?.waistCm)}{latest?.waistCm != null ? <small>cm</small> : null}</b>
+                <em>{trendText(rows, 'waistCm', 'cm')}</em>
+              </div>
+              <div className="body-metric">
+                <span>BF</span>
+                <b>{fmt(latest?.bfPct)}{latest?.bfPct != null ? <small>%</small> : null}</b>
+                <em>{trendText(rows, 'bfPct', '%')}</em>
+              </div>
+            </div>
+          </section>
+
           {/* Accordion 1 — Inputs do dia */}
           <Accordion id="accMeasureInput" title="1) Inputs do dia" defaultOpen>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 12,
-              }}
-            >
+            <div className="body-form-grid">
               <FormRow label="Peso (kg)" hint="Mesmo horário (ao acordar).">
                 <input
                   inputMode="decimal"
@@ -360,7 +277,7 @@ export default function CorpoPage() {
                   style={inputStyle}
                 />
               </FormRow>
-              <FormRow label="BF% (opcional)" hint="Bioimpedância ou aba 🧮.">
+              <FormRow label="BF% (opcional)" hint="Bioimpedância ou calculadora.">
                 <input
                   inputMode="decimal"
                   placeholder="18.9"
@@ -382,16 +299,10 @@ export default function CorpoPage() {
 
           {/* Accordion 2 — Dobras */}
           <Accordion id="accMeasureFolds" title="2) Dobras (mm) • opcional">
-            <p style={{ fontSize: 11, color: 'var(--text3)', margin: '0 0 10px' }}>
+            <p className="body-hint">
               Mesmo lado e técnica sempre.
             </p>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 10,
-              }}
-            >
+            <div className="body-fold-grid">
               {([
                 ['Peito',         chest, setChest],
                 ['Axilar',        ax,    setAx],
@@ -415,61 +326,26 @@ export default function CorpoPage() {
 
           {/* Accordion 3 — Histórico */}
           <Accordion id="accMeasureHistory" title="3) Histórico (últimos 14)" defaultOpen>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 10,
-              }}
-            >
-              <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+            <div className="body-history-head">
+              <span>
                 Tendência &gt; número do dia.
               </span>
               <button
                 type="button"
                 onClick={() => setChartOpen(true)}
-                style={{
-                  background: 'var(--accent)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 'var(--radius-xs)',
-                  fontFamily: 'var(--font)',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  WebkitTapHighlightColor: 'transparent',
-                }}
+                className="btn sm primary"
               >
-                Ver evolução 📈
+                Evolução
               </button>
             </div>
 
             {/* Tabela */}
-            <div style={{ overflowX: 'auto' }}>
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: 12,
-                }}
-              >
+            <div className="body-table-wrap">
+              <table className="body-table">
                 <thead>
                   <tr>
                     {['Data', 'Peso', 'Cintura', 'BF%', 'Nota'].map(h => (
-                      <th
-                        key={h}
-                        style={{
-                          padding: '6px 8px',
-                          textAlign: 'left',
-                          fontWeight: 700,
-                          fontSize: 10,
-                          color: 'var(--text3)',
-                          borderBottom: '1px solid var(--line)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <th key={h}>
                         {h}
                       </th>
                     ))}
@@ -480,7 +356,7 @@ export default function CorpoPage() {
                     <tr>
                       <td
                         colSpan={5}
-                        style={{ padding: '12px 8px', color: 'var(--text3)', fontSize: 12 }}
+                        className="body-table-empty"
                       >
                         Sem medições ainda.
                       </td>
@@ -489,7 +365,6 @@ export default function CorpoPage() {
                     last14.map(row => (
                       <tr
                         key={row.date}
-                        style={{ cursor: 'pointer' }}
                         onClick={() => {
                           // navegar para a data clicada no dateStore (Sessão 3F pendência)
                           setWeight(row.weightKg != null ? String(row.weightKg) : '')
@@ -507,39 +382,19 @@ export default function CorpoPage() {
                           showToast('Carregado 📅')
                         }}
                       >
-                        <td
-                          style={{
-                            padding: '7px 8px',
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: 'var(--text2)',
-                            borderBottom: '1px solid var(--line)',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                        <td className="body-date-cell">
                           {formatDateLabel(row.date)}
                         </td>
-                        <td style={{ padding: '7px 8px', borderBottom: '1px solid var(--line)' }}>
+                        <td>
                           {fmt(row.weightKg)}
                         </td>
-                        <td style={{ padding: '7px 8px', borderBottom: '1px solid var(--line)' }}>
+                        <td>
                           {fmt(row.waistCm)}
                         </td>
-                        <td style={{ padding: '7px 8px', borderBottom: '1px solid var(--line)' }}>
+                        <td>
                           {fmt(row.bfPct)}
                         </td>
-                        <td
-                          style={{
-                            padding: '7px 8px',
-                            color: 'var(--text3)',
-                            fontSize: 11,
-                            borderBottom: '1px solid var(--line)',
-                            maxWidth: 120,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                        <td className="body-note-cell">
                           {(row.note || '').slice(0, 40)}
                         </td>
                       </tr>

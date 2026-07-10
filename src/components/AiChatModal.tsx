@@ -205,57 +205,27 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
       {/* Backdrop */}
       <div
         onClick={handleClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.6)',
-          zIndex: 340,
-        }}
+        className="ai-chat-overlay"
       />
 
       {/* Bottom sheet */}
-      <div
-        style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0,
-          zIndex: 341,
-          background: 'linear-gradient(180deg, #1a2035, #121828)',
-          borderRadius: '20px 20px 0 0',
-          maxHeight: '88dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
-        }}
-      >
+      <div className="ai-chat-sheet">
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px 12px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          flexShrink: 0,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #7c5cff, #a78bfa)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18,
-            }}>
+        <div className="ai-chat-header">
+          <div className="ai-chat-title-row">
+            <div className="ai-chat-mark">
               🤖
             </div>
             <div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Kcal Coach</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
+              <div className="ai-chat-title">Kcal Coach</div>
+              <div className="ai-chat-status">
                 {photoLoading ? 'Analisando foto...' : loading ? 'Pensando...' : 'Online'}
               </div>
             </div>
           </div>
           <button
             onClick={handleClose}
-            style={{
-              background: 'rgba(255,255,255,0.06)', border: 'none',
-              color: 'rgba(255,255,255,0.5)', fontSize: 20,
-              width: 34, height: 34, borderRadius: '50%',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="ai-chat-close"
             aria-label="Fechar"
           >
             ×
@@ -263,34 +233,32 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
         </div>
 
         {/* Área de mensagens */}
-        <div style={{
-          flex: 1, overflowY: 'auto',
-          padding: '16px 16px 8px',
-          display: 'flex', flexDirection: 'column', gap: 12,
-        }}>
+        <div className="ai-chat-messages">
           {/* Estado vazio — chips de ação rápida */}
           {messages.length === 0 && !photoLoading && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 8 }}>
+            <div className="ai-chat-empty">
               {/* Hero */}
-              <div style={{ textAlign: 'center', padding: '4px 0' }}>
-                <div style={{ fontSize: 38, marginBottom: 10 }}>🤖</div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 6 }}>
+              <div className="ai-chat-hero">
+                <div className="ai-chat-hero-mark">🤖</div>
+                <div className="ai-chat-hero-title">
                   Olá! Sou o Kcal Coach.
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>
+                <div className="ai-chat-hero-copy">
                   Acesso aos seus dados reais de nutrição,{'\n'}treino e corpo. Pergunte à vontade.
                 </div>
               </div>
 
               {/* Chips sorteados */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>
+              <div className="ai-chat-chip-list">
+                <div className="ai-chat-section-label">
                   Sugestões de hoje
                 </div>
                 {chips.map(chip => (
                   <button
                     key={chip.label}
                     disabled={loading}
+                    className="ai-chat-chip"
+                    data-action={chip.action}
                     onClick={() => {
                       if (chip.action === 'log') {
                         setInput(chip.logPlaceholder ?? '')
@@ -304,44 +272,26 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
                         sendMessage(chip.label.replace(/^[\p{Emoji}\s]+/u, '').trim())
                       }
                     }}
-                    style={{
-                      background: chip.action === 'log'
-                        ? 'rgba(52,211,153,0.08)'
-                        : 'rgba(124,92,255,0.10)',
-                      border: chip.action === 'log'
-                        ? '1px solid rgba(52,211,153,0.25)'
-                        : '1px solid rgba(124,92,255,0.25)',
-                      borderRadius: 12, padding: '11px 14px',
-                      color: chip.action === 'log' ? '#34d399' : '#a78bfa',
-                      fontSize: 13, textAlign: 'left',
-                      cursor: 'pointer', fontWeight: 500,
-                      display: 'flex', alignItems: 'center', gap: 8,
-                    }}
                   >
                     <span>{chip.label}</span>
                     {chip.action === 'log' && (
-                      <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.6 }}>✏️ digitar</span>
+                      <span className="ai-chat-chip-meta">digitar</span>
                     )}
                   </button>
                 ))}
               </div>
 
               {/* Hint */}
-              <div style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 10, padding: '10px 14px',
-                display: 'flex', flexDirection: 'column', gap: 5,
-              }}>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div className="ai-chat-capabilities">
+                <div>
                   Também posso...
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, lineHeight: 1.7 }}>
+                <p>
                   📷 Analisar foto de refeição — toque em 📷{'\n'}
                   🍴 Registrar o que comeu — descreva em texto{'\n'}
                   📊 Diagnosticar nutrição, treino e corpo{'\n'}
                   💡 Dar sugestões personalizadas baseadas nos seus dados
-                </div>
+                </p>
               </div>
             </div>
           )}
@@ -350,27 +300,11 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
           {messages.map((msg, i) => (
             <div
               key={i}
-              style={{
-                display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              }}
+              className="ai-chat-row"
+              data-role={msg.role}
             >
               <div
-                style={{
-                  maxWidth: '85%',
-                  padding: '10px 14px',
-                  borderRadius: msg.role === 'user'
-                    ? '16px 16px 4px 16px'
-                    : '16px 16px 16px 4px',
-                  background: msg.role === 'user'
-                    ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                    : 'rgba(255,255,255,0.07)',
-                  color: '#fff',
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
+                className="ai-chat-bubble"
               >
                 {msg.content}
               </div>
@@ -379,28 +313,19 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
 
           {/* Bolha de foto enviada — aparece imediatamente ao selecionar */}
           {photoLoading && photoPreviewUrl && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{
-                maxWidth: '72%',
-                background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
-                borderRadius: '16px 16px 4px 16px',
-                overflow: 'hidden',
-              }}>
+            <div className="ai-chat-row" data-role="user">
+              <div className="ai-chat-photo-bubble">
                 <img
                   src={photoPreviewUrl}
                   alt="Foto enviada"
-                  style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }}
+                  className="ai-chat-photo-img"
                 />
-                <div style={{ padding: '7px 12px 9px', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
+                <div className="ai-chat-photo-label">
                   📷 Foto enviada
                 </div>
                 {/* Barra de progresso pulsante */}
-                <div style={{ height: 3, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    background: 'rgba(255,255,255,0.6)',
-                    animation: 'photoProgress 1.6s ease-in-out infinite',
-                  }} />
+                <div className="ai-chat-photo-track">
+                  <div className="ai-chat-photo-progress" />
                 </div>
               </div>
             </div>
@@ -408,21 +333,12 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
 
           {/* Bolha do coach — "Identificando alimentos..." durante photoLoading */}
           {photoLoading && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{
-                padding: '10px 14px',
-                borderRadius: '16px 16px 16px 4px',
-                background: 'rgba(255,255,255,0.07)',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>🔍 Identificando alimentos</span>
-                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <div className="ai-chat-row" data-role="assistant">
+              <div className="ai-chat-loading-bubble wide">
+                <span>Identificando alimentos</span>
+                <div className="ai-chat-dots">
                   {[0, 1, 2].map(i => (
-                    <div key={i} style={{
-                      width: 5, height: 5, borderRadius: '50%',
-                      background: '#a78bfa',
-                      animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-                    }} />
+                    <div key={i} style={{ animationDelay: `${i * 0.2}s` }} />
                   ))}
                 </div>
               </div>
@@ -431,32 +347,20 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
 
           {/* Loading bubble (chat de texto) */}
           {loading && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{
-                padding: '10px 16px',
-                borderRadius: '16px 16px 16px 4px',
-                background: 'rgba(255,255,255,0.07)',
-                display: 'flex', gap: 5, alignItems: 'center',
-              }}>
+            <div className="ai-chat-row" data-role="assistant">
+              <div className="ai-chat-loading-bubble">
+                <div className="ai-chat-dots">
                 {[0, 1, 2].map(i => (
-                  <div key={i} style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: '#a78bfa',
-                    animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-                  }} />
+                  <div key={i} style={{ animationDelay: `${i * 0.2}s` }} />
                 ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Erro */}
           {error && (
-            <div style={{
-              background: 'rgba(239,68,68,0.12)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 10, padding: '8px 12px',
-              color: '#fca5a5', fontSize: 13,
-            }}>
+            <div className="ai-chat-error">
               ⚠️ {error}
             </div>
           )}
@@ -465,23 +369,12 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
         </div>
 
         {/* Input */}
-        <div style={{
-          padding: '10px 12px',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column', gap: 8,
-          flexShrink: 0,
-        }}>
+        <div className="ai-chat-composer">
           {/* Opções de câmera / galeria */}
           {showPhotoOptions && (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="ai-chat-photo-options">
               {/* Tirar foto — input com capture */}
-              <label style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                background: 'rgba(124,92,255,0.12)', border: '1px solid rgba(124,92,255,0.3)',
-                borderRadius: 10, padding: '9px 12px',
-                color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}>
+              <label className="ai-chat-photo-option">
                 📷 Tirar foto
                 <input
                   ref={cameraInputRef}
@@ -493,12 +386,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
                 />
               </label>
               {/* Galeria — input sem capture */}
-              <label style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                background: 'rgba(124,92,255,0.12)', border: '1px solid rgba(124,92,255,0.3)',
-                borderRadius: 10, padding: '9px 12px',
-                color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}>
+              <label className="ai-chat-photo-option">
                 🖼️ Galeria
                 <input
                   ref={galleryInputRef}
@@ -510,32 +398,19 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               </label>
               <button
                 onClick={() => setShowPhotoOptions(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.06)', border: 'none',
-                  color: 'rgba(255,255,255,0.4)', fontSize: 18,
-                  width: 36, height: 36, borderRadius: '50%',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}
+                className="ai-chat-photo-dismiss"
               >×</button>
             </div>
           )}
 
           {/* Linha de texto + câmera + enviar */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          <div className="ai-chat-input-row">
             {/* Botão câmera */}
             <button
               onClick={() => setShowPhotoOptions(v => !v)}
               disabled={photoLoading}
-              style={{
-                width: 42, height: 42, borderRadius: '50%', border: 'none',
-                background: showPhotoOptions
-                  ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                  : 'rgba(255,255,255,0.08)',
-                color: '#fff', fontSize: 18, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, transition: 'background 0.2s',
-              }}
+              className="ai-chat-tool-btn"
+              data-active={showPhotoOptions}
               aria-label="Enviar foto"
             >
               {photoLoading ? '⏳' : '📷'}
@@ -548,15 +423,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               onKeyDown={handleKeyDown}
               placeholder="Pergunte algo ou registre o que comeu..."
               rows={1}
-              style={{
-                flex: 1, resize: 'none', overflow: 'hidden',
-                background: 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 14, padding: '10px 14px',
-                color: '#fff', fontSize: 14, lineHeight: 1.4,
-                outline: 'none', fontFamily: 'inherit',
-                maxHeight: 120,
-              }}
+              className="ai-chat-textarea"
               onInput={e => {
                 const el = e.currentTarget
                 el.style.height = 'auto'
@@ -566,15 +433,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
             <button
               onClick={handleSend}
               disabled={!input.trim() || loading}
-              style={{
-                width: 42, height: 42, borderRadius: '50%', border: 'none',
-                background: input.trim() && !loading
-                  ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                  : 'rgba(255,255,255,0.08)',
-                color: '#fff', fontSize: 18, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, transition: 'background 0.2s',
-              }}
+              className="ai-chat-send-btn"
+              data-ready={!!input.trim() && !loading}
               aria-label="Enviar"
             >
               ↑
@@ -605,18 +465,6 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
           onDescribeByText={handleDescribeByText}
         />
       )}
-
-      <style>{`
-        @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0) }
-          30% { transform: translateY(-6px) }
-        }
-        @keyframes photoProgress {
-          0% { width: 0%; margin-left: 0% }
-          50% { width: 60%; margin-left: 20% }
-          100% { width: 0%; margin-left: 100% }
-        }
-      `}</style>
     </>
   )
 }

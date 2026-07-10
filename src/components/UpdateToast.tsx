@@ -13,23 +13,25 @@ export function UpdateToast() {
         left: 0,
         right: 0,
         zIndex: 9999,
-        background: 'var(--accent)',
+        background: 'var(--surface)',
         color: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0.65rem 1rem',
+        borderBottom: '1px solid var(--line)',
         fontSize: '0.875rem',
-        fontWeight: 500,
+        fontWeight: 700,
+        boxShadow: 'var(--shadow)',
       }}
     >
-      <span>🔄 Nova versão disponível</span>
+      <span>Nova versão disponível</span>
       <button
         onClick={() => updateServiceWorker(true)}
         style={{
-          background: 'rgba(255,255,255,0.2)',
-          border: 'none',
-          borderRadius: '9999px',
+          background: 'var(--gradient-action)',
+          border: '1px solid color-mix(in srgb, var(--ember) 42%, white)',
+          borderRadius: '8px',
           color: '#fff',
           fontWeight: 700,
           padding: '0.3rem 0.9rem',

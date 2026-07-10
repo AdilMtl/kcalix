@@ -41,6 +41,7 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
   // Sincroniza estado interno ao abrir com um template
   useEffect(() => {
     if (open && template) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setNome(template.nome)
       setCor(template.cor)
       setCardioTipo(template.cardio?.tipo ?? 'bicicleta')
@@ -48,8 +49,9 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
       setExercicios([...(template.exercicios ?? [])])
       setCatActive(null)
       setDeleteConfirm(false)
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [open, template?.id])
+  }, [open, template])
 
   // Fechar limpa estado temporário (original closeTmplEditor: se isNew, remove da lista)
   const handleClose = () => {
@@ -124,9 +126,10 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
   const sheetStyle: React.CSSProperties = {
     position: 'fixed', left: 0, right: 0, bottom: 0,
     maxHeight: '92dvh',
-    background: 'linear-gradient(180deg, #1a2035, #121828)',
-    borderRadius: '16px 16px 0 0',
+    background: 'var(--surface)',
+    borderRadius: '18px 18px 0 0',
     border: '1px solid var(--line)',
+    boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
     zIndex: 321,
     display: 'flex', flexDirection: 'column',
     overflow: 'hidden',
@@ -135,12 +138,13 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
   const selectStyle: React.CSSProperties = {
     width: '100%',
     border: '1px solid var(--line)',
-    background: 'rgba(0,0,0,.15)',
+    background: 'var(--surface2)',
     color: 'var(--text)',
-    fontFamily: 'var(--font)',
+    fontFamily: 'var(--font-data)',
     fontSize: 13,
     fontWeight: 700,
-    padding: '6px 8px',
+    minHeight: 44,
+    padding: '8px 10px',
     borderRadius: 'var(--radius-xs)',
     outline: 'none',
     WebkitAppearance: 'none',
@@ -149,13 +153,14 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(0,0,0,.15)',
+    background: 'var(--surface2)',
     border: '1px solid var(--line)',
     borderRadius: 'var(--radius-xs)',
     color: 'var(--text)',
-    fontFamily: 'var(--font)',
+    fontFamily: 'var(--font-data)',
     fontSize: 16,
-    padding: '8px 10px',
+    minHeight: 44,
+    padding: '10px 12px',
     outline: 'none',
     boxSizing: 'border-box',
   }
@@ -163,9 +168,9 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
   const catTabStyle = (active: boolean): React.CSSProperties => ({
     padding: '5px 10px',
     borderRadius: 999,
-    border: active ? '1px solid var(--accent)' : '1px solid var(--line)',
-    background: active ? 'rgba(124,92,255,.15)' : 'transparent',
-    color: active ? 'var(--accent)' : 'var(--text3)',
+    border: active ? '1px solid var(--ember)' : '1px solid var(--line)',
+    background: active ? 'color-mix(in srgb, var(--ember) 14%, transparent)' : 'transparent',
+    color: active ? 'var(--energy)' : 'var(--text3)',
     fontFamily: 'var(--font)',
     fontSize: 11,
     fontWeight: 700,
@@ -228,8 +233,8 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
                   {ex.isCustom && (
                     <span style={{
                       fontSize: 9, fontWeight: 700, padding: '1px 5px',
-                      borderRadius: 999, background: 'rgba(124,92,255,.15)',
-                      color: 'var(--accent)', border: '1px solid rgba(124,92,255,.2)',
+                      borderRadius: 999, background: 'color-mix(in srgb, var(--ember) 10%, transparent)',
+                      color: 'var(--energy)', border: '1px solid color-mix(in srgb, var(--ember) 24%, transparent)',
                     }}>custom</span>
                   )}
                 </div>
@@ -237,7 +242,7 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
                   <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>{ex.grupo}</div>
                 )}
               </div>
-              <span style={{ fontSize: 16, color: 'var(--accent)' }}>{inTemplate ? '✓' : '+'}</span>
+              <span style={{ fontSize: 16, color: 'var(--ember)' }}>{inTemplate ? '✓' : '+'}</span>
             </div>
           )
         })}
@@ -285,7 +290,7 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
                     ? '1px solid rgba(248,113,113,.5)'
                     : '1px solid rgba(248,113,113,.3)',
                   color: 'var(--bad)',
-                  background: deleteConfirm ? 'rgba(248,113,113,.15)' : 'transparent',
+                  background: deleteConfirm ? 'color-mix(in srgb, var(--bad) 14%, transparent)' : 'transparent',
                   borderRadius: 8,
                   fontFamily: 'var(--font)', fontWeight: 700, cursor: 'pointer',
                   WebkitTapHighlightColor: 'transparent',
@@ -301,7 +306,7 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
               style={{
                 minHeight: 36, fontSize: 12, padding: '0 14px',
                 borderRadius: 8, border: 'none',
-                background: 'var(--accent)', color: '#fff',
+                background: 'var(--gradient-action)', color: '#fff',
                 fontFamily: 'var(--font)', fontWeight: 700, cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
               }}
@@ -346,7 +351,7 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
                   key={c}
                   onClick={() => setCor(c)}
                   style={{
-                    width: 24, height: 24, borderRadius: '50%',
+                    width: 26, height: 26, borderRadius: 'var(--radius-xs)',
                     background: c, cursor: 'pointer',
                     border: cor === c ? '2px solid var(--text)' : '2px solid transparent',
                     transition: 'border-color .15s',

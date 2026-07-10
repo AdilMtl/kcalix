@@ -14,12 +14,7 @@ export default function Nav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex"
-      style={{
-        background: 'var(--bg)',
-        borderTop: '1px solid var(--line)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
+      className="bottom-nav fixed bottom-0 left-0 right-0 z-50 flex"
     >
       {TABS.map(({ path, label, icon: Icon }) => {
         const active = pathname === path
@@ -27,12 +22,7 @@ export default function Nav() {
           <button
             key={path}
             onClick={() => navigate(path)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 transition-opacity active:opacity-60"
-            style={{
-              color: active ? 'var(--accent)' : 'var(--text3)',
-              paddingTop: '10px',
-              paddingBottom: '10px',
-            }}
+            className={`bottom-nav-btn flex flex-1 flex-col items-center justify-center gap-1 transition-opacity active:opacity-70 ${active ? 'active' : ''}`}
             aria-label={label}
           >
             <Icon active={active} />

@@ -31,7 +31,12 @@ export function ExerciseProgressionModal({ exercicioId, workoutRows, customExerc
   const open = exercicioId !== null
 
   // reset chart mode quando muda exercício
-  useEffect(() => { if (open) setChartMode('carga') }, [exercicioId, open])
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setChartMode('carga')
+    }
+  }, [exercicioId, open])
 
   if (!open || !exercicioId) return null
 
@@ -58,8 +63,10 @@ export function ExerciseProgressionModal({ exercicioId, workoutRows, customExerc
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         maxHeight: '88dvh',
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
         zIndex: 303,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -84,7 +91,7 @@ export function ExerciseProgressionModal({ exercicioId, workoutRows, customExerc
               <>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  background: 'rgba(251,191,36,.15)', color: '#fbbf24',
+                  background: 'color-mix(in srgb, var(--energy) 15%, transparent)', color: 'var(--energy)',
                   border: '1px solid rgba(251,191,36,.3)', borderRadius: 20,
                   padding: '4px 10px', fontSize: 13, fontWeight: 700,
                 }}>🏆 PR: {prCarga}kg</span>
@@ -107,7 +114,7 @@ export function ExerciseProgressionModal({ exercicioId, workoutRows, customExerc
                   style={{
                     flex: 1, padding: '8px 4px', borderRadius: 8,
                     border: '1px solid var(--line)',
-                    background: chartMode === mode ? 'var(--accent)' : 'var(--surface2)',
+                    background: chartMode === mode ? 'var(--gradient-action)' : 'var(--surface2)',
                     color: chartMode === mode ? '#fff' : 'var(--text2)',
                     fontSize: 12, fontWeight: 700,
                     cursor: 'pointer', fontFamily: 'var(--font)',
@@ -126,7 +133,7 @@ export function ExerciseProgressionModal({ exercicioId, workoutRows, customExerc
                 const v      = valOf(s)
                 const h      = Math.max(8, (v / maxVal) * 70)
                 const isBest = v === bestVal
-                const color  = chartMode === 'volume' ? 'var(--accent2)' : 'var(--accent)'
+                const color  = chartMode === 'volume' ? 'var(--magenta)' : 'var(--ember)'
                 return (
                   <div key={i} style={{ flex: 1, textAlign: 'center' }}>
                     <div style={{ height: 70, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>

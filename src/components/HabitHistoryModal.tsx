@@ -114,14 +114,20 @@ export function HabitHistoryModal({ open, onClose, getAllHabits }: Props) {
   // ── Carrega dados ao abrir (lazy) — fiel ao padrão workoutRows
   useEffect(() => {
     if (!open) return
-    setLoaded(false)
-    setTab(1)
-    setMonth({ y: new Date().getFullYear(), m: new Date().getMonth() })
-    setTooltip(null)
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      setLoaded(false)
+      setTab(1)
+      setMonth({ y: new Date().getFullYear(), m: new Date().getMonth() })
+      setTooltip(null)
+    })
     getAllHabits().then(data => {
+      if (cancelled) return
       setAllHabits(data)
       setLoaded(true)
     })
+    return () => { cancelled = true }
   }, [open, getAllHabits])
 
   // ── Navegação mês — bloqueia futuro

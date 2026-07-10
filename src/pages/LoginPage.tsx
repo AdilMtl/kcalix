@@ -7,22 +7,11 @@ type Mode = 'login' | 'reset'
 
 function KcalixLogo() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-      <img
-        src="/icon-192.png"
-        alt="Kcalix"
-        style={{
-          width: 72, height: 72, borderRadius: 20,
-          boxShadow: '0 8px 32px rgba(124,92,255,.35)',
-        }}
-      />
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1 }}>
-          Kcalix
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
-          Nutrição · Treino · Evolução
-        </div>
+    <div className="auth-logo">
+      <img src="/icon-192.png" alt="Kcalix" />
+      <div>
+        <div className="auth-logo-title">Kcalix</div>
+        <div className="auth-logo-subtitle">Nutrição · Treino · Evolução</div>
       </div>
     </div>
   )
@@ -36,12 +25,9 @@ function Field({
   id: string; label: string; type: string; value: string
   onChange: (v: string) => void; placeholder: string; autoComplete?: string
 }) {
-  const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>
-        {label}
-      </label>
+    <div className="auth-field">
+      <label htmlFor={id}>{label}</label>
       <input
         id={id}
         type={type}
@@ -49,22 +35,7 @@ function Field({
         autoComplete={autoComplete}
         value={value}
         onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         placeholder={placeholder}
-        style={{
-          background: 'var(--surface2)',
-          border: `1.5px solid ${focused ? 'var(--accent)' : 'var(--line)'}`,
-          borderRadius: 12,
-          color: 'var(--text)',
-          padding: '12px 14px',
-          fontSize: 15,
-          outline: 'none',
-          fontFamily: 'var(--font)',
-          transition: 'border-color .15s',
-          width: '100%',
-          boxShadow: focused ? '0 0 0 3px rgba(124,92,255,.12)' : 'none',
-        }}
       />
     </div>
   )
@@ -106,48 +77,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      background: 'var(--bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px 16px',
-    }}>
-      <div style={{ width: '100%', maxWidth: 360 }}>
+    <div className="auth-page">
+      <div className="auth-shell">
 
         {/* Logo */}
-        <div style={{ marginBottom: 32 }}>
+        <div className="auth-logo-wrap">
           <KcalixLogo />
         </div>
 
         {/* Banner: conta desativada */}
         {desativado && (
-          <div style={{
-            marginBottom: 16, padding: '10px 14px', borderRadius: 12, textAlign: 'center',
-            fontSize: 13, fontWeight: 500,
-            background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.25)',
-            color: 'var(--bad)',
-          }}>
-            🚫 Sua conta foi desativada. Entre em contato com o administrador.
+          <div className="auth-alert auth-alert-bad">
+            Sua conta foi desativada. Entre em contato com o administrador.
           </div>
         )}
 
         {/* Card */}
-        <div style={{
-          background: 'linear-gradient(180deg, rgba(18,24,38,.95), rgba(14,20,34,.95))',
-          border: '1px solid var(--line)',
-          borderRadius: 20,
-          padding: 24,
-          boxShadow: '0 16px 48px rgba(0,0,0,.5)',
-        }}>
+        <div className="auth-card">
 
           {/* Título do modo */}
-          <div style={{ marginBottom: 20 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+          <div className="auth-heading">
+            <h2>
               {mode === 'login' ? 'Entrar na conta' : 'Recuperar acesso'}
             </h2>
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
+            <p>
               {mode === 'login'
                 ? 'Acesso restrito — somente convidados'
                 : 'Enviaremos um link para criar sua senha'}
@@ -155,7 +108,7 @@ export default function LoginPage() {
           </div>
 
           {mode === 'login' ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <form onSubmit={handleLogin} className="auth-form">
               <Field
                 id="email" label="Email" type="email"
                 autoComplete="email" value={email}
@@ -168,12 +121,8 @@ export default function LoginPage() {
               />
 
               {error && (
-                <div style={{
-                  padding: '9px 12px', borderRadius: 10, fontSize: 13,
-                  background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.2)',
-                  color: 'var(--bad)',
-                }}>
-                  ❌ {error}
+                <div className="auth-alert auth-alert-bad">
+                  {error}
                 </div>
               )}
 
@@ -189,23 +138,15 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode('reset'); setError(null) }}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font)',
-                  textAlign: 'center', padding: '4px 0',
-                }}
+                className="auth-link-btn"
               >
-                Esqueci minha senha →
+                Esqueci minha senha
               </button>
             </form>
           ) : (
-            <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{
-                padding: '10px 12px', borderRadius: 10, fontSize: 12, lineHeight: 1.6,
-                background: 'rgba(124,92,255,.08)', border: '1px solid rgba(124,92,255,.2)',
-                color: 'var(--text2)',
-              }}>
-                💡 Se você foi convidado, use esta opção para criar sua senha e ativar o acesso.
+            <form onSubmit={handleReset} className="auth-form">
+              <div className="auth-note">
+                Se você foi convidado, use esta opção para criar sua senha e ativar o acesso.
               </div>
 
               <Field
@@ -215,22 +156,14 @@ export default function LoginPage() {
               />
 
               {error && (
-                <div style={{
-                  padding: '9px 12px', borderRadius: 10, fontSize: 13,
-                  background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.2)',
-                  color: 'var(--bad)',
-                }}>
-                  ❌ {error}
+                <div className="auth-alert auth-alert-bad">
+                  {error}
                 </div>
               )}
 
               {success && (
-                <div style={{
-                  padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.6,
-                  background: 'rgba(52,211,153,.1)', border: '1px solid rgba(52,211,153,.2)',
-                  color: 'var(--good)',
-                }}>
-                  ✅ {success}
+                <div className="auth-alert auth-alert-good">
+                  {success}
                 </div>
               )}
 
@@ -246,20 +179,16 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(null); setSuccess(null) }}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font)',
-                  textAlign: 'center', padding: '4px 0',
-                }}
+                className="auth-link-btn"
               >
-                ← Voltar ao login
+                Voltar ao login
               </button>
             </form>
           )}
         </div>
 
         {/* Rodapé */}
-        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 20 }}>
+        <p className="auth-footer">
           Acesso por convite · Kcalix © 2026
         </p>
       </div>

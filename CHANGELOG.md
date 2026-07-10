@@ -2,6 +2,22 @@
 
 ---
 
+## [0.57.0] — 2026-07-09
+
+### Melhorado
+- [improve] Migração Visual Ember Design System concluída e aprovada: tokens globais, tipografia, paleta, navegação, cards, inputs, modais, drawers, Home, Diário, Treino, Corpo, Mais, Login, Admin e Coach alinhados à direção Ember.
+- [improve] Treino: seção de cardio refinada com grid técnico, marcador `HR`, opções sem emoji no select e campo de minutos com largura estável em mobile.
+- [improve] PWA InstallPrompt alinhado ao Ember, removendo superfícies azul/roxo antigas.
+- [improve] VisualMock ajustado para evitar fonte escalada por `vw` no H1.
+
+### Validação
+- `npm run build` passou.
+- `npm.cmd run test` passou: 2 arquivos, 49 testes.
+- Lints escopados passaram para os arquivos ajustados no fechamento.
+- `npm run lint` completo ainda aponta débitos antigos fora do escopo em hooks/coverage.
+
+---
+
 ## [0.55.0] — 2026-03-28
 
 ### Adicionado

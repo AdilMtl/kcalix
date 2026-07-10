@@ -14,11 +14,11 @@ interface Props {
 type Tab = 'mev' | 'cycling' | 'reps' | 'deload' | 'progressao'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'mev',        label: '📊 MEV/MAV/MRV' },
-  { id: 'cycling',    label: '🔄 Volume Cycling' },
-  { id: 'reps',       label: '🔢 Rep Ranges' },
-  { id: 'deload',     label: '😴 Deload' },
-  { id: 'progressao', label: '📈 Progressão' },
+  { id: 'mev',        label: 'MEV/MAV/MRV' },
+  { id: 'cycling',    label: 'Volume Cycling' },
+  { id: 'reps',       label: 'Rep Ranges' },
+  { id: 'deload',     label: 'Deload' },
+  { id: 'progressao', label: 'Progressão' },
 ]
 
 export function CoachGuideModal({ open, onClose }: Props) {
@@ -36,8 +36,10 @@ export function CoachGuideModal({ open, onClose }: Props) {
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         maxHeight: '88dvh',
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
         zIndex: 320,
         display: 'flex', flexDirection: 'column',
       }}>
@@ -46,7 +48,7 @@ export function CoachGuideModal({ open, onClose }: Props) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px', flexShrink: 0 }}>
-          <b style={{ fontSize: 16, color: 'var(--text)' }}>📖 Guia de Volume</b>
+          <b style={{ fontSize: 16, color: 'var(--text)', fontFamily: 'var(--font-title)' }}>Guia de Volume</b>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer', padding: '0 4px', fontFamily: 'var(--font)' }}>✕</button>
         </div>
 
@@ -60,8 +62,9 @@ export function CoachGuideModal({ open, onClose }: Props) {
                 padding: '6px 12px', borderRadius: 20,
                 border: '1px solid var(--line)',
                 fontSize: 12, fontWeight: 600,
-                background: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+                background: activeTab === tab.id ? 'var(--gradient-action)' : 'transparent',
                 color: activeTab === tab.id ? '#fff' : 'var(--text2)',
+                borderColor: activeTab === tab.id ? 'var(--ember)' : 'var(--line)',
                 cursor: 'pointer', fontFamily: 'var(--font)',
                 WebkitTapHighlightColor: 'transparent',
               }}
@@ -80,13 +83,13 @@ export function CoachGuideModal({ open, onClose }: Props) {
                 <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>
                   <p>Esses valores definem a <b>faixa ótima de volume semanal</b> por grupo muscular, baseados nos protocolos de Lucas Campos e Renaissance Periodization (RP).</p>
                   <ul>
-                    <li><b style={{ color: 'var(--accent)' }}>MEV</b> — <i>Mínimo Efetivo</i>: mínimo de séries por semana para manter massa muscular. Abaixo disso, você não cresce.</li>
+                    <li><b style={{ color: 'var(--ember)' }}>MEV</b> — <i>Mínimo Efetivo</i>: mínimo de séries por semana para manter massa muscular. Abaixo disso, você não cresce.</li>
                     <li><b style={{ color: 'var(--good)' }}>MAV</b> — <i>Máximo Adaptativo</i>: volume ideal para crescimento. É aqui que você fica a maior parte do tempo.</li>
                     <li><b style={{ color: 'var(--bad)' }}>MRV</b> — <i>Máximo Recuperável</i>: limite acima do qual você não consegue se recuperar adequadamente. Ultrapassar por semanas seguidas causa overtraining.</li>
                   </ul>
                   <p>Séries via exercícios compostos (costas via supino, bíceps via remada) valem <b>0.5x</b> na contagem.</p>
                 </div>
-                <blockquote style={{ borderLeft: '3px solid var(--accent)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
+                <blockquote style={{ borderLeft: '3px solid var(--ember)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
                   "Não é quem treina mais que cresce — é quem treina na dose certa com consistência."
                 </blockquote>
               </div>
@@ -124,7 +127,7 @@ export function CoachGuideModal({ open, onClose }: Props) {
                 {MUSCLE_ORDER.map(g => (
                   <button key={g} onClick={() => setActiveGrupo(g)} style={{
                     padding: '6px 14px', borderRadius: 20,
-                    border: activeGrupo === g ? '1px solid var(--accent)' : '1px solid var(--line)',
+                    border: activeGrupo === g ? '1px solid var(--ember)' : '1px solid var(--line)',
                     fontSize: 12, fontWeight: 600,
                     background: activeGrupo === g ? 'var(--surface2)' : 'transparent',
                     color: activeGrupo === g ? 'var(--text)' : 'var(--text2)',
@@ -141,7 +144,7 @@ export function CoachGuideModal({ open, onClose }: Props) {
                     <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', margin: '0 0 8px' }}>{activeGrupo}</h4>
                     <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                       {[
-                        { lbl: 'MEV', val: lm.mev, color: 'var(--accent)' },
+                        { lbl: 'MEV', val: lm.mev, color: 'var(--ember)' },
                         { lbl: 'MAV', val: lm.mav, color: 'var(--good)' },
                         { lbl: 'MRV', val: lm.mrv, color: 'var(--bad)' },
                       ].map(({ lbl, val, color }) => (
@@ -172,7 +175,7 @@ export function CoachGuideModal({ open, onClose }: Props) {
                   <li><b>Realização (2–4 semanas):</b> volume menor, carga alta, testa o novo teto.</li>
                 </ul>
                 <p>O ícone <b>⚠ volume alto por X semanas</b> aparece quando você ficou acima do MAV por 4+ semanas consecutivas — sinal de que é hora de deloar.</p>
-                <blockquote style={{ borderLeft: '3px solid var(--accent)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
+                <blockquote style={{ borderLeft: '3px solid var(--ember)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
                   "É como parar no posto: não para desistir da viagem, mas para chegar mais longe."
                 </blockquote>
               </div>
@@ -233,7 +236,7 @@ export function CoachGuideModal({ open, onClose }: Props) {
                   <li>Quando você perceber queda de força em 2+ exercícios.</li>
                   <li>Quando dormir bem mas ainda acordar com articulações pesadas.</li>
                 </ul>
-                <blockquote style={{ borderLeft: '3px solid var(--accent)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
+                <blockquote style={{ borderLeft: '3px solid var(--ember)', padding: '8px 12px', margin: '12px 0', fontSize: 13, fontStyle: 'italic', color: 'var(--text2)', background: 'var(--surface2)', borderRadius: '0 8px 8px 0' }}>
                   "O músculo não cresce na academia — cresce na recuperação."
                 </blockquote>
               </div>

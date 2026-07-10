@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { AppMessage } from '../hooks/useAppMessage'
 
 interface Props {
@@ -33,13 +33,13 @@ function renderInline(nodes: InlineNode[], keyPrefix: string) {
   return nodes.map((n, i) => {
     const key = `${keyPrefix}-${i}`
     if (n.type === 'bold')   return <strong key={key} style={{ color: 'var(--text)', fontWeight: 700 }}>{n.content}</strong>
-    if (n.type === 'italic') return <em key={key} style={{ color: 'var(--accent2)', fontStyle: 'italic' }}>{n.content}</em>
-    if (n.type === 'code')   return <code key={key} style={{ background: 'var(--surface3)', borderRadius: 4, padding: '1px 6px', fontSize: 12, color: 'var(--accent2)', fontFamily: 'monospace' }}>{n.content}</code>
+    if (n.type === 'italic') return <em key={key} style={{ color: 'var(--energy)', fontStyle: 'italic' }}>{n.content}</em>
+    if (n.type === 'code')   return <code key={key} style={{ background: 'var(--surface3)', borderRadius: 4, padding: '1px 6px', fontSize: 12, color: 'var(--energy)', fontFamily: 'monospace' }}>{n.content}</code>
     return <span key={key}>{n.content}</span>
   })
 }
 
-export function MarkdownBody({ text, style }: { text: string; style?: React.CSSProperties }) {
+export function MarkdownBody({ text, style }: { text: string; style?: CSSProperties }) {
   const lines = text.split('\n')
   return (
     <div style={{ textAlign: 'left', ...style }}>
@@ -76,7 +76,7 @@ function SurveyBody({
   adminMode: boolean
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+    <div className="app-msg-survey">
       {/* Opções de múltipla escolha */}
       {options.map(opt => {
         const isSelected = selected === opt
@@ -85,33 +85,12 @@ function SurveyBody({
             key={opt}
             type="button"
             onClick={() => !adminMode && onSelect(opt)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px',
-              borderRadius: 10,
-              border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--line)'}`,
-              background: isSelected ? 'rgba(124,92,255,.15)' : 'var(--surface)',
-              color: isSelected ? 'var(--accent2)' : 'var(--text2)',
-              fontSize: 14, fontWeight: isSelected ? 600 : 400,
-              cursor: adminMode ? 'default' : 'pointer',
-              transition: 'all .15s',
-              textAlign: 'left',
-              fontFamily: 'var(--font)',
-            }}
+            className={`app-msg-option${isSelected ? ' active' : ''}${adminMode ? ' readonly' : ''}`}
           >
             {/* Radio visual */}
-            <span style={{
-              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-              border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--line)'}`,
-              background: isSelected ? 'var(--accent)' : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all .15s',
-            }}>
+            <span className="app-msg-radio">
               {isSelected && (
-                <span style={{
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: '#fff', display: 'block',
-                }} />
+                <span />
               )}
             </span>
             {opt}
@@ -121,24 +100,14 @@ function SurveyBody({
 
       {/* Pergunta aberta (se configurada) */}
       {openQuestion && (
-        <div style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, fontWeight: 600 }}>
-            {openQuestion}
-          </div>
+        <div className="app-msg-open">
+          <div>{openQuestion}</div>
           <textarea
             rows={2}
             value={comment}
             onChange={e => onComment(e.target.value)}
             placeholder="Opcional..."
             disabled={adminMode}
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              background: 'var(--surface2)', border: '1px solid var(--line)',
-              borderRadius: 8, color: 'var(--text)',
-              padding: '8px 10px', fontSize: 13, outline: 'none',
-              fontFamily: 'var(--font)', resize: 'none', lineHeight: 1.5,
-              opacity: adminMode ? 0.5 : 1,
-            }}
           />
         </div>
       )}
@@ -172,44 +141,17 @@ export default function AppMessageModal({ message, onDismiss, adminMode = false 
       {/* Overlay */}
       <div
         onClick={adminMode ? undefined : handleSubmit}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.6)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 350,
-        }}
+        className="app-msg-overlay"
       />
 
       {/* Card centralizado */}
-      <div style={{
-        position: 'fixed',
-        top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 'min(340px, calc(100vw - 32px))',
-        maxHeight: 'calc(100dvh - 48px)',
-        overflowY: 'auto',
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        border: '1px solid rgba(124,92,255,.25)',
-        borderRadius: 20,
-        boxShadow: '0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04)',
-        zIndex: 351,
-        overflow: 'hidden',
-      }}>
+      <div className="app-msg-card">
 
         {/* Botão fechar */}
         <button
           onClick={() => onDismiss()}
-          style={{
-            position: 'absolute', top: 12, right: 12,
-            width: 28, height: 28, borderRadius: '50%',
-            background: 'var(--surface2)',
-            border: '1px solid var(--line)',
-            color: 'var(--text3)',
-            fontSize: 14, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            lineHeight: 1,
-            zIndex: 1,
-          }}
+          className="app-msg-close"
+          aria-label="Fechar"
         >
           ✕
         </button>
@@ -220,25 +162,19 @@ export default function AppMessageModal({ message, onDismiss, adminMode = false 
             src={message.image_url}
             alt=""
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-            style={{
-              width: '100%', maxHeight: 180,
-              objectFit: 'cover', display: 'block',
-            }}
+            className="app-msg-image"
           />
         )}
 
         {/* Corpo */}
-        <div style={{ padding: message.image_url ? '24px 24px 24px' : '32px 24px 24px', textAlign: 'center' }}>
+        <div className={`app-msg-body${message.image_url ? ' has-image' : ''}`}>
           {/* Emoji */}
-          <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 16 }}>
+          <div className="app-msg-emoji">
             {message.emoji}
           </div>
 
           {/* Título */}
-          <div style={{
-            fontSize: 18, fontWeight: 700, color: 'var(--text)',
-            marginBottom: 14, lineHeight: 1.3,
-          }}>
+          <div className="app-msg-title">
             {message.title}
           </div>
 
@@ -283,7 +219,7 @@ export default function AppMessageModal({ message, onDismiss, adminMode = false 
 
           {/* Dica sutil para survey sem seleção */}
           {isSurvey && !adminMode && !selected && (
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>
+            <div className="app-msg-hint">
               Selecione uma opção para responder
             </div>
           )}

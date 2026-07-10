@@ -23,29 +23,20 @@ function kcalFromMacros(p: number, c: number, g: number) {
 function NutriBanner({ settings, onConfigure }: { settings: UserSettingsData | null; onConfigure: () => void }) {
   if (!settings) {
     return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'rgba(124,92,255,.12)', border: '1px solid rgba(124,92,255,.3)',
-        borderRadius: 10, padding: '10px 12px', marginBottom: 12, gap: 10,
-      }}>
-        <span style={{ fontSize: 13, color: 'var(--text2)' }}>Configure seu perfil nutricional</span>
-        <button className="btn sm primary" onClick={onConfigure}>🧭 Configurar</button>
+      <div className="more-nutri-banner empty">
+        <span>Configure seu perfil nutricional</span>
+        <button className="btn sm primary" onClick={onConfigure}>Configurar</button>
       </div>
     )
   }
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      background: 'rgba(52,211,153,.1)', border: '1px solid rgba(52,211,153,.3)',
-      borderRadius: 10, padding: '10px 12px', marginBottom: 12, gap: 10, flexWrap: 'wrap',
-    }}>
-      <span style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.7 }}>
-        BMR: <b style={{ color: 'var(--text)' }}>{Math.round(settings.bmr)} kcal</b>
-        {' · '}TDEE: <b style={{ color: 'var(--text)' }}>{Math.round(settings.tdee)} kcal</b>
-        {' · '}Meta: <b style={{ color: 'var(--accent)' }}>{settings.kcalTarget} kcal</b>
-        {' · '}P <b>{settings.pTarget}g</b> / C <b>{settings.cTarget}g</b> / G <b>{settings.gTarget}g</b>
+    <div className="more-nutri-banner">
+      <span>
+        <b>{settings.kcalTarget} kcal</b>
+        <em>BMR {Math.round(settings.bmr)} · TDEE {Math.round(settings.tdee)}</em>
+        <em>P {settings.pTarget}g / C {settings.cTarget}g / G {settings.gTarget}g</em>
       </span>
-      <button className="btn sm ghost" onClick={onConfigure} style={{ flexShrink: 0 }}>✏️ Editar</button>
+      <button className="btn sm ghost" onClick={onConfigure}>Editar</button>
     </div>
   )
 }
@@ -276,13 +267,13 @@ export default function MaisPage() {
 
   // ────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ paddingBottom: 24 }}>
+    <div className="more-page">
 
       {/* ── Card 1: Nutrição ── */}
-      <div className="card">
+      <div className="card more-card">
         <div className="card-header">
           <div className="ch-info">
-            <b>🍎 Nutrição</b>
+            <b>Nutrição</b>
             <span>Perfil corporal, metas e calculadora.</span>
           </div>
         </div>
@@ -291,7 +282,7 @@ export default function MaisPage() {
           <NutriBanner settings={settings} onConfigure={() => setWizardOpen(true)} />
 
           {/* Hidratação */}
-          <Accordion id="accWater" label="💧 Hidratação">
+          <Accordion id="accWater" label="Hidratação">
             {waterRec && (
               <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 12, lineHeight: 1.8 }}>
                 <div><b style={{ color: 'var(--text2)' }}>Meta recomendada: {waterRec.goalMl} ml/dia</b></div>
@@ -308,7 +299,7 @@ export default function MaisPage() {
             )}
             <div className="form-grid cols-2">
               <div className="form-row">
-                <label>💧 Meta diária (ml)</label>
+                <label>Meta diária (ml)</label>
                 <input
                   inputMode="numeric"
                   placeholder={String(waterRec?.goalMl ?? 2500)}
@@ -330,28 +321,28 @@ export default function MaisPage() {
           </Accordion>
 
           {/* Metas diárias */}
-          <Accordion id="accGoals" label="🎯 Metas diárias" defaultOpen>
+          <Accordion id="accGoals" label="Metas diárias" defaultOpen>
             <div className="form-grid cols-2">
               <div className="form-row">
-                <label>🥩 Proteína (g/dia)</label>
+                <label>Proteína (g/dia)</label>
                 <input inputMode="decimal" placeholder="152" value={goalP}
                   onChange={e => setGoalP(e.target.value)} />
                 <small>Ex.: 152</small>
               </div>
               <div className="form-row">
-                <label>🥔 Carbo (g/dia)</label>
+                <label>Carbo (g/dia)</label>
                 <input inputMode="decimal" placeholder="228" value={goalC}
                   onChange={e => setGoalC(e.target.value)} />
                 <small>Ex.: 228</small>
               </div>
               <div className="form-row">
-                <label>🥑 Gordura (g/dia)</label>
+                <label>Gordura (g/dia)</label>
                 <input inputMode="decimal" placeholder="31" value={goalG}
                   onChange={e => setGoalG(e.target.value)} />
                 <small>Ex.: 31</small>
               </div>
               <div className="form-row">
-                <label>🔥 Kcal alvo</label>
+                <label>Kcal alvo</label>
                 <input
                   inputMode="decimal"
                   readOnly
@@ -368,11 +359,11 @@ export default function MaisPage() {
           </Accordion>
 
           {/* Calculadora de perfil */}
-          <Accordion id="accCalcFull" label="🧮 Calculadora de perfil">
+          <Accordion id="accCalcFull" label="Calculadora de perfil">
             <div className="wz-entry-banner">
               <span>Configure seu perfil passo a passo</span>
               <button className="btn sm primary" type="button"
-                onClick={() => setWizardOpen(true)}>🧭 Configurar</button>
+                onClick={() => setWizardOpen(true)}>Configurar</button>
             </div>
             <p className="hint" style={{ marginBottom: 12 }}>
               Ou preencha manualmente abaixo. Dobras são opcionais — sem elas usamos Mifflin-St Jeor.
@@ -512,25 +503,25 @@ export default function MaisPage() {
 
             {/* Resultados */}
             {calcResult && (
-              <div className="card" style={{ marginTop: 14, boxShadow: 'none', border: '1px solid var(--line)' }}>
+              <div className="more-inline-panel">
                 <div className="card-body" style={{ paddingTop: 12, paddingBottom: 12 }}>
                   <div className="kpi-grid" style={{ marginBottom: 10 }}>
                     <div className="kpi">
-                      <div className="kpi-label">🧍 BF%</div>
+                      <div className="kpi-label">BF%</div>
                       <div className="kpi-value">
                         <span className="num">{calcResult.bf !== null ? calcResult.bf.toFixed(1) : '—'}</span>
                         {calcResult.bf !== null && <span className="den">%</span>}
                       </div>
                     </div>
                     <div className="kpi">
-                      <div className="kpi-label">💪 Magra</div>
+                      <div className="kpi-label">Magra</div>
                       <div className="kpi-value">
                         <span className="num">{calcResult.leanKg !== null ? calcResult.leanKg.toFixed(1) : '—'}</span>
                         {calcResult.leanKg !== null && <span className="den">kg</span>}
                       </div>
                     </div>
                     <div className="kpi">
-                      <div className="kpi-label">🔥 BMR</div>
+                      <div className="kpi-label">BMR</div>
                       <div className="kpi-value">
                         <span className="num">{calcResult.bmr !== null ? Math.round(calcResult.bmr) : '—'}</span>
                         {calcResult.bmr !== null && <span className="den">kcal</span>}
@@ -538,16 +529,16 @@ export default function MaisPage() {
                     </div>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.8 }}>
-                    <div>🎯 Meta: <b>{calcResult.kcalTarget} kcal</b></div>
-                    <div>🥩 P <b>{calcResult.pTarget}g</b> · 🥔 C <b>{calcResult.cTarget}g</b> · 🥑 G <b>{calcResult.gTarget}g</b></div>
+                    <div>Meta: <b>{calcResult.kcalTarget} kcal</b></div>
+                    <div>P <b>{calcResult.pTarget}g</b> · C <b>{calcResult.cTarget}g</b> · G <b>{calcResult.gTarget}g</b></div>
                   </div>
                   <div className="btn-group" style={{ marginTop: 10 }}>
                     <button className="btn sm primary" type="button" onClick={handleApplyResult}>
-                      ➡️ Aplicar nas metas
+                      Aplicar nas metas
                     </button>
                     {calcResult.bf !== null && (
                       <button className="btn sm ghost" type="button" onClick={handleBfToMedicion}>
-                        ➡️ BF% → Medição
+                        BF% → Medição
                       </button>
                     )}
                   </div>
@@ -558,10 +549,10 @@ export default function MaisPage() {
 
           {/* Exportar para IA — card fixo (fiel ao original) */}
           <div style={{ height: 16 }} />
-          <div className="card" style={{ boxShadow: 'none', marginBottom: 0 }}>
+          <div className="more-inline-panel">
             <div className="card-header">
               <div className="ch-info">
-                <b>🤖 Exportar para IA</b>
+                <b>Exportar para IA</b>
                 <span>Coach personalizado (GPT / Gemini)</span>
               </div>
             </div>
@@ -577,11 +568,11 @@ export default function MaisPage() {
                   const a = document.createElement('a')
                   a.href = url; a.download = 'kcalix-export.json'; a.click()
                   URL.revokeObjectURL(url)
-                }}>⬇️ Baixar JSON</button>
+                }}>Baixar JSON</button>
                 <button className="btn sm ghost" type="button" onClick={() => {
                   const prompt = `Você é um coach de nutrição e treino. Analise os dados do usuário abaixo e forneça sugestões personalizadas de treino, nutrição e recuperação.`
                   navigator.clipboard.writeText(prompt)
-                }}>📋 Copiar prompt do sistema</button>
+                }}>Copiar prompt</button>
               </div>
             </div>
           </div>
@@ -590,16 +581,16 @@ export default function MaisPage() {
       </div>
 
       {/* ── Card 2: Configurações ── */}
-      <div className="card">
+      <div className="card more-card">
         <div className="card-header">
           <div className="ch-info">
-            <b>⚙️ Configurações</b>
+            <b>Configurações</b>
             <span>Equivalências de bloco e kcal estimadas.</span>
           </div>
         </div>
         <div className="card-body">
 
-          <Accordion id="accBlockEq" label="🧱 Equivalência do bloco (g por 1 bloco)">
+          <Accordion id="accBlockEq" label="Equivalência do bloco">
             <div className="form-grid cols-2">
               <div className="form-row">
                 <label>1P = (g proteína)</label>
@@ -619,7 +610,7 @@ export default function MaisPage() {
             </div>
           </Accordion>
 
-          <Accordion id="accKcalBlock" label="🔢 kcal estimadas por bloco">
+          <Accordion id="accKcalBlock" label="Kcal estimadas por bloco">
             <div className="form-grid cols-2">
               <div className="form-row">
                 <label>kcal por 1P</label>
@@ -657,10 +648,10 @@ export default function MaisPage() {
       </div>
 
       {/* ── Card 3: Migração ── */}
-      <div className="card">
+      <div className="card more-card">
         <div className="card-header">
           <div className="ch-info">
-            <b>🔄 Migrar dados</b>
+            <b>Migrar dados</b>
             <span>Importar histórico do Blocos Tracker.</span>
           </div>
         </div>
@@ -674,16 +665,16 @@ export default function MaisPage() {
             type="button"
             onClick={() => setMigrateOpen(true)}
           >
-            🔄 Migrar dados do app antigo
+            Migrar dados do app antigo
           </button>
         </div>
       </div>
 
       {/* ── Card 4: Exportar dados ── */}
-      <div className="card">
+      <div className="card more-card">
         <div className="card-header">
           <div className="ch-info">
-            <b>📦 Exportar dados</b>
+            <b>Exportar dados</b>
             <span>Backup completo dos seus dados.</span>
           </div>
         </div>
@@ -698,17 +689,17 @@ export default function MaisPage() {
             onClick={handleExport}
             disabled={exporting}
           >
-            {exporting ? 'Exportando...' : '⬇️ Baixar backup completo'}
+            {exporting ? 'Exportando...' : 'Baixar backup completo'}
           </button>
         </div>
       </div>
 
       {/* ── Card admin — visível só para o admin ── */}
       {isAdmin && (
-        <div className="card">
+        <div className="card more-card">
           <div className="card-header">
             <div className="ch-info">
-              <b>⚙️ Painel admin</b>
+              <b>Painel admin</b>
               <span>Gerenciar usuários e acessos.</span>
             </div>
           </div>

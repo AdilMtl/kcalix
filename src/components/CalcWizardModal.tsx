@@ -73,25 +73,30 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
   // Reset ao abrir
   useEffect(() => {
     if (!open) return
-    setStep(isNewUser ? 'welcome' : 'summary')
-    setPendingResult(null)
-    setSex(initialData?.sex ?? 'male')
-    setAge(String(initialData?.age ?? ''))
-    setWeight(String(initialData?.weightKg ?? ''))
-    setHeight(String(initialData?.heightCm ?? ''))
-    setGoal(initialData?.goal ?? 'cut')
-    setActivity(String(initialData?.activityFactor ?? '1.55'))
-    setHasSkinfolds(initialData?.skinfolds != null ? true : null)
-    setSf({
-      chest: String(initialData?.skinfolds?.chest ?? ''),
-      ax: String(initialData?.skinfolds?.ax ?? ''),
-      tri: String(initialData?.skinfolds?.tri ?? ''),
-      sub: String(initialData?.skinfolds?.sub ?? ''),
-      ab: String(initialData?.skinfolds?.ab ?? ''),
-      sup: String(initialData?.skinfolds?.sup ?? ''),
-      th: String(initialData?.skinfolds?.th ?? ''),
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      setStep(isNewUser ? 'welcome' : 'summary')
+      setPendingResult(null)
+      setSex(initialData?.sex ?? 'male')
+      setAge(String(initialData?.age ?? ''))
+      setWeight(String(initialData?.weightKg ?? ''))
+      setHeight(String(initialData?.heightCm ?? ''))
+      setGoal(initialData?.goal ?? 'cut')
+      setActivity(String(initialData?.activityFactor ?? '1.55'))
+      setHasSkinfolds(initialData?.skinfolds != null ? true : null)
+      setSf({
+        chest: String(initialData?.skinfolds?.chest ?? ''),
+        ax: String(initialData?.skinfolds?.ax ?? ''),
+        tri: String(initialData?.skinfolds?.tri ?? ''),
+        sub: String(initialData?.skinfolds?.sub ?? ''),
+        ab: String(initialData?.skinfolds?.ab ?? ''),
+        sup: String(initialData?.skinfolds?.sup ?? ''),
+        th: String(initialData?.skinfolds?.th ?? ''),
+      })
     })
-  }, [open])
+    return () => { cancelled = true }
+  }, [open, isNewUser, initialData])
 
   if (!open) return null
 

@@ -137,7 +137,7 @@ function PanelSessoes({ workoutRows, activeTmplId, customExercises, onOpenExProg
                     </div>
                     <div style={{ position: 'relative', height: 5, background: 'var(--line)', borderRadius: 3, overflow: 'visible' }}>
                       <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: barColor }} />
-                      <div style={{ position: 'absolute', top: -2, left: `${mevPct}%`, width: 2, height: 9, background: 'var(--accent)', borderRadius: 1 }} />
+                      <div style={{ position: 'absolute', top: -2, left: `${mevPct}%`, width: 2, height: 9, background: 'var(--ember)', borderRadius: 1 }} />
                     </div>
                   </div>
                 )
@@ -177,7 +177,7 @@ function PanelSessoes({ workoutRows, activeTmplId, customExercises, onOpenExProg
         )
       })}
       <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 4 }}>
-        Linha roxa = MEV semanal. Barra amarela = abaixo do MEV · Verde = na faixa.
+        Linha laranja = MEV semanal. Barra amarela = abaixo do MEV · Verde = na faixa.
       </div>
     </div>
   )
@@ -337,7 +337,7 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
 
         let borderColor = 'var(--text3)'
         let barColor    = 'var(--text3)'
-        let opacity     = total === 0 ? 0.5 : 1
+        const opacity   = total === 0 ? 0.5 : 1
         if (total >= lm.mrv)      { borderColor = 'var(--bad)';  barColor = 'var(--bad)' }
         else if (total >= lm.mev) { borderColor = 'var(--good)'; barColor = 'var(--good)' }
 
@@ -376,10 +376,10 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
             {/* barra */}
             <div style={{ position: 'relative', height: 6, background: 'var(--line)', borderRadius: 3, marginBottom: 6, overflow: 'visible' }}>
               <div style={{ height: '100%', width: `${barPct}%`, borderRadius: 3, background: barColor, transition: 'width .3s ease' }} />
-              {/* marcador MEV (linha roxa) */}
+              {/* marcador MEV */}
               <div style={{
                 position: 'absolute', top: -3, left: `${mevPct}%`,
-                width: 2, height: 12, background: 'var(--accent)', borderRadius: 1,
+                width: 2, height: 12, background: 'var(--ember)', borderRadius: 1,
               }} title={`MEV: ${lm.mev}`} />
             </div>
 
@@ -399,12 +399,12 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
                     const bgMap: Record<Insight['nivel'], string> = {
                       ok:      'rgba(74,222,128,.12)',
                       warning: 'rgba(248,113,113,.12)',
-                      info:    'rgba(139,92,246,.12)',
+                      info:    'color-mix(in srgb, var(--ember) 12%, transparent)',
                     }
                     const colorMap: Record<Insight['nivel'], string> = {
                       ok:      'var(--good)',
                       warning: 'var(--bad)',
-                      info:    'var(--accent)',
+                      info:    'var(--ember)',
                     }
                     return (
                       <span
@@ -465,7 +465,7 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
 
       {/* nota de rodapé */}
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text3)' }}>
-        Linha roxa na barra = MEV (mínimo efetivo). Séries via compostos valem 0.5x. Baseado em protocolos Lucas Campos / RP.
+        Linha laranja na barra = MEV (mínimo efetivo). Séries via compostos valem 0.5x. Baseado em protocolos Lucas Campos / RP.
       </div>
     </>
   )
@@ -480,20 +480,23 @@ export function TemplateHistoryModal({
 
   // Sempre abre na aba "Sessões"
   useEffect(() => {
-    if (open) setActiveTab('sessoes')
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab('sessoes')
+    }
   }, [open])
 
   if (!open) return null
 
   const tmpl    = activeTmplId ? templates.find(t => t.id === activeTmplId) : null
   const title   = tmpl
-    ? `📊 ${tmpl.nome.includes('—') ? tmpl.nome.split('—')[0].trim() : tmpl.nome}`
-    : '📊 Histórico geral'
+    ? `${tmpl.nome.includes('—') ? tmpl.nome.split('—')[0].trim() : tmpl.nome}`
+    : 'Histórico geral'
 
   const TABS: { id: ThTab; label: string }[] = [
-    { id: 'sessoes', label: '📅 Sessões' },
-    { id: 'equip',   label: '🏋️ Por exercício' },
-    { id: 'grupo',   label: '💪 Por grupo' },
+    { id: 'sessoes', label: 'Sessões' },
+    { id: 'equip',   label: 'Por exercício' },
+    { id: 'grupo',   label: 'Por grupo' },
   ]
 
   return (
@@ -512,9 +515,10 @@ export function TemplateHistoryModal({
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0,
         minHeight: '70dvh', maxHeight: '92dvh',
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
+        background: 'var(--surface)',
         borderRadius: '18px 18px 0 0',
         border: '1px solid var(--line)',
+        boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
         display: 'flex', flexDirection: 'column',
         zIndex: 321,
       }}>
@@ -557,9 +561,9 @@ export function TemplateHistoryModal({
                 fontFamily: 'var(--font)',
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
-                background: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+                background: activeTab === tab.id ? 'var(--gradient-action)' : 'transparent',
                 color:      activeTab === tab.id ? '#fff'          : 'var(--text2)',
-                borderColor:activeTab === tab.id ? 'var(--accent)' : 'var(--line)',
+                borderColor:activeTab === tab.id ? 'var(--ember)' : 'var(--line)',
               }}
             >
               {tab.label}
