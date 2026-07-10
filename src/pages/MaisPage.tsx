@@ -422,10 +422,10 @@ export default function MaisPage() {
               <div className="form-row" style={{ gridColumn: '1/-1' }}>
                 <label>Objetivo</label>
                 <select value={calcGoal} onChange={e => setCalcGoal(e.target.value as GoalType)}>
-                  <option value="maintain">🟡 Manutenção — manter peso atual</option>
-                  <option value="cut">🔴 Cut — emagrecer com preservação muscular</option>
-                  <option value="recomp">🟢 Recomp — recomposição corporal</option>
-                  <option value="bulk">🔵 Bulk — ganho de massa com mínimo de gordura</option>
+                  <option value="maintain">Manutenção — manter peso atual</option>
+                  <option value="cut">Cut — emagrecer com preservação muscular</option>
+                  <option value="recomp">Recomp — recomposição corporal</option>
+                  <option value="bulk">Bulk — ganho de massa com mínimo de gordura</option>
                 </select>
               </div>
               <div className="calc-goal-hint" style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>
@@ -714,6 +714,11 @@ export default function MaisPage() {
           </div>
         </div>
       )}
+
+      <p className="icon-credit">
+        Ícones coloridos por{' '}
+        <a href="https://icons8.com" target="_blank" rel="noreferrer">Icons8</a>
+      </p>
 
       {/* ── MigrateModal ── */}
       <MigrateModal open={migrateOpen} onClose={() => setMigrateOpen(false)} />

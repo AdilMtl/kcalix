@@ -6,10 +6,13 @@ import { PhotoReviewSheet } from './PhotoReviewSheet'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 import { useCustomFoods } from '../hooks/useCustomFoods'
 import { resizeImageToBase64 } from '../lib/imageUtils'
+import { KcalixIcon, type KcalixIconName } from './icons/KcalixIcon'
+import { SystemIcon, type SystemIconName } from './icons/SystemIcon'
 
 // Pool de sugestões — 3 são sorteadas a cada abertura do chat
 // chips com action:'log' preenchem o input em vez de enviar diretamente
 interface Chip {
+  icon: KcalixIconName
   label: string
   action: 'send' | 'log'
   logPlaceholder?: string  // texto pré-preenchido no input quando action:'log'
@@ -17,21 +20,28 @@ interface Chip {
 
 const CHIP_POOL: Chip[] = [
   // Nutrição
-  { label: '🍽️ Como estão meus macros hoje?',        action: 'send' },
-  { label: '🥗 O que devo jantar hoje?',              action: 'send' },
-  { label: '🎯 Estou batendo minha meta de proteína?', action: 'send' },
-  { label: '📊 Resumo da minha semana de nutrição',   action: 'send' },
+  { icon: 'diary', label: 'Como estão meus macros hoje?',          action: 'send' },
+  { icon: 'diary', label: 'O que devo jantar hoje?',                action: 'send' },
+  { icon: 'diary', label: 'Estou batendo minha meta de proteína?',  action: 'send' },
+  { icon: 'diary', label: 'Resumo da minha semana de nutrição',     action: 'send' },
   // Treino
-  { label: '💪 Como devo treinar hoje?',              action: 'send' },
-  { label: '📈 Como está minha progressão de carga?', action: 'send' },
-  { label: '🏋️ O que achaste dos meus treinos?',      action: 'send' },
-  { label: '😴 Preciso de descanso hoje?',            action: 'send' },
+  { icon: 'workout', label: 'Como devo treinar hoje?',              action: 'send' },
+  { icon: 'workout', label: 'Como está minha progressão de carga?', action: 'send' },
+  { icon: 'workout', label: 'O que achaste dos meus treinos?',      action: 'send' },
+  { icon: 'workout', label: 'Preciso de descanso hoje?',            action: 'send' },
   // Corpo
-  { label: '⚖️ Como está minha evolução de peso?',   action: 'send' },
-  { label: '🔍 Analisa tudo dos últimos 30 dias',     action: 'send' },
+  { icon: 'body', label: 'Como está minha evolução de peso?',         action: 'send' },
+  { icon: 'coach-avatar', label: 'Analisa tudo dos últimos 30 dias',  action: 'send' },
   // Registro
-  { label: '🍴 Registrar o que comi agora',           action: 'log', logPlaceholder: 'Comi ' },
-  { label: '☕ Registrar café da manhã',              action: 'log', logPlaceholder: 'No café da manhã comi ' },
+  { icon: 'diary', label: 'Registrar o que comi agora', action: 'log', logPlaceholder: 'Comi ' },
+  { icon: 'diary', label: 'Registrar café da manhã',    action: 'log', logPlaceholder: 'No café da manhã comi ' },
+]
+
+const CAPABILITIES: Array<{ icon: SystemIconName; text: string }> = [
+  { icon: 'camera', text: 'Analisar foto de refeição' },
+  { icon: 'check', text: 'Registrar o que você comeu' },
+  { icon: 'trend', text: 'Diagnosticar nutrição, treino e corpo' },
+  { icon: 'lightbulb', text: 'Dar sugestões com base nos seus dados' },
 ]
 
 interface Props {
@@ -113,7 +123,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
       const result = await sendPhotoToAi(base64, mimeType)
       setPhotoResult(result)
     } catch (err) {
-      addMessage({ role: 'assistant', content: '⚠️ Não consegui processar a foto. Tente novamente ou descreva por texto.' })
+      addMessage({ role: 'assistant', content: 'Não consegui processar a foto. Tente novamente ou descreva por texto.' })
       console.error('[photo]', err)
     } finally {
       setPhotoLoading(false)
@@ -178,7 +188,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
 
     onAddFoods?.(meal, entries)
     const nomes = items.map(i => `• ${i.nome} (${i.grams}g)`).join('\n')
-    addMessage({ role: 'assistant', content: `✅ Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
+    addMessage({ role: 'assistant', content: `Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
   }
 
   async function handleSend() {
@@ -214,7 +224,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
         <div className="ai-chat-header">
           <div className="ai-chat-title-row">
             <div className="ai-chat-mark">
-              🤖
+              <KcalixIcon name="coach-avatar" size={36} />
             </div>
             <div>
               <div className="ai-chat-title">Kcal Coach</div>
@@ -228,7 +238,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
             className="ai-chat-close"
             aria-label="Fechar"
           >
-            ×
+            <SystemIcon name="close" size={18} />
           </button>
         </div>
 
@@ -239,7 +249,9 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
             <div className="ai-chat-empty">
               {/* Hero */}
               <div className="ai-chat-hero">
-                <div className="ai-chat-hero-mark">🤖</div>
+                <div className="ai-chat-hero-visual">
+                  <KcalixIcon name="coach-hero" size={126} />
+                </div>
                 <div className="ai-chat-hero-title">
                   Olá! Sou o Kcal Coach.
                 </div>
@@ -269,10 +281,11 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
                           if (el) el.setSelectionRange(el.value.length, el.value.length)
                         }, 50)
                       } else {
-                        sendMessage(chip.label.replace(/^[\p{Emoji}\s]+/u, '').trim())
+                        sendMessage(chip.label)
                       }
                     }}
                   >
+                    <KcalixIcon name={chip.icon} size={24} className="ai-chat-chip-icon" />
                     <span>{chip.label}</span>
                     {chip.action === 'log' && (
                       <span className="ai-chat-chip-meta">digitar</span>
@@ -286,12 +299,14 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
                 <div>
                   Também posso...
                 </div>
-                <p>
-                  📷 Analisar foto de refeição — toque em 📷{'\n'}
-                  🍴 Registrar o que comeu — descreva em texto{'\n'}
-                  📊 Diagnosticar nutrição, treino e corpo{'\n'}
-                  💡 Dar sugestões personalizadas baseadas nos seus dados
-                </p>
+                <div className="ai-chat-capability-list">
+                  {CAPABILITIES.map(item => (
+                    <div key={item.text} className="ai-chat-capability-row">
+                      <SystemIcon name={item.icon} size={16} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -321,7 +336,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
                   className="ai-chat-photo-img"
                 />
                 <div className="ai-chat-photo-label">
-                  📷 Foto enviada
+                  <SystemIcon name="camera" size={15} />
+                  Foto enviada
                 </div>
                 {/* Barra de progresso pulsante */}
                 <div className="ai-chat-photo-track">
@@ -361,7 +377,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
           {/* Erro */}
           {error && (
             <div className="ai-chat-error">
-              ⚠️ {error}
+              <SystemIcon name="warning" size={17} />
+              {error}
             </div>
           )}
 
@@ -375,7 +392,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
             <div className="ai-chat-photo-options">
               {/* Tirar foto — input com capture */}
               <label className="ai-chat-photo-option">
-                📷 Tirar foto
+                <SystemIcon name="camera" size={17} />
+                Tirar foto
                 <input
                   ref={cameraInputRef}
                   type="file"
@@ -387,7 +405,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               </label>
               {/* Galeria — input sem capture */}
               <label className="ai-chat-photo-option">
-                🖼️ Galeria
+                <SystemIcon name="gallery" size={17} />
+                Galeria
                 <input
                   ref={galleryInputRef}
                   type="file"
@@ -399,7 +418,8 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               <button
                 onClick={() => setShowPhotoOptions(false)}
                 className="ai-chat-photo-dismiss"
-              >×</button>
+                aria-label="Fechar opções de foto"
+              ><SystemIcon name="close" size={17} /></button>
             </div>
           )}
 
@@ -413,7 +433,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               data-active={showPhotoOptions}
               aria-label="Enviar foto"
             >
-              {photoLoading ? '⏳' : '📷'}
+              <SystemIcon name={photoLoading ? 'loader' : 'camera'} size={19} />
             </button>
 
             <textarea
@@ -437,7 +457,7 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               data-ready={!!input.trim() && !loading}
               aria-label="Enviar"
             >
-              ↑
+              <SystemIcon name="send" size={19} />
             </button>
           </div>
         </div>

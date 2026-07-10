@@ -12,6 +12,7 @@ import { useDateStore } from './store/dateStore'
 import LoginPage from './pages/LoginPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import AdminPage from './pages/AdminPage'
+import { KcalixIcon } from './components/icons/KcalixIcon'
 
 // Páginas carregadas sob demanda (code splitting por rota)
 const HomePage   = lazy(() => import('./pages/HomePage'))
@@ -20,6 +21,9 @@ const TreinoPage = lazy(() => import('./pages/TreinoPage'))
 const CorpoPage  = lazy(() => import('./pages/CorpoPage'))
 const MaisPage   = lazy(() => import('./pages/MaisPage'))
 const VisualMockPage = lazy(() => import('./pages/VisualMockPage'))
+const IconPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('./pages/IconPreviewPage'))
+  : null
 
 function Spinner() {
   return (
@@ -83,7 +87,7 @@ function AppLayout() {
         aria-label="Kcal Coach IA"
         className="coach-fab"
       >
-        🤖
+        <KcalixIcon name="coach-avatar" size={46} />
       </button>
 
       {/* Única instância do AiChatModal — fora do <main> para z-index correto */}
@@ -126,6 +130,18 @@ export default function App() {
             </Suspense>
           }
         />
+
+        {/* Prévia local da iconografia — nunca exposta no build de produção */}
+        {IconPreviewPage && (
+          <Route
+            path="/icon-preview"
+            element={
+              <Suspense fallback={<Spinner />}>
+                <IconPreviewPage />
+              </Suspense>
+            }
+          />
+        )}
 
         {/* Admin — so o email definido em VITE_ADMIN_EMAIL */}
         <Route

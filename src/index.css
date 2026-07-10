@@ -2297,8 +2297,16 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   color: #fff;
   box-shadow: 0 14px 34px color-mix(in srgb, var(--magenta) 24%, transparent);
   cursor: pointer;
+  overflow: hidden;
+  padding: 1px;
   font: 800 20px/1 var(--font-data);
   transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.coach-fab img {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  object-fit: cover;
 }
 .coach-fab:hover { transform: translateY(-1px) scale(1.04); }
 .coach-fab:active { transform: scale(.95); opacity: .9; }
@@ -2323,6 +2331,26 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 .bottom-nav-btn.active {
   color: var(--text);
   background: linear-gradient(135deg, color-mix(in srgb, var(--ember) 34%, transparent), color-mix(in srgb, var(--magenta) 24%, transparent));
+}
+.bottom-nav-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  opacity: .72;
+  filter: saturate(.72) brightness(.9);
+  transition: transform .16s ease, opacity .16s ease, filter .16s ease;
+}
+.bottom-nav-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.bottom-nav-btn.active .bottom-nav-icon {
+  opacity: 1;
+  filter: saturate(1.08) brightness(1.08);
+  transform: translateY(-1px) scale(1.08);
 }
 .bottom-nav-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--ember) 70%, transparent); outline-offset: -2px; }
 
@@ -3969,6 +3997,18 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 }
 
 .ai-chat-mark {
+  overflow: hidden;
+  padding: 1px;
+  background: var(--surface2);
+}
+.ai-chat-mark img {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius) - 2px);
+  object-fit: cover;
+}
+
+.ai-chat-mark {
   width: 38px;
   height: 38px;
   flex-shrink: 0;
@@ -4030,6 +4070,21 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   text-align: center;
 }
 
+.ai-chat-hero-visual {
+  width: 132px;
+  height: 118px;
+  display: grid;
+  place-items: center;
+  margin: -2px auto 10px;
+  overflow: hidden;
+}
+.ai-chat-hero-visual img {
+  width: 126px;
+  height: 126px;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 24px color-mix(in srgb, var(--ember) 16%, transparent));
+}
+
 .ai-chat-hero-mark {
   width: 54px;
   height: 54px;
@@ -4089,6 +4144,13 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   text-align: left;
 }
 
+.ai-chat-chip-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  object-fit: contain;
+}
+
 .ai-chat-chip[data-action="log"] {
   border-color: color-mix(in srgb, var(--good) 28%, transparent);
   background: color-mix(in srgb, var(--good) 9%, var(--surface));
@@ -4117,6 +4179,22 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   font-size: 12px;
   line-height: 1.7;
   white-space: pre-line;
+}
+
+.ai-chat-capability-list {
+  display: grid;
+  gap: 7px;
+  color: var(--text3);
+  font-size: 12px;
+}
+.ai-chat-capability-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-chat-capability-row svg {
+  flex: 0 0 auto;
+  color: var(--energy);
 }
 
 .ai-chat-row {
@@ -4167,6 +4245,9 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 }
 
 .ai-chat-photo-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: rgba(255,255,255,.86);
   font-size: 13px;
   padding: 7px 12px 9px;
@@ -4214,6 +4295,9 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 }
 
 .ai-chat-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
   border-radius: var(--radius-xs);
   background: color-mix(in srgb, var(--bad) 12%, transparent);
@@ -4292,6 +4376,10 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   transform: scale(.96);
 }
 
+.system-icon-spin {
+  animation: spin 1s linear infinite;
+}
+
 .ai-chat-textarea {
   flex: 1;
   max-height: 120px;
@@ -4323,6 +4411,14 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   50% { width: 60%; margin-left: 20%; }
   100% { width: 0%; margin-left: 100%; }
 }
+
+.icon-credit {
+  margin: 4px 0 18px;
+  color: var(--text3);
+  font-size: 10px;
+  text-align: center;
+}
+.icon-credit a { color: var(--text2); }
 
 /* ═══════════════════════ AUTH / ADMIN / BROADCAST EMBER ═══════════════════════ */
 .auth-page,

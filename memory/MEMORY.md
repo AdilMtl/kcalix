@@ -24,6 +24,7 @@
 - `/migrate` — migrar dados do app antigo
 
 ## Specs pendentes para próximas sessões
+- [Kcalix Hybrid Icon System sem emojis](spec-iconografia-profissional.md) — piloto aprovado pelo usuário em 2026-07-10 na branch `feature-icon-system`: Coach autoral Ember 3D, Icons8 Color local para Home/Diário/Corpo/Mais, halter Icons8 Color simplificado para Treino e SVGs locais para controles pequenos. Publicação no `main` autorizada.
 - [Migração Visual Ember Design System](spec-visual-ember-design-system.md) — CONCLUÍDA E APROVADA em 2026-07-09 na branch local `feature-ember-design-system`; QA visual manual feito pelo usuário durante a execução; build e testes finais passaram; liberada para commit, push e merge/publicação.
 - Pós-Ember — abrir nova branch depois de fechar/mergear `feature-ember-design-system` para substituir emojis por ícones bonitos/consistentes (ex.: biblioteca de ícones ou sistema próprio), sem misturar com a migração visual atual.
 - [Broadcasts Fase 6C — spec detalhada por fase](spec-broadcasts.md) — canal admin→usuário; 4 fases (texto→imagem→survey→feed); migration 014; iniciar com "implementar Fase 6C-1"
