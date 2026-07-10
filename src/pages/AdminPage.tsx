@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useCallback, useState, useEffect, type FormEvent } from 'react'
 import { useAuthStore } from '../store/authStore'
 import {
   listAuthorizedEmails,
@@ -18,10 +18,10 @@ type EmailRow = AuthorizedEmail
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function statusLabel(item: EmailRow) {
-  if (item.ativo === false) return { text: 'Desativado', color: 'var(--bad)',   dot: '🔴', bg: 'rgba(248,113,113,.08)', border: 'rgba(248,113,113,.18)' }
-  if (item.accepted_at)    return { text: 'Ativo',       color: 'var(--good)',  dot: '🟢', bg: 'rgba(52,211,153,.08)',  border: 'rgba(52,211,153,.18)'  }
-  if (item.invited_at)     return { text: 'Convidado',   color: 'var(--warn)',  dot: '📨', bg: 'rgba(251,191,36,.08)',  border: 'rgba(251,191,36,.18)'  }
-  return                          { text: 'Pendente',    color: 'var(--text3)', dot: '⏳', bg: 'var(--surface)',        border: 'var(--line)'           }
+  if (item.ativo === false) return { text: 'Desativado', color: 'var(--bad)',   dot: 'OFF', bg: 'rgba(255,95,115,.08)', border: 'rgba(255,95,115,.20)' }
+  if (item.accepted_at)    return { text: 'Ativo',       color: 'var(--good)',  dot: 'ON',  bg: 'rgba(33,212,180,.08)', border: 'rgba(33,212,180,.20)' }
+  if (item.invited_at)     return { text: 'Convidado',   color: 'var(--warn)',  dot: 'INV', bg: 'rgba(255,209,102,.08)', border: 'rgba(255,209,102,.20)' }
+  return                          { text: 'Pendente',    color: 'var(--text3)', dot: 'PEN', bg: 'var(--surface)',       border: 'var(--line)' }
 }
 
 function formatDate(iso: string | null) {
@@ -36,15 +36,9 @@ function formatDate(iso: string | null) {
 
 function StatKpi({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--line)',
-      borderRadius: 'var(--radius-sm)',
-      padding: '10px 12px',
-      textAlign: 'center',
-    }}>
+    <div className="admin-kpi">
       <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1.2 }}>{value}</div>
-      <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
+      <div>{label}</div>
     </div>
   )
 }
@@ -74,7 +68,7 @@ function UserCard({
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+      background: 'var(--gradient-panel)',
       border: `1px solid ${status.border}`,
       borderRadius: 'var(--radius)',
       overflow: 'hidden',
@@ -95,7 +89,7 @@ function UserCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <div style={{
             width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-            background: `linear-gradient(135deg, ${status.bg === 'var(--surface)' ? 'rgba(124,92,255,.2)' : status.bg}, var(--surface2))`,
+            background: `linear-gradient(135deg, ${status.bg === 'var(--surface)' ? 'rgba(255,92,53,.16)' : status.bg}, var(--surface2))`,
             border: `1px solid ${status.border}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 14, fontWeight: 700, color: status.color,
@@ -219,10 +213,10 @@ function UserCard({
 type BadgeStatus = 'ativa' | 'agendada' | 'expirada' | 'arquivada'
 
 const BADGE_STYLE: Record<BadgeStatus, { color: string; bg: string; border: string; icon: string }> = {
-  ativa:     { color: 'var(--good)',   bg: 'rgba(52,211,153,.08)',   border: 'rgba(52,211,153,.2)',   icon: '🟢' },
-  agendada:  { color: 'var(--accent2)',bg: 'rgba(167,139,250,.08)',  border: 'rgba(167,139,250,.2)',  icon: '🕐' },
-  expirada:  { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',   border: 'var(--line)',           icon: '⏰' },
-  arquivada: { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',   border: 'var(--line)',           icon: '📦' },
+  ativa:     { color: 'var(--good)',  bg: 'rgba(33,212,180,.08)',   border: 'rgba(33,212,180,.2)',   icon: 'ON' },
+  agendada:  { color: 'var(--energy)',bg: 'rgba(255,209,102,.08)',  border: 'rgba(255,209,102,.2)',  icon: 'SCH' },
+  expirada:  { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',  border: 'var(--line)',           icon: 'EXP' },
+  arquivada: { color: 'var(--text3)', bg: 'rgba(255,255,255,.03)',  border: 'var(--line)',           icon: 'ARC' },
 }
 
 function MsgCard({
@@ -241,7 +235,7 @@ function MsgCard({
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+      background: 'var(--gradient-panel)',
       border: `1px solid ${bs.border}`,
       borderRadius: 'var(--radius)', overflow: 'hidden',
     }}>
@@ -253,7 +247,7 @@ function MsgCard({
       }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: bs.color, textTransform: 'uppercase', letterSpacing: '.06em' }}>
           {bs.icon} {badge}
-          {isTargeted && <span style={{ marginLeft: 8, color: 'var(--accent2)', fontWeight: 600, textTransform: 'none' }}>· 👤 {targeting.emails!.length} usuário{targeting.emails!.length > 1 ? 's' : ''}</span>}
+          {isTargeted && <span style={{ marginLeft: 8, color: 'var(--energy)', fontWeight: 600, textTransform: 'none' }}>· {targeting.emails!.length} usuário{targeting.emails!.length > 1 ? 's' : ''}</span>}
         </span>
         <span style={{ fontSize: 10, color: 'var(--text3)' }}>
           {badge === 'agendada' && m.starts_at && (
@@ -351,7 +345,7 @@ function SurveyCard({
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
+      background: 'var(--gradient-panel)',
       border: `1px solid ${bs.border}`,
       borderRadius: 'var(--radius)', overflow: 'hidden',
     }}>
@@ -361,9 +355,9 @@ function SurveyCard({
         background: 'rgba(0,0,0,.1)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-          📊 Enquete
-          {isTargeted && <span style={{ marginLeft: 8, fontWeight: 600, textTransform: 'none' }}>· 👤 {targeting.emails!.length} usuário{targeting.emails!.length > 1 ? 's' : ''}</span>}
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--energy)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+          Enquete
+          {isTargeted && <span style={{ marginLeft: 8, fontWeight: 600, textTransform: 'none' }}>· {targeting.emails!.length} usuário{targeting.emails!.length > 1 ? 's' : ''}</span>}
         </span>
         <span style={{ fontSize: 11, fontWeight: 700, color: bs.color, textTransform: 'uppercase', letterSpacing: '.06em' }}>
           {bs.icon} {badge}
@@ -420,7 +414,7 @@ function SurveyCard({
                   <div style={{ height: 6, borderRadius: 3, background: 'var(--surface3)', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%', borderRadius: 3,
-                      background: 'linear-gradient(90deg, var(--accent), var(--accent2))',
+                      background: 'var(--gradient-action)',
                       width: `${o.pct}%`, transition: 'width .4s ease',
                     }} />
                   </div>
@@ -435,7 +429,7 @@ function SurveyCard({
                     <div key={i} style={{
                       fontSize: 12, color: 'var(--text2)', padding: '6px 10px',
                       background: 'var(--surface)', borderRadius: 8, marginBottom: 4,
-                      borderLeft: '2px solid var(--accent)',
+                      borderLeft: '2px solid var(--ember)',
                     }}>
                       "{c.comment}"
                     </div>
@@ -654,14 +648,20 @@ export default function AdminPage() {
     )
   }
 
-  useEffect(() => { load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     const { data, error } = await listAuthorizedEmails()
     if (!error && data) setEmails(data as EmailRow[])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void load()
+    })
+    return () => { cancelled = true }
+  }, [load])
 
   function setFeedbackFor(email: string, type: 'ok' | 'err', msg: string, ms = 5000) {
     setFeedback(prev => ({ ...prev, [email]: { type, msg } }))
@@ -723,67 +723,39 @@ export default function AdminPage() {
   const pendentes  = emails.filter(e => !e.invited_at && e.ativo !== false).length
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg)', padding: '0 0 32px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
+    <div className="admin-page">
+      <div className="admin-shell">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '20px 0 16px',
-          borderBottom: '1px solid var(--line)',
-          marginBottom: 20,
-        }}>
+        <div className="admin-header">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 10,
-                background: 'linear-gradient(135deg, var(--accent), rgba(124,92,255,.5))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 15,
-              }}>
-                ⚙️
-              </div>
-              <h1 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', margin: 0 }}>
+            <div className="admin-title-row">
+              <div className="admin-mark">KCX</div>
+              <h1>
                 Painel admin
               </h1>
             </div>
-            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4, paddingLeft: 40 }}>
+            <p>
               Gerenciamento de acesso e usuários
             </p>
           </div>
           <a
             href="/"
-            style={{
-              fontSize: 12, color: 'var(--text3)', textDecoration: 'none',
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '6px 10px', borderRadius: 8,
-              background: 'var(--surface)', border: '1px solid var(--line)',
-            }}
+            className="admin-back"
           >
-            ← Voltar
+            Voltar
           </a>
         </div>
 
         {/* ── Abas ────────────────────────────────────────────────────────── */}
-        <div style={{
-          display: 'flex', gap: 4, marginBottom: 20,
-          background: 'var(--surface)', border: '1px solid var(--line)',
-          borderRadius: 'var(--radius-sm)', padding: 4,
-        }}>
+        <div className="admin-tabs">
           {(['users', 'messages', 'surveys'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              style={{
-                flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                border: 'none', cursor: 'pointer', transition: 'all .15s',
-                background: tab === t ? 'var(--accent)' : 'transparent',
-                color: tab === t ? '#fff' : 'var(--text3)',
-              }}
+              data-active={tab === t}
             >
-              {t === 'users' ? '👥 Usuários' : t === 'messages' ? '📢 Mensagens' : '📊 Enquetes'}
+              {t === 'users' ? 'Usuários' : t === 'messages' ? 'Mensagens' : 'Enquetes'}
             </button>
           ))}
         </div>
@@ -792,7 +764,7 @@ export default function AdminPage() {
         {tab === 'users' && <>
 
           {/* ── KPI Stats ────────────────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+          <div className="admin-kpi-grid">
             <StatKpi label="Total"      value={total}      color="var(--text)"  />
             <StatKpi label="Ativos"     value={ativos}     color="var(--good)"  />
             <StatKpi label="Convidados" value={convidados} color="var(--warn)"  />
@@ -939,7 +911,7 @@ export default function AdminPage() {
               {/* ── Mensagens agendadas ── */}
               {scheduled.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--energy)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
                     🕐 Agendadas ({scheduled.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1103,8 +1075,8 @@ export default function AdminPage() {
                             onClick={() => { setMsgTargetAll(opt === 'all'); setMsgTargetEmails([]) }}
                             style={{
                               padding: '6px 14px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-                              background: (opt === 'all') === msgTargetAll ? 'var(--accent)' : 'var(--surface2)',
-                              border: `1px solid ${(opt === 'all') === msgTargetAll ? 'var(--accent)' : 'var(--line)'}`,
+                              background: (opt === 'all') === msgTargetAll ? 'var(--gradient-action)' : 'var(--surface2)',
+                              border: `1px solid ${(opt === 'all') === msgTargetAll ? 'color-mix(in srgb, var(--ember) 44%, white)' : 'var(--line)'}`,
                               color: (opt === 'all') === msgTargetAll ? '#fff' : 'var(--text2)',
                               fontFamily: 'var(--font)',
                             }}
@@ -1122,8 +1094,8 @@ export default function AdminPage() {
                               onClick={() => setMsgTargetEmails(prev => [...prev, adminEmail])}
                               style={{
                                 marginBottom: 6, padding: '5px 12px', borderRadius: 16, fontSize: 12, cursor: 'pointer',
-                                background: 'rgba(124,92,255,.12)', border: '1px solid rgba(124,92,255,.3)',
-                                color: 'var(--accent2)', fontFamily: 'var(--font)',
+                                background: 'color-mix(in srgb, var(--ember) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ember) 30%, transparent)',
+                                color: 'var(--energy)', fontFamily: 'var(--font)',
                               }}
                             >
                               + Me incluir ({adminEmail})
@@ -1136,14 +1108,14 @@ export default function AdminPage() {
                           }}>
                             {/* Admin no topo se selecionado */}
                             {msgTargetEmails.includes(adminEmail) && (
-                              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--line)', background: 'rgba(124,92,255,.06)' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--line)', background: 'color-mix(in srgb, var(--ember) 8%, transparent)' }}>
                                 <input
                                   type="checkbox"
                                   checked
                                   onChange={() => setMsgTargetEmails(prev => prev.filter(x => x !== adminEmail))}
-                                  style={{ accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
+                                  style={{ accentColor: 'var(--ember)', width: 15, height: 15, flexShrink: 0 }}
                                 />
-                                <span style={{ fontSize: 13, color: 'var(--accent2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                                <span style={{ fontSize: 13, color: 'var(--energy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
                                   {adminEmail} (você)
                                 </span>
                               </label>
@@ -1161,7 +1133,7 @@ export default function AdminPage() {
                                   type="checkbox"
                                   checked={msgTargetEmails.includes(e.email)}
                                   onChange={() => toggleTargetEmail(e.email)}
-                                  style={{ accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
+                                  style={{ accentColor: 'var(--ember)', width: 15, height: 15, flexShrink: 0 }}
                                 />
                                 <span style={{ fontSize: 13, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {e.email}
@@ -1177,7 +1149,7 @@ export default function AdminPage() {
                         </>
                       )}
                       {!msgTargetAll && msgTargetEmails.length > 0 && (
-                        <div style={{ fontSize: 11, color: 'var(--accent2)', marginTop: 6 }}>
+                        <div style={{ fontSize: 11, color: 'var(--energy)', marginTop: 6 }}>
                           {msgTargetEmails.length} usuário{msgTargetEmails.length > 1 ? 's' : ''} selecionado{msgTargetEmails.length > 1 ? 's' : ''}
                         </div>
                       )}
@@ -1313,7 +1285,7 @@ export default function AdminPage() {
               {/* ── Enquetes agendadas ── */}
               {scheduled.filter(m => m.message_type === 'survey').length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--energy)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
                     🕐 Agendadas ({scheduled.filter(m => m.message_type === 'survey').length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1460,7 +1432,7 @@ export default function AdminPage() {
                           type="checkbox"
                           checked={srvOpenEnabled}
                           onChange={e => setSrvOpenEnabled(e.target.checked)}
-                          style={{ accentColor: 'var(--accent)', width: 15, height: 15 }}
+                          style={{ accentColor: 'var(--ember)', width: 15, height: 15 }}
                         />
                         <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>
                           Adicionar pergunta aberta
@@ -1528,8 +1500,8 @@ export default function AdminPage() {
                             onClick={() => { setSrvTargetAll(opt === 'all'); setSrvTargetEmails([]) }}
                             style={{
                               padding: '6px 14px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-                              background: (opt === 'all') === srvTargetAll ? 'var(--accent)' : 'var(--surface2)',
-                              border: `1px solid ${(opt === 'all') === srvTargetAll ? 'var(--accent)' : 'var(--line)'}`,
+                              background: (opt === 'all') === srvTargetAll ? 'var(--gradient-action)' : 'var(--surface2)',
+                              border: `1px solid ${(opt === 'all') === srvTargetAll ? 'color-mix(in srgb, var(--ember) 44%, white)' : 'var(--line)'}`,
                               color: (opt === 'all') === srvTargetAll ? '#fff' : 'var(--text2)',
                               fontFamily: 'var(--font)',
                             }}
@@ -1547,8 +1519,8 @@ export default function AdminPage() {
                               onClick={() => setSrvTargetEmails(prev => [...prev, adminEmail])}
                               style={{
                                 marginBottom: 6, padding: '5px 12px', borderRadius: 16, fontSize: 12, cursor: 'pointer',
-                                background: 'rgba(124,92,255,.12)', border: '1px solid rgba(124,92,255,.3)',
-                                color: 'var(--accent2)', fontFamily: 'var(--font)',
+                                background: 'color-mix(in srgb, var(--ember) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ember) 30%, transparent)',
+                                color: 'var(--energy)', fontFamily: 'var(--font)',
                               }}
                             >
                               + Me incluir ({adminEmail})
@@ -1561,14 +1533,14 @@ export default function AdminPage() {
                           }}>
                             {/* Admin no topo se selecionado */}
                             {srvTargetEmails.includes(adminEmail) && (
-                              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--line)', background: 'rgba(124,92,255,.06)' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--line)', background: 'color-mix(in srgb, var(--ember) 8%, transparent)' }}>
                                 <input
                                   type="checkbox"
                                   checked
                                   onChange={() => setSrvTargetEmails(prev => prev.filter(x => x !== adminEmail))}
-                                  style={{ accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
+                                  style={{ accentColor: 'var(--ember)', width: 15, height: 15, flexShrink: 0 }}
                                 />
-                                <span style={{ fontSize: 13, color: 'var(--accent2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                                <span style={{ fontSize: 13, color: 'var(--energy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
                                   {adminEmail} (você)
                                 </span>
                               </label>
@@ -1582,7 +1554,7 @@ export default function AdminPage() {
                                   type="checkbox"
                                   checked={srvTargetEmails.includes(e.email)}
                                   onChange={() => toggleSrvEmail(e.email)}
-                                  style={{ accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
+                                  style={{ accentColor: 'var(--ember)', width: 15, height: 15, flexShrink: 0 }}
                                 />
                                 <span style={{ fontSize: 13, color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {e.email}

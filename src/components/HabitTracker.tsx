@@ -15,8 +15,21 @@ interface Props {
   onOpenHistory: () => void
 }
 
+function renderScoreDots(todayRow: Props['habits'][string] | undefined) {
+  return HABITS_DEF.map(h => {
+    const checked = !!(todayRow?.[h.id as keyof typeof todayRow])
+    return (
+      <div
+        key={h.id}
+        className={`habit-score-dot${checked ? ' lit' : ''}`}
+        style={{ ['--h-color' as string]: h.color }}
+      />
+    )
+  })
+}
+
 export function HabitTracker({ habits, weekDates, todayStr, onToggle, onOpenHistory }: Props) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
 
   const todayRow = habits[todayStr]
   const score = HABITS_DEF.filter(h => todayRow?.[h.id as keyof typeof todayRow]).length
@@ -31,23 +44,6 @@ export function HabitTracker({ habits, weekDates, todayStr, onToggle, onOpenHist
     ? `${fmtD(weekDates[0])} – ${fmtD(weekDates[6])}`
     : ''
 
-  // ── Score dots no trigger (original L8151–8153)
-  // usa classe .lit + CSS custom property --h-color (fiel ao original)
-  const ScoreDots = () => (
-    <>
-      {HABITS_DEF.map(h => {
-        const checked = !!(todayRow?.[h.id as keyof typeof todayRow])
-        return (
-          <div
-            key={h.id}
-            className={`habit-score-dot${checked ? ' lit' : ''}`}
-            style={{ ['--h-color' as string]: h.color }}
-          />
-        )
-      })}
-    </>
-  )
-
   return (
     <div className={`habit-card${open ? ' open' : ''}`}>
       {/* ── Trigger (original L8182–8202) */}
@@ -56,20 +52,19 @@ export function HabitTracker({ habits, weekDates, todayStr, onToggle, onOpenHist
         onClick={() => setOpen(o => !o)}
       >
         <div className="habit-trigger-left">
-          <span className="habit-title">⚡ Hábitos</span>
+          <span className="habit-title">Habitos diarios</span>
         </div>
         <div className="habit-trigger-right">
           <div className="habit-score-dots">
-            <ScoreDots />
+            {renderScoreDots(todayRow)}
           </div>
           <span className="habit-score-num">{score}/{HABITS_DEF.length}</span>
-          {/* Botão 📊 — original L8200–8202 */}
           <button
             type="button"
+            className="habit-history-btn"
             onClick={e => { e.stopPropagation(); onOpenHistory() }}
-            style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
             title="Histórico de hábitos"
-          >📊</button>
+          >HIST</button>
           <span className="habit-chevron">▾</span>
         </div>
       </div>
@@ -136,7 +131,7 @@ export function HabitTracker({ habits, weekDates, todayStr, onToggle, onOpenHist
           <div className="habit-score">
             <span className="habit-score-lbl">Hoje</span>
             <div className="habit-score-dots">
-              <ScoreDots />
+              {renderScoreDots(todayRow)}
             </div>
             <span className="habit-score-num">{score}/{HABITS_DEF.length}</span>
           </div>

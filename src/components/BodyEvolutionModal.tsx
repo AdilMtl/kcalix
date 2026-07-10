@@ -17,9 +17,9 @@ interface MetricCfg {
 }
 
 const MCHART_CFG: Record<Metric, MetricCfg> = {
-  weightKg: { label: 'Peso',    unit: 'kg', color: '#60a5fa' },
-  waistCm:  { label: 'Cintura', unit: 'cm', color: '#f87171' },
-  bfPct:    { label: 'BF',      unit: '%',  color: '#34d399' },
+  weightKg: { label: 'Peso',    unit: 'kg', color: '#ff5c35' },
+  waistCm:  { label: 'Cintura', unit: 'cm', color: '#ff2f7d' },
+  bfPct:    { label: 'BF',      unit: '%',  color: '#21d4b4' },
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -233,89 +233,36 @@ export default function BodyEvolutionModal({ open, onClose, rows }: Props) {
   return (
     <>
       {/* overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.55)',
-          zIndex: 339,
-        }}
-      />
+      <div onClick={onClose} className="mchart-overlay" />
 
       {/* sheet */}
-      <div
-        style={{
-          position: 'fixed',
-          left: 0, right: 0, bottom: 0,
-          background: 'linear-gradient(180deg, #1a2035, #121828)',
-          borderRadius: '18px 18px 0 0',
-          zIndex: 340,
-          maxHeight: '88dvh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <div className="mchart-sheet">
         {/* handle */}
-        <div
-          style={{
-            width: 36, height: 4,
-            background: 'rgba(255,255,255,.15)',
-            borderRadius: 2,
-            margin: '12px auto 0',
-            flexShrink: 0,
-          }}
-        />
+        <div className="sheet-handle" />
 
         {/* header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px 8px',
-            flexShrink: 0,
-          }}
-        >
-          <b style={{ fontSize: 15 }}>📈 Evolução</b>
+        <div className="mchart-header">
+          <b>Evolução corporal</b>
           <button
             type="button"
             onClick={onClose}
-            style={{
-              background: 'none', border: 'none',
-              color: 'var(--text3)', fontSize: 18,
-              cursor: 'pointer', padding: '4px 8px',
-              fontFamily: 'var(--font)',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className="profile-checkin-close"
           >
             ✕
           </button>
         </div>
 
         {/* body */}
-        <div style={{ padding: '0 16px 24px', overflowY: 'auto' }}>
+        <div className="mchart-body">
 
           {/* filter buttons */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+          <div className="mchart-tabs">
             {(['weightKg', 'waistCm', 'bfPct'] as Metric[]).map(m => (
               <button
                 key={m}
                 type="button"
                 onClick={() => { setMetric(m); setTooltip(null) }}
-                style={{
-                  flex: 1,
-                  padding: '8px 4px',
-                  borderRadius: 8,
-                  border: `1px solid ${metric === m ? 'var(--accent)' : 'var(--line)'}`,
-                  background: metric === m ? 'var(--accent)' : 'var(--surface2)',
-                  color: metric === m ? '#fff' : 'var(--text2)',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font)',
-                  WebkitTapHighlightColor: 'transparent',
-                  transition: 'background .15s, color .15s',
-                }}
+                className={`mchart-tab${metric === m ? ' active' : ''}`}
               >
                 {MCHART_CFG[m].label} ({MCHART_CFG[m].unit})
               </button>
@@ -323,26 +270,9 @@ export default function BodyEvolutionModal({ open, onClose, rows }: Props) {
           </div>
 
           {/* chart area */}
-          <div
-            ref={wrapRef}
-            style={{
-              width: '100%',
-              position: 'relative',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              WebkitOverflowScrolling: 'touch',
-            }}
-          >
+          <div ref={wrapRef} className="mchart-chart-wrap">
             {points.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '40px 20px',
-                  color: 'var(--text3)',
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                }}
-              >
+              <div className="mchart-empty">
                 Nenhum dado para "{cfg.label}".<br />
                 Salve medições primeiro.
               </div>
@@ -357,19 +287,10 @@ export default function BodyEvolutionModal({ open, onClose, rows }: Props) {
             {/* tooltip */}
             {tooltip && (
               <div
+                className="mchart-tooltip"
                 style={{
-                  position: 'absolute',
                   left: tooltip.x,
                   top: tooltip.y,
-                  background: 'var(--surface3)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 8,
-                  padding: '5px 9px',
-                  fontSize: 11,
-                  color: 'var(--text)',
-                  pointerEvents: 'none',
-                  zIndex: 10,
-                  whiteSpace: 'nowrap',
                 }}
               >
                 {tooltip.text}
@@ -379,15 +300,7 @@ export default function BodyEvolutionModal({ open, onClose, rows }: Props) {
 
           {/* summary */}
           {summary && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                marginTop: 14,
-                paddingTop: 12,
-                borderTop: '1px solid var(--line)',
-              }}
-            >
+            <div className="mchart-summary">
               {[
                 { lbl: 'Mínimo',   val: summary.min.toFixed(1), color: 'var(--text)' },
                 { lbl: 'Máximo',   val: summary.max.toFixed(1), color: 'var(--text)' },
@@ -398,9 +311,9 @@ export default function BodyEvolutionModal({ open, onClose, rows }: Props) {
                   color: trendColor(summary.diff),
                 },
               ].map(({ lbl, val, color }) => (
-                <div key={lbl} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 2 }}>{lbl}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color }}>{val}</div>
+                <div key={lbl} className="mchart-summary-item">
+                  <span>{lbl}</span>
+                  <b style={{ color }}>{val}</b>
                 </div>
               ))}
             </div>

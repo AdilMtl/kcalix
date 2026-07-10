@@ -111,49 +111,26 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
       {/* Backdrop */}
       <div
         onClick={onCancel}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 348,
-        }}
+        className="ai-food-overlay"
       />
 
       {/* Bottom sheet */}
       <div
-        style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0,
-          zIndex: 350,
-          background: 'linear-gradient(180deg, #1a2035, #121828)',
-          borderRadius: '20px 20px 0 0',
-          maxHeight: '88dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
-        }}
+        className="ai-food-sheet"
       >
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px 12px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          flexShrink: 0,
-        }}>
+        <div className="ai-food-header">
           <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
+            <div className="ai-food-title">
               Confirmar alimentos
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
+            <div className="ai-food-subtitle">
               Ajuste as gramas antes de salvar
             </div>
           </div>
           <button
             onClick={onCancel}
-            style={{
-              background: 'rgba(255,255,255,0.06)', border: 'none',
-              color: 'rgba(255,255,255,0.5)', fontSize: 20,
-              width: 34, height: 34, borderRadius: '50%',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="ai-food-close"
             aria-label="Cancelar"
           >
             ×
@@ -161,34 +138,23 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
         </div>
 
         {/* Conteúdo scrollável */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+        <div className="ai-food-body">
 
           {/* Seleção de refeição */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <div className="ai-food-label" style={{ marginBottom: 6 }}>
               Refeição
             </div>
             <select
               value={selectedMeal}
               onChange={e => setSelectedMeal(e.target.value as MealKey)}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.07)',
-                border: selectedMeal ? '1px solid rgba(124,92,255,0.4)' : '1px solid rgba(239,68,68,0.5)',
-                borderRadius: 10,
-                color: selectedMeal ? '#fff' : 'rgba(255,255,255,0.4)',
-                fontSize: 14,
-                padding: '10px 14px',
-                outline: 'none',
-                appearance: 'none',
-                cursor: 'pointer',
-              }}
+              className={`ai-food-select${selectedMeal ? ' valid' : ' invalid'}`}
             >
-              <option value="" disabled style={{ background: '#1a2035' }}>
+              <option value="" disabled style={{ background: 'var(--surface)' }}>
                 Selecione a refeição...
               </option>
               {MEAL_ORDER.map(key => (
-                <option key={key} value={key} style={{ background: '#1a2035' }}>
+                <option key={key} value={key} style={{ background: 'var(--surface)' }}>
                   {MEAL_LABELS[key]}
                 </option>
               ))}
@@ -201,10 +167,10 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
           </div>
 
           {/* Lista de itens */}
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <div className="ai-food-label" style={{ marginBottom: 8 }}>
             Alimentos detectados
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          <div className="ai-food-list">
             {pendingLog.items.map((item, i) => {
               const resolved = resolveItem(item, i)
               const grams = parseFloat(gramsMap[i]) || 0
@@ -214,56 +180,35 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
               return (
                 <div
                   key={i}
-                  style={{
-                    background: isCustom ? 'rgba(124,92,255,0.06)' : 'rgba(255,255,255,0.05)',
-                    border: isCustom ? '1px solid rgba(124,92,255,0.2)' : '1px solid transparent',
-                    borderRadius: 12,
-                    padding: '12px 14px',
-                  }}
+                  className={`ai-food-row${isCustom ? ' custom' : ''}`}
                 >
                   {/* Linha 1: nome + badge + gramas */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="ai-food-item-main">
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span className="ai-food-name">
                           {item.nome}
                         </span>
                         {isCustom && (
-                          <span style={{
-                            fontSize: 10, fontWeight: 700, color: '#a78bfa',
-                            background: 'rgba(124,92,255,0.15)', borderRadius: 4,
-                            padding: '1px 5px', flexShrink: 0,
-                          }}>
-                            ✨ Novo
+                          <span className="ai-food-badge">
+                            Novo
                           </span>
                         )}
                       </div>
-                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
+                      <div className="ai-food-macro-line">
                         P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
                       </div>
                     </div>
 
                     {/* Input de gramas */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <div className="ai-food-grams">
                       <input
                         type="number"
                         min="1"
                         max="2000"
                         value={gramsMap[i]}
                         onChange={e => handleGramsChange(i, e.target.value)}
-                        style={{
-                          width: 64,
-                          background: 'rgba(255,255,255,0.08)',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          borderRadius: 8,
-                          color: '#fff',
-                          fontSize: 14,
-                          fontWeight: 600,
-                          padding: '6px 8px',
-                          outline: 'none',
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
+                        className="ai-food-input"
                       />
                       <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>g</span>
                     </div>
@@ -271,15 +216,12 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
 
                   {/* Linha 2: macros editáveis (só para itens custom) */}
                   {isCustom && cm && (
-                    <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                    <div className="ai-custom-grid">
                       {(['p', 'c', 'g'] as const).map(field => {
-                        const colors = { p: '#f87171', c: '#fbbf24', g: '#34d399' }
+                        const colors = { p: 'var(--pColor)', c: 'var(--cColor)', g: 'var(--gColor)' }
                         const labels = { p: 'Prot (g/100g)', c: 'Carbo (g/100g)', g: 'Gord (g/100g)' }
                         return (
-                          <div key={field} style={{
-                            background: 'rgba(0,0,0,0.2)',
-                            borderRadius: 8, padding: '6px 8px',
-                          }}>
+                          <div key={field} className="ai-custom-field">
                             <div style={{ color: colors[field], fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 3 }}>
                               {labels[field]}
                             </div>
@@ -289,16 +231,6 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
                               step="0.1"
                               value={cm[field]}
                               onChange={e => handleCustomMacroChange(i, field, e.target.value)}
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#fff',
-                                fontSize: 13,
-                                fontWeight: 600,
-                                outline: 'none',
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
                             />
                           </div>
                         )
@@ -311,79 +243,43 @@ export function AiLogConfirmModal({ pendingLog, onConfirm, onCancel }: Props) {
           </div>
 
           {/* Totalizador */}
-          <div style={{
-            background: 'rgba(124,92,255,0.08)',
-            border: '1px solid rgba(124,92,255,0.2)',
-            borderRadius: 12,
-            padding: '12px 16px',
-            marginBottom: 4,
-          }}>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div className="ai-total-panel" style={{ marginBottom: 4 }}>
+            <div className="ai-food-label" style={{ marginBottom: 8 }}>
               Total desta refeição
             </div>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--pColor, #f87171)', fontSize: 16, fontWeight: 700 }}>{totals.p}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Prot</div>
+            <div className="ai-total-grid">
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--pColor)' }}>{totals.p}g</div>
+                <div className="ai-total-label">Prot</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--cColor, #fbbf24)', fontSize: 16, fontWeight: 700 }}>{totals.c}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Carbo</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--cColor)' }}>{totals.c}g</div>
+                <div className="ai-total-label">Carbo</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gColor, #34d399)', fontSize: 16, fontWeight: 700 }}>{totals.g}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Gord</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--gColor)' }}>{totals.g}g</div>
+                <div className="ai-total-label">Gord</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{totals.kcal}</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>kcal</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--ember)' }}>{totals.kcal}</div>
+                <div className="ai-total-label">kcal</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Botões fixos no rodapé */}
-        <div style={{
-          padding: '12px 16px',
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex',
-          gap: 10,
-          flexShrink: 0,
-        }}>
+        <div className="ai-food-footer">
           <button
             onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: '13px',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.6)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className="ai-food-secondary"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canConfirm}
-            style={{
-              flex: 2,
-              padding: '13px',
-              borderRadius: 12,
-              border: 'none',
-              background: canConfirm
-                ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                : 'rgba(255,255,255,0.06)',
-              color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: canConfirm ? 'pointer' : 'not-allowed',
-              transition: 'background 0.2s',
-            }}
+            className="ai-food-primary"
           >
             Confirmar e salvar
           </button>

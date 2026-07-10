@@ -44,6 +44,7 @@ export default function ExerciseSelector({
   // Força aba ao abrir com forceGroup (ex: após criar exercício custom — original L7984)
   useEffect(() => {
     if (open && forceGroup) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedGroup(forceGroup)
       setRenaming(null)
     }
@@ -140,9 +141,10 @@ export default function ExerciseSelector({
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0,
         zIndex: 329,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
+        background: 'var(--surface)',
         border: '1px solid var(--line)',
-        borderRadius: 'var(--radius) var(--radius) 0 0',
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
         maxHeight: '90vh',
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
@@ -185,9 +187,9 @@ export default function ExerciseSelector({
                 onClick={() => { setSelectedGroup(g); setRenaming(null) }}
                 style={{
                   padding: '6px 12px', borderRadius: 999,
-                  border: selectedGroup === g ? '1px solid var(--accent)' : '1px solid var(--line)',
-                  background: selectedGroup === g ? 'rgba(124,92,255,.18)' : 'var(--surface2)',
-                  color: selectedGroup === g ? 'var(--accent2)' : 'var(--text2)',
+                  border: selectedGroup === g ? '1px solid var(--ember)' : '1px solid var(--line)',
+                  background: selectedGroup === g ? 'color-mix(in srgb, var(--ember) 14%, transparent)' : 'var(--surface2)',
+                  color: selectedGroup === g ? 'var(--energy)' : 'var(--text2)',
                   fontFamily: 'var(--font)', fontSize: 12, fontWeight: 700,
                   cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                   whiteSpace: 'nowrap',
@@ -280,11 +282,11 @@ export default function ExerciseSelector({
                     style={{
                       padding: '4px 10px', borderRadius: 20,
                       border: renaming.secundarios.includes(g)
-                        ? '1px solid var(--accent)'
+                        ? '1px solid var(--ember)'
                         : '1px solid var(--line)',
                       fontSize: 12, fontWeight: 600,
                       color: renaming.secundarios.includes(g) ? '#fff' : 'var(--text2)',
-                      background: renaming.secundarios.includes(g) ? 'var(--accent)' : 'transparent',
+                      background: renaming.secundarios.includes(g) ? 'var(--gradient-action)' : 'transparent',
                       cursor: 'pointer', fontFamily: 'var(--font)',
                     }}
                   >
@@ -345,9 +347,9 @@ export default function ExerciseSelector({
                         {isCustom && (
                           <span style={{
                             fontSize: 9, fontWeight: 700,
-                            color: 'var(--accent)',
-                            background: 'rgba(124,92,255,.12)',
-                            border: '1px solid rgba(124,92,255,.25)',
+                            color: 'var(--energy)',
+                            background: 'color-mix(in srgb, var(--ember) 10%, transparent)',
+                            border: '1px solid color-mix(in srgb, var(--ember) 24%, transparent)',
                             borderRadius: 4, padding: '1px 5px', flexShrink: 0,
                           }}>custom</span>
                         )}
@@ -381,10 +383,10 @@ export default function ExerciseSelector({
                             color: 'var(--text3)', fontSize: 13, cursor: 'pointer', padding: '0 4px',
                           }}
                         >✏️</button>
-                        <span style={{ fontSize: 18, color: 'var(--accent)', padding: '0 4px' }}>+</span>
+                        <span style={{ fontSize: 18, color: 'var(--ember)', padding: '0 4px' }}>+</span>
                       </div>
                     ) : (
-                      <div style={{ fontSize: 18, color: 'var(--accent)', flexShrink: 0, paddingLeft: 8 }}>+</div>
+                      <div style={{ fontSize: 18, color: 'var(--ember)', flexShrink: 0, paddingLeft: 8 }}>+</div>
                     )}
                   </div>
                 )
@@ -397,8 +399,8 @@ export default function ExerciseSelector({
                   style={{
                     width: '100%', marginTop: 8,
                     background: 'transparent',
-                    border: '1px dashed rgba(124,92,255,.4)',   // .custom-ex-create-btn CSS L1576
-                    color: 'var(--accent)',
+                    border: '1px dashed color-mix(in srgb, var(--ember) 40%, transparent)',   // .custom-ex-create-btn CSS L1576
+                    color: 'var(--ember)',
                     fontSize: 13, fontWeight: 700,
                     padding: 10, borderRadius: 'var(--radius-xs)',
                     cursor: 'pointer', fontFamily: 'var(--font)',

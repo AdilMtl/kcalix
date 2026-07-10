@@ -172,18 +172,9 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
   if (result.items.length === 0) {
     return (
       <>
-        <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 348 }} />
-        <div style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 350,
-          background: 'linear-gradient(180deg, #1a2035, #121828)',
-          borderRadius: '20px 20px 0 0',
-          padding: '24px 20px',
-          paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
-          boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
-        }}>
-          <div style={{ fontSize: 40 }}>🤔</div>
-          <div style={{ color: '#fff', fontWeight: 700, fontSize: 16, textAlign: 'center' }}>
+        <div onClick={onCancel} className="ai-food-overlay" />
+        <div className="ai-food-sheet empty">
+          <div className="ai-food-title" style={{ fontSize: 16, textAlign: 'center' }}>
             Não identifiquei alimentos
           </div>
           <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, textAlign: 'center', lineHeight: 1.5 }}>
@@ -191,11 +182,8 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
           </div>
           <button
             onClick={onDescribeByText}
-            style={{
-              width: '100%', padding: '13px', borderRadius: 12, border: 'none',
-              background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
-              color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            }}
+            className="ai-food-primary"
+            style={{ width: '100%', flex: 'unset' }}
           >
             Descrever por texto
           </button>
@@ -218,25 +206,13 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 348 }} />
+      <div onClick={onCancel} className="ai-food-overlay" />
 
       {/* Bottom sheet */}
-      <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 350,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
-        maxHeight: '92dvh',
-        display: 'flex', flexDirection: 'column',
-        boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
-      }}>
+      <div className="ai-food-sheet photo">
 
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px 12px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          flexShrink: 0,
-        }}>
+        <div className="ai-food-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Miniatura da foto */}
             {previewUrl && (
@@ -247,58 +223,46 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
               />
             )}
             <div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
+              <div className="ai-food-title">
                 O que eu identifiquei
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
+              <div className="ai-food-subtitle">
                 Ajuste as gramas e confirme
               </div>
             </div>
           </div>
           <button
             onClick={onCancel}
-            style={{
-              background: 'rgba(255,255,255,0.06)', border: 'none',
-              color: 'rgba(255,255,255,0.5)', fontSize: 20,
-              width: 34, height: 34, borderRadius: '50%',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="ai-food-close"
             aria-label="Cancelar"
           >×</button>
         </div>
 
         {/* Conteúdo scrollável */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+        <div className="ai-food-body">
 
           {/* Seleção de refeição */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <div className="ai-food-label" style={{ marginBottom: 6 }}>
               Refeição
             </div>
             <select
               value={selectedMeal}
               onChange={e => setSelectedMeal(e.target.value as MealKey)}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.07)',
-                border: selectedMeal ? '1px solid rgba(124,92,255,0.4)' : '1px solid rgba(239,68,68,0.5)',
-                borderRadius: 10, color: selectedMeal ? '#fff' : 'rgba(255,255,255,0.4)',
-                fontSize: 14, padding: '10px 14px',
-                outline: 'none', appearance: 'none', cursor: 'pointer',
-              }}
+              className={`ai-food-select${selectedMeal ? ' valid' : ' invalid'}`}
             >
-              <option value="" disabled style={{ background: '#1a2035' }}>Selecione a refeição...</option>
+              <option value="" disabled style={{ background: 'var(--surface)' }}>Selecione a refeição...</option>
               {MEAL_ORDER.map(key => (
-                <option key={key} value={key} style={{ background: '#1a2035' }}>{MEAL_LABELS[key]}</option>
+                <option key={key} value={key} style={{ background: 'var(--surface)' }}>{MEAL_LABELS[key]}</option>
               ))}
             </select>
           </div>
 
           {/* Lista de itens detectados */}
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <div className="ai-food-label" style={{ marginBottom: 8 }}>
             Alimentos detectados
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          <div className="ai-food-list">
             {items.map((item, i) => {
               const grams = parseFloat(gramsMap[i]) || 0
               const m = calcMacros(item, grams)
@@ -308,18 +272,14 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
               return (
                 <div
                   key={i}
-                  style={{
-                    background: lowConf ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.05)',
-                    border: lowConf ? '1px solid rgba(251,191,36,0.3)' : '1px solid transparent',
-                    borderRadius: 12, padding: '12px 14px',
-                  }}
+                  className={`ai-food-row${lowConf ? ' warn' : ''}`}
                 >
                   {/* Linha 1: nome + badge + gramas + remover */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="ai-food-item-main" style={{ gap: 8 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
-                        {lowConf && <span style={{ fontSize: 14 }}>⚠️</span>}
-                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {lowConf && <span className="ai-food-badge" style={{ color: 'var(--energy)' }}>Revisar</span>}
+                        <span className="ai-food-name">
                           {item.nome}
                         </span>
                       </div>
@@ -332,25 +292,19 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
                           ⚠️ macros zerados — ajuste manualmente
                         </div>
                       ) : (
-                        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
+                        <div className="ai-food-macro-line">
                           P {m.p}g · C {m.c}g · G {m.g}g · {m.kcal}kcal
                         </div>
                       )}
                     </div>
 
                     {/* Input gramas */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <div className="ai-food-grams">
                       <input
                         type="number" min="1" max="2000"
                         value={gramsMap[i]}
                         onChange={e => handleGramsChange(i, e.target.value)}
-                        style={{
-                          width: 64, background: 'rgba(255,255,255,0.08)',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600,
-                          padding: '6px 8px', outline: 'none', textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
+                        className="ai-food-input"
                       />
                       <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>g</span>
                     </div>
@@ -358,13 +312,8 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
                     {/* Botão remover */}
                     <button
                       onClick={() => handleRemoveItem(i)}
-                      style={{
-                        background: 'rgba(255,255,255,0.06)', border: 'none',
-                        color: 'rgba(255,255,255,0.4)', fontSize: 16,
-                        width: 28, height: 28, borderRadius: '50%',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
+                      className="ai-food-remove"
+                      style={{ width: 28, height: 28, flexShrink: 0 }}
                       aria-label="Remover item"
                     >×</button>
                   </div>
@@ -438,13 +387,9 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
           </div>
 
           {/* ── Checklist ingredientes ocultos ── */}
-          <div style={{
-            background: 'rgba(124,92,255,0.06)',
-            border: '1px solid rgba(124,92,255,0.2)',
-            borderRadius: 12, padding: '12px 14px', marginBottom: 16,
-          }}>
-            <div style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, marginBottom: 10, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              💡 Tem algo que não aparece na foto?
+          <div className="ai-extra-card">
+            <div className="ai-food-label" style={{ color: 'var(--energy)', marginBottom: 10 }}>
+              Tem algo que não aparece na foto?
             </div>
             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 10, lineHeight: 1.4 }}>
               Molhos, recheios e temperos costumam ser esquecidos — adicione para ter uma estimativa mais precisa.
@@ -470,9 +415,8 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
                         display: 'flex', alignItems: 'center', gap: 8,
                       }}
                     >
-                      <span>{hi.icon}</span>
                       <span style={{ flex: 1 }}>{hi.label}</span>
-                      <span style={{ color: 'rgba(124,92,255,0.8)', fontSize: 18, lineHeight: 1 }}>+</span>
+                      <span style={{ color: 'var(--ember)', fontSize: 18, lineHeight: 1 }}>+</span>
                     </button>
                   )}
                 </div>
@@ -481,30 +425,26 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
           </div>
 
           {/* Totalizador */}
-          <div style={{
-            background: 'rgba(124,92,255,0.08)',
-            border: '1px solid rgba(124,92,255,0.2)',
-            borderRadius: 12, padding: '12px 16px', marginBottom: 4,
-          }}>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div className="ai-total-panel" style={{ marginBottom: 4 }}>
+            <div className="ai-food-label" style={{ marginBottom: 8 }}>
               Total desta refeição
             </div>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--pColor, #f87171)', fontSize: 16, fontWeight: 700 }}>{totals.p}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Prot</div>
+            <div className="ai-total-grid">
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--pColor)' }}>{totals.p}g</div>
+                <div className="ai-total-label">Prot</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--cColor, #fbbf24)', fontSize: 16, fontWeight: 700 }}>{totals.c}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Carbo</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--cColor)' }}>{totals.c}g</div>
+                <div className="ai-total-label">Carbo</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gColor, #34d399)', fontSize: 16, fontWeight: 700 }}>{totals.g}g</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Gord</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--gColor)' }}>{totals.g}g</div>
+                <div className="ai-total-label">Gord</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{totals.kcal}</div>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>kcal</div>
+              <div className="ai-total-item">
+                <div className="ai-total-num" style={{ color: 'var(--ember)' }}>{totals.kcal}</div>
+                <div className="ai-total-label">kcal</div>
               </div>
             </div>
           </div>
@@ -523,36 +463,17 @@ export function PhotoReviewSheet({ result, previewUrl, onConfirm, onCancel, onDe
         </div>
 
         {/* Rodapé fixo */}
-        <div style={{
-          padding: '12px 16px',
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', gap: 10, flexShrink: 0,
-        }}>
+        <div className="ai-food-footer">
           <button
             onClick={onCancel}
-            style={{
-              flex: 1, padding: '13px', borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}
+            className="ai-food-secondary"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canConfirm}
-            style={{
-              flex: 2, padding: '13px', borderRadius: 12, border: 'none',
-              background: canConfirm
-                ? 'linear-gradient(135deg, #7c5cff, #6144e0)'
-                : 'rgba(255,255,255,0.06)',
-              color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
-              fontSize: 14, fontWeight: 700,
-              cursor: canConfirm ? 'pointer' : 'not-allowed',
-              transition: 'background 0.2s',
-            }}
+            className="ai-food-primary"
           >
             Confirmar e salvar
           </button>
@@ -571,7 +492,7 @@ function AddExtraInput({ placeholder, onAdd, onCancel }: {
 }) {
   const [val, setVal] = useState('')
   return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+    <div className="ai-extra-input">
       <input
         autoFocus
         type="text"
@@ -579,21 +500,12 @@ function AddExtraInput({ placeholder, onAdd, onCancel }: {
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') onAdd(val); if (e.key === 'Escape') onCancel() }}
         placeholder={placeholder}
-        style={{
-          flex: 1, background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(124,92,255,0.4)',
-          borderRadius: 8, color: '#fff', fontSize: 13,
-          padding: '8px 10px', outline: 'none',
-        }}
+        className="ai-food-inline-input"
       />
       <button
         onClick={() => onAdd(val)}
-        style={{
-          background: 'linear-gradient(135deg, #7c5cff, #6144e0)',
-          border: 'none', borderRadius: 8,
-          color: '#fff', fontSize: 13, fontWeight: 700,
-          padding: '8px 12px', cursor: 'pointer',
-        }}
+        className="ai-food-primary"
+        style={{ flex: 'unset', padding: '8px 12px' }}
       >OK</button>
       <button
         onClick={onCancel}

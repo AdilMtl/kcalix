@@ -58,21 +58,21 @@ function StepInstructions({
           <li>Salve o arquivo <code>kcalix-export-YYYY-MM-DD.json</code></li>
           <li>Volte aqui e toque em <b>"Selecionar arquivo"</b></li>
         </ol>
-        <p style={{ marginTop: 8, color: 'var(--text3)', fontSize: 12 }}>
+        <p className="mg-note">
           Seus dados atuais no Kcalix <b>não serão sobrescritos</b> — apenas dias sem registro serão importados.
         </p>
       </div>
 
       {parseError && (
         <div className="mg-error-box" style={{ marginBottom: 14 }}>
-          ✗ {parseError} — certifique-se de usar o arquivo gerado pelo botão "Exportar dados completos" do Blocos Tracker.
+          {parseError} — certifique-se de usar o arquivo gerado pelo botão "Exportar dados completos" do Blocos Tracker.
         </div>
       )}
 
       <div className="btn-group">
         {/* label age como botão — o toque abre o file picker nativamente no mobile */}
         <label className="btn primary" style={{ cursor: 'pointer', textAlign: 'center' }}>
-          📂 Selecionar arquivo
+          Selecionar arquivo
           <input
             type="file"
             accept=".json"
@@ -81,7 +81,7 @@ function StepInstructions({
           />
         </label>
         <button className="btn ghost" type="button" onClick={onClose}>
-          ✕ Cancelar
+          Cancelar
         </button>
       </div>
     </>
@@ -100,14 +100,14 @@ function StepPreview({
   onBack: () => void
 }) {
   const rows: Array<{ icon: string; label: string; value: number }> = [
-    { icon: '📅', label: 'Dias de diário',             value: preview.diaryDays },
-    { icon: '🏋️', label: 'Sessões de treino',          value: preview.workoutDays },
-    { icon: '📋', label: 'Rotinas de treino',           value: preview.templates },
-    { icon: '💪', label: 'Exercícios personalizados',   value: preview.customExercises },
-    { icon: '📏', label: 'Dias de medições corporais',  value: preview.bodyDays },
-    { icon: '✅', label: 'Dias de hábitos',             value: preview.habitDays },
-    { icon: '🍎', label: 'Alimentos personalizados',    value: preview.customFoods },
-    { icon: '📊', label: 'Check-ins de progresso',      value: preview.checkins },
+    { icon: 'D', label: 'Dias de diário',             value: preview.diaryDays },
+    { icon: 'T', label: 'Sessões de treino',          value: preview.workoutDays },
+    { icon: 'R', label: 'Rotinas de treino',           value: preview.templates },
+    { icon: 'EX', label: 'Exercícios personalizados',   value: preview.customExercises },
+    { icon: 'C', label: 'Dias de medições corporais',  value: preview.bodyDays },
+    { icon: 'H', label: 'Dias de hábitos',             value: preview.habitDays },
+    { icon: 'F', label: 'Alimentos personalizados',    value: preview.customFoods },
+    { icon: 'CI', label: 'Check-ins de progresso',      value: preview.checkins },
   ].filter(r => r.value > 0)
 
   const period = preview.firstDate && preview.lastDate
@@ -121,20 +121,20 @@ function StepPreview({
       <div className="mg-preview-card">
         {rows.map(r => (
           <div key={r.label} className="mg-preview-row">
-            <span>{r.icon} {r.label}</span>
+            <span><i>{r.icon}</i> {r.label}</span>
             <b>{r.value}</b>
           </div>
         ))}
       </div>
 
       <div className="mg-warn">
-        ⚠️ Dados já existentes no Kcalix <b>não serão sobrescritos</b>.
+        Dados já existentes no Kcalix <b>não serão sobrescritos</b>.
         Apenas dias sem registro serão importados.
       </div>
 
       <div className="btn-group">
         <button className="btn primary" type="button" onClick={onImport}>
-          ⬆️ Importar tudo
+          Importar tudo
         </button>
         <button className="btn ghost" type="button" onClick={onBack}>
           ← Voltar
@@ -290,48 +290,29 @@ export default function MigrateModal({ open, onClose }: Props) {
     <>
       {/* Overlay */}
       <div
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.6)',
-          zIndex: 318,
-          backdropFilter: 'blur(2px)',
-        }}
+        className="mg-overlay"
         onClick={step === 'importing' ? undefined : handleClose}
       />
 
       {/* Sheet */}
-      <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0,
-        zIndex: 319,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius) var(--radius) 0 0',
-        maxHeight: '88dvh',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+      <div className="mg-sheet">
         {/* handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.15)' }} />
-        </div>
+        <div className="sheet-handle" />
 
         {/* header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px 8px', borderBottom: '1px solid var(--line)', flexShrink: 0,
-        }}>
-          <b style={{ fontSize: 15, color: 'var(--text)' }}>🔄 Migrar dados do app antigo</b>
+        <div className="mg-header">
+          <b>Migrar dados do app antigo</b>
           {step !== 'importing' && (
             <button
               onClick={handleClose}
               type="button"
-              style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+              className="profile-checkin-close"
             >✕</button>
           )}
         </div>
 
         {/* body */}
-        <div style={{ padding: 16, overflowY: 'auto', flex: 1 }}>
+        <div className="mg-body">
           {step === 'instructions' && (
             <StepInstructions
               onFileChange={handleFileChange}

@@ -1,5 +1,24 @@
 # Kcalix — CHANGELOG
 
+## [v0.57.0] — 2026-07-09
+
+### Melhorado
+- [improve] Migração Visual Ember Design System concluída e aprovada na branch `feature-ember-design-system`.
+- [improve] Aplicados tokens Ember em superfícies globais, navegação, Home, Diário, Treino, Corpo, Mais, autenticação, Admin, Coach/IA, modais e drawers principais.
+- [improve] `TreinoPage`: seção de cardio refinada após QA visual, com marcador `HR`, select sem emoji e layout em grid para evitar corte do campo de minutos no mobile.
+- [improve] `InstallPrompt`: prompt PWA alinhado ao Ember, removendo fundo azul/roxo antigo.
+- [improve] `VisualMockPage.css`: H1 do mock deixou de usar `vw`, mantendo tamanhos fixos por breakpoint.
+
+### Validação
+- Build final passou com `npm run build`.
+- Testes passaram fora do sandbox com `C:\Program Files\nodejs\npm.cmd run test`: 2 arquivos, 49 testes.
+- Lint escopado passou para `TreinoPage.tsx` e `InstallPrompt.tsx`.
+- `npm run lint` completo ainda falha por débitos antigos fora do escopo em hooks e arquivos de coverage; não foi tratado nesta spec visual.
+
+### Notas
+- Não foram alterados hooks, Supabase, Edge Functions, auth, migrations, prompts de IA ou regras de cálculo.
+- Próximo trabalho recomendado: branch separada para iconografia/ícones consistentes, sem misturar com a migração Ember.
+
 ## [v0.56.0] — 2026-03-29
 
 ### Corrigido

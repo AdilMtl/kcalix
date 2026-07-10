@@ -6,6 +6,7 @@ import { fetchAllWorkoutRows } from '../hooks/useWorkout'
 import { fetchAllBodyRows } from '../hooks/useBody'
 import BodyEvolutionModal from '../components/BodyEvolutionModal'
 import type { BodyRow } from '../types/body'
+import type { WorkoutDayData } from '../types/workout'
 import { useAuthStore } from '../store/authStore'
 import { useDateStore } from '../store/dateStore'
 import { useHabits, getWeekDates as getHabitWeekDates } from '../hooks/useHabits'
@@ -20,282 +21,355 @@ import Skeleton from '../components/Skeleton'
 import { useInstallStore } from '../store/installStore'
 import { useAppMessage } from '../hooks/useAppMessage'
 import AppMessageModal from '../components/AppMessageModal'
+import { DEFAULT_TEMPLATES, exById } from '../data/exerciseDb'
+import { HABITS_DEF, type HabitsMap } from '../types/habit'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+type WeekDay = { iso: string; label: string; isFuture: boolean; isToday: boolean }
+type WorkoutRow = WorkoutDayData & { date: string }
+type WorkoutPlan = {
+  title: string
+  focus: string
+  reason: string
+  start: string
+  minimum: string
+  readiness: number
+  cta: string
+}
 
 function pct(value: number, total: number): number {
   if (total <= 0) return 0
   return Math.min(100, Math.round((value / total) * 100))
 }
 
-function greeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia 👋'
-  if (h < 18) return 'Boa tarde 👋'
-  return 'Boa noite 🌙'
+function clampText(value: string, max = 84): string {
+  return value.length > max ? `${value.slice(0, max - 1)}...` : value
 }
 
 function formatDate(iso: string): string {
   const [y, mo, dy] = iso.split('-')
   const label = new Date(+y, +mo - 1, +dy).toLocaleDateString('pt-BR', {
-    weekday: 'long', day: 'numeric', month: 'long',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
   })
   return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
-function balanceColor(saldo: number): string {
-  if (saldo < 0) return '#22c55e'    // déficit = verde (bom)
-  if (saldo > 200) return 'var(--bad)'
-  return 'var(--accent2)'
+function daysBetween(fromIso: string, toIso: string): number {
+  const from = new Date(`${fromIso}T12:00:00`).getTime()
+  const to = new Date(`${toIso}T12:00:00`).getTime()
+  return Math.max(0, Math.round((to - from) / 86400000))
 }
 
-// ── Calcula os 7 dias da semana atual (Seg → Dom) ────────────────────────────
-function getWeekDates(): { iso: string; label: string; isFuture: boolean; isToday: boolean }[] {
+function getWeekDates(): WeekDay[] {
   const todayStr = todayISO()
-  const todayDate = new Date(todayStr + 'T12:00:00')
+  const todayDate = new Date(`${todayStr}T12:00:00`)
   const dow = todayDate.getDay()
   const diffToMon = dow === 0 ? -6 : 1 - dow
   const monday = new Date(todayDate)
   monday.setDate(monday.getDate() + diffToMon)
-  const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+  const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
     const iso = d.toISOString().slice(0, 10)
-    return { iso, label: DAY_LABELS[i], isFuture: iso > todayStr, isToday: iso === todayStr }
+    return { iso, label: labels[i], isFuture: iso > todayStr, isToday: iso === todayStr }
   })
 }
 
-// ── Sub-componentes ───────────────────────────────────────────────────────────
+function templateShortName(nome: string): string {
+  return nome.split(' - ')[0]?.replace('Treino ', '') || nome
+}
 
-// Card genérico fiel ao original (.card .card-body)
-function Card({ children, onClick, style }: {
+function templateFocus(nome: string): string {
+  return nome.split(' - ')[1] ?? 'Sessao completa'
+}
+
+function exerciseName(id: string | undefined): string {
+  if (!id) return 'Exercicio principal'
+  return exById(id)?.nome ?? 'Exercicio principal'
+}
+
+function buildWorkoutPlan(rows: WorkoutRow[], selectedDate: string, todayWorkoutKcal: number): WorkoutPlan {
+  const pastRows = rows
+    .filter(row => row.date <= selectedDate)
+    .sort((a, b) => b.date.localeCompare(a.date))
+  const doneToday = todayWorkoutKcal > 0 || pastRows.some(row => row.date === selectedDate && (row.kcal ?? 0) > 0)
+  const lastBeforeSelected = rows
+    .filter(row => row.date < selectedDate)
+    .sort((a, b) => b.date.localeCompare(a.date))[0]
+
+  const lastTemplateId = lastBeforeSelected?.templateId ?? pastRows[0]?.templateId ?? null
+  const lastIndex = DEFAULT_TEMPLATES.findIndex(t => t.id === lastTemplateId)
+  const template = DEFAULT_TEMPLATES[(lastIndex + 1 + DEFAULT_TEMPLATES.length) % DEFAULT_TEMPLATES.length] ?? DEFAULT_TEMPLATES[0]
+  const days = lastBeforeSelected ? daysBetween(lastBeforeSelected.date, selectedDate) : null
+  const start = exerciseName(template.exercicios[0])
+  const second = exerciseName(template.exercicios[1])
+  const third = exerciseName(template.exercicios[3] ?? template.exercicios[2])
+
+  if (doneToday) {
+    return {
+      title: 'Treino registrado',
+      focus: `${Math.round(todayWorkoutKcal)} kcal de treino`,
+      reason: 'sessao de hoje ja entrou no diario',
+      start: 'Revisar treino salvo',
+      minimum: 'Manter recuperacao e fechar o diario',
+      readiness: 100,
+      cta: 'Revisar treino',
+    }
+  }
+
+  return {
+    title: templateShortName(template.nome),
+    focus: templateFocus(template.nome),
+    reason: days == null ? 'primeira sugestao da rotina base' : `ultimo treino ha ${days} dia${days === 1 ? '' : 's'}`,
+    start,
+    minimum: `25 min: ${start} + ${second} + ${third}`,
+    readiness: days == null ? 72 : Math.min(92, 58 + days * 8),
+    cta: 'Abrir treino',
+  }
+}
+
+function buildRunway({
+  p,
+  pTarget,
+  c,
+  cTarget,
+  g,
+  gTarget,
+}: {
+  p: number
+  pTarget: number
+  c: number
+  cTarget: number
+  g: number
+  gTarget: number
+}): string | null {
+  if (pTarget <= 0 && cTarget <= 0 && gTarget <= 0) return null
+  const pLeft = Math.max(0, Math.round(pTarget - p))
+  const cLeft = Math.max(0, Math.round(cTarget - c))
+  const gLeft = Math.max(0, Math.round(gTarget - g))
+  return `ate ${pLeft}P / ${cLeft}C / ${gLeft}G na proxima refeicao`
+}
+
+function buildAlert({
+  p,
+  pTarget,
+  c,
+  cTarget,
+  kcal,
+  kcalTarget,
+  workoutDone,
+}: {
+  p: number
+  pTarget: number
+  c: number
+  cTarget: number
+  kcal: number
+  kcalTarget: number
+  workoutDone: boolean
+}): { title: string; text: string } {
+  const pPct = pct(p, pTarget)
+  const kcalLeft = kcalTarget > 0 ? Math.round(kcalTarget - kcal) : 0
+  const cLeft = cTarget > 0 ? Math.round(cTarget - c) : 0
+
+  if (pTarget > 0 && pPct < 55) {
+    return { title: 'Proteina baixa ate agora', text: 'Priorize uma refeicao com proteina clara antes de gastar carbo.' }
+  }
+  if (!workoutDone) {
+    return { title: 'Treino pendente hoje', text: 'Uma sessao curta ja fecha o sinal principal do dia.' }
+  }
+  if (kcalTarget > 0 && kcalLeft > 350 && cLeft > 35) {
+    return { title: 'Boa margem para jantar', text: 'Carbo moderado cabe bem sem estourar a meta.' }
+  }
+  return { title: 'Dia sob controle', text: 'Mantenha o diario fechado e preserve a recuperacao.' }
+}
+
+function weekHabitAdherence(habits: HabitsMap, weekDates: string[]): number {
+  const validDates = weekDates.filter(date => date <= todayISO())
+  if (validDates.length === 0) return 0
+  const total = validDates.length * HABITS_DEF.length
+  const done = validDates.reduce((sum, date) => {
+    const row = habits[date]
+    return sum + HABITS_DEF.filter(h => row?.[h.id as keyof typeof row]).length
+  }, 0)
+  return Math.round((done / total) * 100)
+}
+
+function HomeCard({ children, className = '', onClick }: {
   children: React.ReactNode
+  className?: string
   onClick?: () => void
-  style?: React.CSSProperties
 }) {
   return (
-    <div
-      onClick={onClick}
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius)',
-        padding: '14px',
-        marginBottom: '12px',
-        cursor: onClick ? 'pointer' : undefined,
-        WebkitTapHighlightColor: 'transparent',
-        transition: onClick ? 'background .15s' : undefined,
-        ...style,
-      }}
-    >
+    <section className={`home-card ${className}`} onClick={onClick}>
       {children}
-    </div>
+    </section>
   )
 }
 
-// ── Card de progresso do dia (home-kcal + home-macro-row) ────────────────────
+function WorkoutHero({ plan, onOpen }: { plan: WorkoutPlan; onOpen: () => void }) {
+  return (
+    <>
+      <section className="home-workout-hero">
+        <div className="home-workout-copy">
+          <span className="home-chip">Treino de hoje</span>
+          <h1>{plan.title}</h1>
+          <p>{clampText(`${plan.focus} / ${plan.reason}.`)}</p>
+        </div>
+        <div className="home-readiness">
+          <strong>{plan.readiness}</strong>
+          <span>pronto</span>
+        </div>
+      </section>
+
+      <HomeCard className="home-next-workout">
+        <div>
+          <span>Comecar por</span>
+          <strong>{plan.start}</strong>
+          <small>{plan.title === 'Treino registrado' ? plan.minimum : 'Depois siga para o segundo bloco da rotina.'}</small>
+        </div>
+        <button type="button" onClick={onOpen}>{plan.cta}</button>
+      </HomeCard>
+
+      <div className="home-reason-grid">
+        <HomeCard>
+          <span className="home-card-kicker">Por que hoje</span>
+          <strong>{plan.reason}</strong>
+          <small>{plan.focus}</small>
+        </HomeCard>
+        <HomeCard>
+          <span className="home-card-kicker">Plano minimo</span>
+          <strong>25 min</strong>
+          <small>{clampText(plan.minimum, 74)}</small>
+        </HomeCard>
+      </div>
+    </>
+  )
+}
+
 function ProgressCard({
-  kcalConsumed, kcalTarget,
-  p, pTarget, c, cTarget, g, gTarget,
-  onClick, onHistorico, loading,
+  kcalConsumed,
+  kcalTarget,
+  p,
+  pTarget,
+  c,
+  cTarget,
+  g,
+  gTarget,
+  onClick,
+  onHistorico,
+  loading,
 }: {
-  kcalConsumed: number; kcalTarget: number
-  p: number; pTarget: number
-  c: number; cTarget: number
-  g: number; gTarget: number
+  kcalConsumed: number
+  kcalTarget: number
+  p: number
+  pTarget: number
+  c: number
+  cTarget: number
+  g: number
+  gTarget: number
   onClick: () => void
   onHistorico: () => void
   loading: boolean
 }) {
   if (loading) {
     return (
-      <Card onClick={onClick}>
-        <Skeleton height="38px" style={{ marginBottom: '12px' }} />
-        <Skeleton height="8px" borderRadius="999px" style={{ marginBottom: '14px' }} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-          <Skeleton height="38px" />
-          <Skeleton height="38px" />
-          <Skeleton height="38px" />
+      <HomeCard className="home-calories">
+        <Skeleton height="34px" />
+        <Skeleton height="8px" borderRadius="999px" />
+        <div className="home-macro-row">
+          <Skeleton height="46px" />
+          <Skeleton height="46px" />
+          <Skeleton height="46px" />
         </div>
-      </Card>
+      </HomeCard>
     )
   }
 
   const kcalPct = pct(kcalConsumed, kcalTarget)
-  const pPct    = pct(p, pTarget)
-  const cPct    = pct(c, cTarget)
-  const gPct    = pct(g, gTarget)
+  const runway = buildRunway({ p, pTarget, c, cTarget, g, gTarget })
+  const freeKcal = kcalTarget > 0 ? Math.max(0, Math.round(kcalTarget - kcalConsumed)) : null
+  const macros = [
+    { label: 'P', value: p, target: pTarget, color: 'var(--pColor)', pct: pct(p, pTarget) },
+    { label: 'C', value: c, target: cTarget, color: 'var(--cColor)', pct: pct(c, cTarget) },
+    { label: 'G', value: g, target: gTarget, color: 'var(--gColor)', pct: pct(g, gTarget) },
+  ]
 
   return (
-    <Card onClick={onClick}>
-      {/* home-kcal-row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-        <span style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-.5px', lineHeight: 1, color: 'var(--text)' }}>
-          {Math.round(kcalConsumed)}
-          <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--text3)', marginLeft: '3px' }}>kcal</span>
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>
-            meta: <b>{kcalTarget > 0 ? `${kcalTarget} kcal` : '—'}</b>
-          </span>
-          <button
-            type="button"
-            onClick={e => { e.stopPropagation(); onHistorico() }}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--line)',
-              borderRadius: '6px',
-              padding: '4px 8px',
-              fontSize: '13px',
-              cursor: 'pointer',
-              lineHeight: 1,
-            }}
-          >📊</button>
-        </div>
+    <HomeCard className="home-calories" onClick={onClick}>
+      <div className="home-section-head">
+        <strong>Calorias hoje</strong>
+        <button
+          type="button"
+          onClick={event => {
+            event.stopPropagation()
+            onHistorico()
+          }}
+        >
+          HIST
+        </button>
       </div>
 
-      {/* home-kcal-bar */}
-      <div style={{ height: '8px', background: 'var(--surface3)', borderRadius: '999px', overflow: 'hidden', marginBottom: '14px' }}>
-        <div style={{
-          height: '100%', borderRadius: '999px',
-          background: kcalPct > 100 ? 'var(--bad)' : 'var(--accent)',
-          width: `${kcalPct}%`,
-          transition: 'width .4s ease',
-        }} />
+      <div className="home-calorie-main">
+        <strong>{Math.round(kcalConsumed)}</strong>
+        <span>/ {kcalTarget > 0 ? kcalTarget : '--'} kcal</span>
       </div>
 
-      {/* home-macro-row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-        {([
-          { label: 'PROTEÍNA', val: p, target: pTarget, color: 'var(--pColor)', pct: pPct },
-          { label: 'CARBO',    val: c, target: cTarget, color: 'var(--cColor)', pct: cPct },
-          { label: 'GORDURA',  val: g, target: gTarget, color: 'var(--gColor)', pct: gPct },
-        ] as const).map(m => (
-          <div key={m.label} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-              {m.label}
-            </div>
-            <div style={{ height: '4px', background: 'var(--surface3)', borderRadius: '999px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: '999px', background: m.color, width: `${m.pct}%`, transition: 'width .4s ease' }} />
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text2)' }}>
-              {Math.round(m.val)}g / {m.target > 0 ? `${m.target}g` : '—'}
-            </div>
+      <div className="home-calorie-bar">
+        <i style={{ width: `${kcalPct}%`, background: kcalPct > 100 ? 'var(--bad)' : undefined }} />
+      </div>
+
+      <div className="home-macro-row">
+        {macros.map(macro => (
+          <div key={macro.label} className="home-macro-cell" style={{ ['--macro-color' as string]: macro.color }}>
+            <span>{macro.label}</span>
+            <strong>{Math.round(macro.value)}g</strong>
+            <small>{macro.target > 0 ? `${macro.pct}%` : '--'}</small>
           </div>
         ))}
       </div>
-    </Card>
+
+      <div className="home-runway">
+        <strong>{freeKcal == null ? 'Meta indefinida' : `${freeKcal} kcal livres`}</strong>
+        <span>{runway ?? 'Configure metas para ver a margem da proxima refeicao.'}</span>
+      </div>
+    </HomeCard>
   )
 }
 
-// ── Card ⚡ Energia Hoje ──────────────────────────────────────────────────────
-function EnergyCard({
-  consumed, bmr, tdee, kcalTreino, kcalTarget, loading,
+function EnergySnapshot({
+  consumed,
+  bmr,
+  tdee,
+  kcalTreino,
+  kcalTarget,
 }: {
   consumed: number
   bmr: number | undefined
   tdee: number | undefined
   kcalTreino: number
   kcalTarget: number
-  loading: boolean
 }) {
-  if (loading) {
-    return (
-      <Card>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text2)', marginBottom: '8px' }}>⚡ Energia Hoje</div>
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '10px' }}>
-          <Skeleton height="42px" style={{ flex: 1 }} />
-          <Skeleton height="42px" style={{ flex: 1 }} />
-          <Skeleton height="42px" style={{ flex: 1 }} />
-          <Skeleton height="42px" style={{ flex: 1 }} />
-        </div>
-        <Skeleton height="10px" borderRadius="999px" />
-      </Card>
-    )
-  }
-
   const hasBmr = bmr != null && bmr > 0
-  const saldo  = hasBmr ? Math.round(consumed - (bmr + kcalTreino)) : null
-  const balTxt = saldo != null ? (saldo > 0 ? `+${saldo}` : `${saldo}`) : '—'
-  const balClr = saldo != null ? balanceColor(saldo) : 'var(--text2)'
-  const goalPct = kcalTarget > 0 ? Math.min(100, Math.round((consumed / kcalTarget) * 100)) : 0
-
+  const saldo = hasBmr ? Math.round(consumed - (bmr + kcalTreino)) : null
   return (
-    <Card>
-      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text2)', marginBottom: '8px' }}>⚡ Energia Hoje</div>
-
-      {/* energy-kpi-row */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '10px' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{Math.round(consumed)}</span>
-          <span style={{ fontSize: '10px', color: 'var(--text2)', textAlign: 'center', lineHeight: 1.3 }}>kcal in</span>
-        </div>
-        {hasBmr ? (
-          <>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{Math.round(bmr!)}</span>
-              <span style={{ fontSize: '10px', color: 'var(--text2)', textAlign: 'center', lineHeight: 1.3 }}>basal</span>
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-                {kcalTreino > 0 ? `+${Math.round(kcalTreino)}` : Math.round(kcalTreino)}
-              </span>
-              <span style={{ fontSize: '10px', color: 'var(--text2)', textAlign: 'center', lineHeight: 1.3 }}>treino</span>
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: balClr, lineHeight: 1.2 }}>{balTxt}</span>
-              <span style={{ fontSize: '10px', color: 'var(--text2)', textAlign: 'center', lineHeight: 1.3 }}>saldo</span>
-            </div>
-          </>
-        ) : (
-          <div style={{ flex: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text2)', textAlign: 'center', padding: '6px 0 2px' }}>
-              Configure o perfil em Mais → Calculadora para ver gasto e saldo
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Barra consumido vs meta com energy-meta-line */}
-      {kcalTarget > 0 && (
-        <>
-          <div style={{ position: 'relative', height: '10px', background: 'var(--surface3)', borderRadius: '999px', overflow: 'visible', marginTop: '4px' }}>
-            <div style={{
-              height: '100%', borderRadius: '999px',
-              background: 'var(--accent)',
-              width: `${goalPct}%`,
-              transition: 'width .4s ease',
-            }} />
-            {/* energy-meta-line: marcador vertical no final da meta */}
-            <div style={{
-              position: 'absolute', top: '-3px', right: 0,
-              width: '2px', height: '16px',
-              background: 'var(--accent2)', borderRadius: '1px', opacity: .7,
-              pointerEvents: 'none',
-            }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--text2)' }}>{goalPct}% da meta</span>
-            <span style={{ fontSize: '10px', color: 'var(--text2)' }}>meta: {kcalTarget} kcal</span>
-          </div>
-        </>
-      )}
-
-      {/* TDEE info (quando disponível) */}
-      {tdee != null && tdee > 0 && (
-        <div style={{ marginTop: '8px', fontSize: '10px', color: 'var(--text3)', textAlign: 'center' }}>
-          TDEE {Math.round(tdee)} kcal/dia
-        </div>
-      )}
-    </Card>
+    <div className="home-bottom-grid">
+      <HomeCard>
+        <span className="home-card-kicker">Energia</span>
+        <strong>{kcalTarget > 0 ? Math.max(0, Math.round(kcalTarget - consumed)) : '--'}</strong>
+        <small>kcal livres</small>
+      </HomeCard>
+      <HomeCard>
+        <span className="home-card-kicker">Saldo</span>
+        <strong className={saldo != null && saldo < 0 ? 'good' : ''}>{saldo == null ? '--' : saldo > 0 ? `+${saldo}` : saldo}</strong>
+        <small>{hasBmr ? `TDEE ${Math.round(tdee ?? bmr)}` : 'perfil pendente'}</small>
+      </HomeCard>
+    </div>
   )
 }
 
-// ── Gráfico Semanal ───────────────────────────────────────────────────────────
-interface WeekDay { iso: string; label: string; isFuture: boolean; isToday: boolean }
-
-function WeeklyChart({ weekDays, weekKcal, goal, todayKcal, bmr, workoutKcalByDate, todayWorkoutKcal }: {
+function WeeklyChart({ weekDays, weekKcal, goal, todayKcal, bmr, workoutKcalByDate, todayWorkoutKcal, onOpenDetail }: {
   weekDays: WeekDay[]
   weekKcal: Record<string, number>
   goal: number
@@ -303,200 +377,114 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal, bmr, workoutKcalByDa
   bmr: number | undefined
   workoutKcalByDate: Record<string, number>
   todayWorkoutKcal: number
+  onOpenDetail: () => void
 }) {
-  const CHART_H = 90
-
-  // consumed = kcal ingerida no dia (igual ao original)
+  const chartHeight = 76
   const consumed = (d: WeekDay) => d.isToday ? todayKcal : (weekKcal[d.iso] ?? 0)
-
-  // total = BMR + treino do dia — só válido quando há alimento logado (fiel ao original L4199:
-  // balance = consumed > 0 && basalTotal != null ? ... : null)
   const total = (d: WeekDay): number => {
     if (bmr == null || bmr <= 0) return 0
-    if (consumed(d) === 0) return 0   // sem alimento → sem barra cinza
+    if (consumed(d) === 0) return 0
     const exercise = d.isToday ? todayWorkoutKcal : (workoutKcalByDate[d.iso] ?? 0)
     return bmr + exercise
   }
-
-  // maxVal inclui consumed e total de cada dia + goal (fiel ao original L4292)
-  const allVals = weekDays.flatMap(d => [consumed(d), total(d)])
-  if (goal > 0) allVals.push(goal)
-  const maxVal = Math.max(...allVals, 1)
-
-  const metaPx = goal > 0 ? Math.round((goal / maxVal) * CHART_H) : null
-
-  // projeção: só dias com consumed > 0 (fiel ao original: balance != null só quando consumed > 0)
+  const values = weekDays.flatMap(d => [consumed(d), total(d)])
+  if (goal > 0) values.push(goal)
+  const maxVal = Math.max(...values, 1)
+  const metaPx = goal > 0 ? Math.round((goal / maxVal) * chartHeight) : null
   const daysWithData = weekDays.filter(d => !d.isFuture && consumed(d) > 0 && total(d) > 0)
-  let projection: string | null = null
-  if (daysWithData.length >= 2) {
-    const avgBalance = daysWithData.reduce((s, d) => s + (consumed(d) - total(d)), 0) / daysWithData.length
-    const kgPerWeek  = (avgBalance * 7) / 7700
-    const sign       = kgPerWeek < 0 ? '📉' : '📈'
-    projection = `${sign} Projeção: ${kgPerWeek >= 0 ? '+' : ''}${kgPerWeek.toFixed(2)} kg/sem (média ${Math.round(avgBalance)} kcal/dia)`
-  }
+  const avgBalance = daysWithData.length > 0
+    ? Math.round(daysWithData.reduce((sum, d) => sum + (consumed(d) - total(d)), 0) / daysWithData.length)
+    : null
 
   return (
-    <div className="week-chart-wrap" style={{ position: 'relative', marginTop: '4px' }}>
-      <div style={{ position: 'relative' }}>
-        {/* week-meta-line */}
-        {metaPx != null && (
-          <div className="week-meta-line" style={{
-            position: 'absolute', left: 0, right: 0,
-            bottom: metaPx + 14,
-            borderTop: '1.5px dashed var(--accent2)',
-            opacity: 0.45,
-            pointerEvents: 'none',
-            zIndex: 2,
-          }} />
-        )}
-
-        {/* week-bars */}
-        <div className="week-bars" style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', position: 'relative' }}>
-          {weekDays.map(day => {
-            const kcal      = consumed(day)
-            const totalDay  = total(day)
-            const consumedH = kcal > 0    ? Math.round((kcal     / maxVal) * CHART_H) : 0
-            const totalH    = totalDay > 0 ? Math.round((totalDay / maxVal) * CHART_H) : 0
-            const noData    = !day.isFuture && kcal === 0 && totalH === 0
-
-            return (
-              <div
-                key={day.iso}
-                className={['week-bar-group', day.isToday ? 'today' : '', noData ? 'no-data' : ''].filter(Boolean).join(' ')}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', opacity: noData ? .4 : 1 }}
-              >
-                <div className="week-bar-wrap" style={{ position: 'relative', width: '100%', height: CHART_H }}>
-                  {!day.isFuture && totalH > 0 && (
-                    <div className="week-bar-total" style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0,
-                      height: totalH,
-                      background: 'var(--surface3)',
-                      borderRadius: '4px 4px 0 0',
-                      minHeight: 2,
-                      border: day.isToday ? '1.5px solid var(--accent2)' : 'none',
-                      boxSizing: 'border-box',
-                    }} />
-                  )}
-                  {!day.isFuture && consumedH > 0 && (
-                    <div className="week-bar-consumed" style={{
-                      position: 'absolute', bottom: 0,
-                      left: '50%', transform: 'translateX(-50%)',
-                      width: '55%',
-                      height: consumedH,
-                      background: 'var(--accent)',
-                      borderRadius: '4px 4px 0 0',
-                      zIndex: 1,
-                      minHeight: 2,
-                    }} />
-                  )}
-                </div>
-                <div className="week-day-label" style={{
-                  fontSize: '9px',
-                  color: day.isToday ? 'var(--accent2)' : 'var(--text2)',
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {day.label}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+    <HomeCard className="home-week-card">
+      <div className="home-section-head">
+        <strong>Semana kcal</strong>
+        <button type="button" onClick={onOpenDetail}>
+          {avgBalance == null ? 'sem media' : `${avgBalance > 0 ? '+' : ''}${avgBalance} kcal/dia`}
+        </button>
       </div>
-
-      {/* energy-projection */}
-      {projection && (
-        <div className="energy-projection" style={{ fontSize: '11px', color: 'var(--text2)', textAlign: 'center', marginTop: '8px', letterSpacing: '.01em' }}>
-          {projection}
-        </div>
-      )}
-    </div>
+      <div className="home-week-chart" style={{ ['--chart-height' as string]: `${chartHeight}px` }}>
+        {metaPx != null && <b className="home-week-meta" style={{ bottom: `${metaPx + 16}px` }} />}
+        {weekDays.map(day => {
+          const kcal = consumed(day)
+          const totalDay = total(day)
+          const consumedH = kcal > 0 ? Math.round((kcal / maxVal) * chartHeight) : 0
+          const totalH = totalDay > 0 ? Math.round((totalDay / maxVal) * chartHeight) : 0
+          return (
+            <div key={day.iso} className={`home-week-day${day.isToday ? ' today' : ''}${day.isFuture ? ' future' : ''}`}>
+              <div className="home-week-bars">
+                {!day.isFuture && totalH > 0 && <i className="total" style={{ height: `${totalH}px` }} />}
+                {!day.isFuture && consumedH > 0 && <i className="consumed" style={{ height: `${consumedH}px` }} />}
+              </div>
+              <span>{day.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </HomeCard>
   )
 }
 
-// ── Grid de ações (home-grid) ─────────────────────────────────────────────────
+function WeekPulse({ habits, weekDates, onOpenHistory }: {
+  habits: HabitsMap
+  weekDates: string[]
+  onOpenHistory: () => void
+}) {
+  const adherence = weekHabitAdherence(habits, weekDates)
+  return (
+    <HomeCard className="home-pulse">
+      <div className="home-section-head">
+        <strong>Semana em pulso</strong>
+        <button type="button" onClick={onOpenHistory}>{adherence}% aderencia</button>
+      </div>
+      <div className="home-pulse-days">
+        {weekDates.map(date => (
+          <div key={date} className={date === todayISO() ? 'today' : ''}>
+            {HABITS_DEF.map(habit => {
+              const row = habits[date]
+              const checked = !!(row?.[habit.id as keyof typeof row])
+              return (
+                <i
+                  key={habit.id}
+                  className={checked ? 'on' : ''}
+                  style={{ ['--habit-color' as string]: habit.color }}
+                />
+              )
+            })}
+          </div>
+        ))}
+      </div>
+    </HomeCard>
+  )
+}
+
 function ActionGrid({ onNavigate, onOpenProfile, onOpenEvolution }: {
   onNavigate: (path: string) => void
   onOpenProfile: () => void
   onOpenEvolution: () => void
 }) {
-  const navActions = [
-    { icon: '📊', label: 'Diário',  path: '/diario' },
-    { icon: '🏋️', label: 'Treino',  path: '/treino' },
-    { icon: '📏', label: 'Corpo',   path: '/corpo'  },
-  ]
-  const btnStyle: React.CSSProperties = {
-    background: 'var(--surface)',
-    border: '1px solid var(--line)',
-    borderRadius: 'var(--radius)',
-    padding: '22px 12px',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-    cursor: 'pointer',
-    WebkitTapHighlightColor: 'transparent',
-    fontFamily: 'var(--font)',
-    transition: 'background .15s, transform .1s',
-  }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
-      {navActions.map(a => (
-        <button
-          key={a.path}
-          type="button"
-          onClick={() => onNavigate(a.path)}
-          style={btnStyle}
-          onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
-          onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
-          onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
-          onTouchEnd={e => (e.currentTarget.style.background = 'var(--surface)')}
-        >
-          <span style={{ fontSize: '28px', lineHeight: 1.2 }}>{a.icon}</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>{a.label}</span>
-        </button>
-      ))}
-
-      {/* Evolução corporal — substitui "Mais" */}
-      <button
-        type="button"
-        onClick={onOpenEvolution}
-        style={btnStyle}
-        onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
-        onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
-        onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
-        onTouchEnd={e => (e.currentTarget.style.background = 'var(--surface)')}
-      >
-        <span style={{ fontSize: '28px', lineHeight: 1.2 }}>📈</span>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>Evolução</span>
-      </button>
-
-      {/* Botão full-width: Meu Perfil Nutricional → abre ProfileCheckinModal */}
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        style={{
-          gridColumn: '1 / -1',
-          background: 'var(--surface)',
-          border: '1px solid rgba(124,92,255,.35)',
-          borderRadius: 'var(--radius)',
-          padding: '16px 12px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-          cursor: 'pointer',
-          WebkitTapHighlightColor: 'transparent',
-          fontFamily: 'var(--font)',
-          transition: 'background .15s',
-        }}
-        onMouseDown={e => (e.currentTarget.style.background = 'var(--surface3)')}
-        onMouseUp={e => (e.currentTarget.style.background = 'var(--surface)')}
-        onTouchStart={e => (e.currentTarget.style.background = 'var(--surface3)')}
-        onTouchEnd={e => (e.currentTarget.style.background = 'var(--surface)')}
-      >
-        <span style={{ fontSize: '24px', lineHeight: 1.2 }}>🎯</span>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text2)' }}>Meu Perfil Nutricional</span>
-      </button>
+    <div className="home-action-grid">
+      <button type="button" onClick={() => onNavigate('/diario')}><span>D</span>Diario</button>
+      <button type="button" onClick={() => onNavigate('/treino')}><span>T</span>Treino</button>
+      <button type="button" onClick={onOpenEvolution}><span>E</span>Evolucao</button>
+      <button type="button" onClick={onOpenProfile}><span>P</span>Perfil</button>
     </div>
   )
 }
 
-// ── Página principal ──────────────────────────────────────────────────────────
+function CoachStrip({ alert }: { alert: { title: string; text: string } }) {
+  return (
+    <section className="home-coach-strip">
+      <span>AI</span>
+      <div>
+        <strong>Coach insight</strong>
+        <p>{alert.title}. {alert.text}</p>
+      </div>
+    </section>
+  )
+}
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -505,64 +493,52 @@ export default function HomePage() {
   const { settings, loading: loadingSettings, saveSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal, getAllDiaryRows } = useDiary(selectedDate)
   const { habits, toggleHabit, getAllHabits } = useHabits()
-  const [habitHistOpen, setHabitHistOpen]     = useState(false)
-  const [diaryHistOpen, setDiaryHistOpen]     = useState(false)
+  const [habitHistOpen, setHabitHistOpen] = useState(false)
+  const [diaryHistOpen, setDiaryHistOpen] = useState(false)
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
-  const [profileOpen, setProfileOpen]       = useState(false)
-  const [wizardOpen, setWizardOpen]         = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(() => localStorage.getItem('kcalix_onboarding_dismissed') === '1')
   const { triggerInstallPrompt } = useInstallStore()
   const { message: appMessage, loading: appMessageLoading, dismiss: dismissAppMessage } = useAppMessage()
   const [appMessageOpen, setAppMessageOpen] = useState(false)
   const appMessageShown = useRef(false)
-  const [weekKcal, setWeekKcal]             = useState<Record<string, number>>({})
+  const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
-  const [evolutionOpen, setEvolutionOpen]   = useState(false)
-  const [bodyRows, setBodyRows]             = useState<BodyRow[]>([])
-  const weekDays = getWeekDates()
+  const [workoutRows, setWorkoutRows] = useState<WorkoutRow[]>([])
+  const [evolutionOpen, setEvolutionOpen] = useState(false)
+  const [bodyRows, setBodyRows] = useState<BodyRow[]>([])
+  const weekDays = useMemo(() => getWeekDates(), [])
   const todayIso = todayISO()
   const habitWeekDates = getHabitWeekDates(todayIso)
+  const autoWizardVisible = autoWizardOpen || (!loadingSettings && settings === null && !onboardingDismissed)
 
   useEffect(() => {
     getWeekKcal(weekDays.map(d => d.iso)).then(setWeekKcal)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Carrega kcal de treino por data no mount — necessário para a barra cinza do WeeklyChart
   useEffect(() => {
     if (!user) return
     fetchAllWorkoutRows(user.id).then(rows => {
       const map: Record<string, number> = {}
-      for (const r of rows) {
-        map[r.date] = (map[r.date] ?? 0) + (r.kcal ?? 0)
+      for (const row of rows) {
+        map[row.date] = (map[row.date] ?? 0) + (row.kcal ?? 0)
       }
       setWorkoutKcalByDate(map)
+      setWorkoutRows(rows)
     })
   }, [user])
 
-  // Broadcast: abre 1.5s após carregar, só se não tiver onboarding pendente
-  // Guard appMessageShown evita reabrir se appMessage mudar de referência na mesma sessão
-  // Admin nunca vê o modal automaticamente — só via botão "Ver" no painel (sem gravar eventos reais)
   useEffect(() => {
-    if (appMessageLoading || !appMessage || autoWizardOpen) return
+    if (appMessageLoading || !appMessage || autoWizardVisible) return
     if (appMessageShown.current) return
     if (user?.email === import.meta.env.VITE_ADMIN_EMAIL) return
     appMessageShown.current = true
     const t = setTimeout(() => setAppMessageOpen(true), 1500)
     return () => clearTimeout(t)
-  }, [appMessageLoading, appMessage, autoWizardOpen, user])
+  }, [appMessageLoading, appMessage, autoWizardVisible, user])
 
-  // Onboarding automático: abre wizard na primeira visita
-  // Condições: settings carregou (loadingSettings=false) + perfil nunca configurado (settings===null)
-  // + usuário não dismissou sem salvar antes (localStorage)
-  useEffect(() => {
-    if (loadingSettings) return
-    const dismissed = localStorage.getItem('kcalix_onboarding_dismissed')
-    if (settings === null && !dismissed) {
-      setAutoWizardOpen(true)
-    }
-  }, [loadingSettings, settings])
-
-  // Abre modal histórico semanal (workoutKcalByDate já carregado no mount)
   const handleOpenWeeklyModal = useMemo(() => async () => {
     setWeeklyModalOpen(true)
   }, [])
@@ -578,11 +554,40 @@ export default function HomePage() {
   const loading = loadingSettings || loadingDiary
   const { kcalTarget = 0, pTarget = 0, cTarget = 0, gTarget = 0, bmr, tdee } = settings ?? {}
   const { totals, kcalTreino } = diary
+  const workoutPlan = useMemo(
+    () => buildWorkoutPlan(workoutRows, selectedDate, kcalTreino),
+    [workoutRows, selectedDate, kcalTreino],
+  )
+  const alert = buildAlert({
+    p: totals.p,
+    pTarget,
+    c: totals.c,
+    cTarget,
+    kcal: totals.kcal,
+    kcalTarget,
+    workoutDone: kcalTreino > 0,
+  })
 
   return (
-    <div style={{ padding: '20px 16px', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="home-page">
+      <div className="home-date-line">{formatDate(selectedDate)}</div>
 
-      {/* HabitTracker — topo, igual ao original L2116 */}
+      <WorkoutHero plan={workoutPlan} onOpen={() => navigate('/treino')} />
+
+      <ProgressCard
+        kcalConsumed={totals.kcal}
+        kcalTarget={kcalTarget}
+        p={totals.p}
+        pTarget={pTarget}
+        c={totals.c}
+        cTarget={cTarget}
+        g={totals.g}
+        gTarget={gTarget}
+        onClick={() => navigate('/diario')}
+        onHistorico={() => setDiaryHistOpen(true)}
+        loading={loading}
+      />
+
       <HabitTracker
         habits={habits}
         weekDates={habitWeekDates}
@@ -591,83 +596,51 @@ export default function HomePage() {
         onOpenHistory={() => setHabitHistOpen(true)}
       />
 
-      <HabitHistoryModal
-        open={habitHistOpen}
-        onClose={() => setHabitHistOpen(false)}
-        getAllHabits={getAllHabits}
+      <HomeCard className="home-alert">
+        <span>Insight</span>
+        <strong>{alert.title}</strong>
+        <small>{alert.text}</small>
+      </HomeCard>
+
+      <WeekPulse
+        habits={habits}
+        weekDates={habitWeekDates}
+        onOpenHistory={() => setHabitHistOpen(true)}
       />
 
-      {/* Saudação + data (home-greeting / home-date-sub) */}
-      <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>
-        {greeting()}
-      </div>
-      <div style={{ fontSize: '13px', color: 'var(--text3)', marginBottom: '14px' }}>
-        {formatDate(todayIso)}
-      </div>
-
-      {/* Card progresso do dia — clicável → /diario */}
-      <ProgressCard
-        kcalConsumed={totals.kcal}
-        kcalTarget={kcalTarget}
-        p={totals.p} pTarget={pTarget}
-        c={totals.c} cTarget={cTarget}
-        g={totals.g} gTarget={gTarget}
-        onClick={() => navigate('/diario')}
-        onHistorico={() => setDiaryHistOpen(true)}
-        loading={loading}
+      <WeeklyChart
+        weekDays={weekDays}
+        weekKcal={weekKcal}
+        goal={kcalTarget}
+        todayKcal={totals.kcal}
+        bmr={bmr}
+        workoutKcalByDate={workoutKcalByDate}
+        todayWorkoutKcal={kcalTreino}
+        onOpenDetail={handleOpenWeeklyModal}
       />
 
-      {/* Card ⚡ Energia Hoje */}
-      <EnergyCard
+      <EnergySnapshot
         consumed={totals.kcal}
         bmr={bmr}
         tdee={tdee}
         kcalTreino={kcalTreino}
         kcalTarget={kcalTarget}
-        loading={loading}
       />
 
-      {/* Card 📅 Últimos 7 dias */}
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text2)' }}>📅 Últimos 7 dias</span>
-          <button
-            type="button"
-            onClick={handleOpenWeeklyModal}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--line)',
-              borderRadius: '6px',
-              padding: '4px 10px',
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--text2)',
-              cursor: 'pointer',
-              fontFamily: 'var(--font)',
-            }}
-          >
-            📊
-          </button>
-        </div>
-        <WeeklyChart
-          weekDays={weekDays}
-          weekKcal={weekKcal}
-          goal={kcalTarget}
-          todayKcal={totals.kcal}
-          bmr={bmr}
-          workoutKcalByDate={workoutKcalByDate}
-          todayWorkoutKcal={kcalTreino}
-        />
-      </Card>
+      <CoachStrip alert={alert} />
 
-      {/* Grid de ações */}
       <ActionGrid
         onNavigate={navigate}
         onOpenProfile={() => setProfileOpen(true)}
         onOpenEvolution={handleOpenEvolution}
       />
 
-      {/* Modal perfil nutricional + check-in */}
+      <HabitHistoryModal
+        open={habitHistOpen}
+        onClose={() => setHabitHistOpen(false)}
+        getAllHabits={getAllHabits}
+      />
+
       {settings && (
         <ProfileCheckinModal
           open={profileOpen}
@@ -677,7 +650,6 @@ export default function HomePage() {
         />
       )}
 
-      {/* CalcWizardModal aberto pelo botão "Atualizar →" do perfil */}
       <CalcWizardModal
         open={wizardOpen}
         isNewUser={false}
@@ -686,19 +658,18 @@ export default function HomePage() {
         onClose={() => setWizardOpen(false)}
       />
 
-      {/* Onboarding automático — abre só na primeira visita (settings===null) */}
       <CalcWizardModal
-        open={autoWizardOpen}
+        open={autoWizardVisible}
         isNewUser={true}
         initialData={null}
-        onSave={async (result) => { await saveSettings(result); setAutoWizardOpen(false); triggerInstallPrompt() }}
+        onSave={async (result) => { await saveSettings(result); setAutoWizardOpen(false); setOnboardingDismissed(true); triggerInstallPrompt() }}
         onClose={() => {
           localStorage.setItem('kcalix_onboarding_dismissed', '1')
+          setOnboardingDismissed(true)
           setAutoWizardOpen(false)
         }}
       />
 
-      {/* Modal histórico de dias do diário */}
       <DiaryHistoryModal
         open={diaryHistOpen}
         onClose={() => setDiaryHistOpen(false)}
@@ -706,14 +677,12 @@ export default function HomePage() {
         kcalTarget={kcalTarget}
       />
 
-      {/* Modal evolução corporal */}
       <BodyEvolutionModal
         open={evolutionOpen}
         onClose={() => setEvolutionOpen(false)}
         rows={bodyRows}
       />
 
-      {/* Modal histórico semanal de kcal */}
       <WeeklyKcalModal
         open={weeklyModalOpen}
         onClose={() => setWeeklyModalOpen(false)}
@@ -723,7 +692,6 @@ export default function HomePage() {
         kcalTarget={kcalTarget}
       />
 
-      {/* Broadcast — aparece 1× por mensagem, 1.5s após carregar */}
       {appMessageOpen && appMessage && (
         <AppMessageModal
           message={appMessage}

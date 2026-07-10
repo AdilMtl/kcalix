@@ -42,6 +42,10 @@ function getSecondary(exercicioId: string, customExercises: CustomExercise[]): s
   return EX_SECONDARY[exercicioId] ?? []
 }
 
+function cleanCardioName(nome: string): string {
+  return nome.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+}
+
 export default function TreinoPage() {
   const { selectedDate } = useDateStore()
   const { autoCheckHabit } = useHabits()
@@ -269,7 +273,7 @@ export default function TreinoPage() {
     setExSelOpen(true)
   }
 
-  const handleExSelect = async (exercicioId: string, _nome: string) => {
+  const handleExSelect = async (exercicioId: string) => {
     if (exSelMode === 'add') {
       // Pré-preencher com última sessão se existir
       const last = await getLastWorkoutForExercise(exercicioId)
@@ -338,7 +342,7 @@ export default function TreinoPage() {
   }
 
   return (
-    <div style={{ paddingBottom: 32 }}>
+    <div className="training-page">
 
       {/* ExerciseSelector bottom sheet */}
       <ExerciseSelector
@@ -417,7 +421,7 @@ export default function TreinoPage() {
             />
             <div style={{
               position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 311,
-              background: 'linear-gradient(180deg, #1a2035, #121828)',
+              background: 'var(--surface)',
               borderRadius: '18px 18px 0 0',
               border: '1px solid var(--line)',
               maxHeight: '80dvh', display: 'flex', flexDirection: 'column',
@@ -452,7 +456,7 @@ export default function TreinoPage() {
                       </div>
                       <div style={{ position: 'relative', height: 6, background: 'var(--line)', borderRadius: 3, overflow: 'visible' }}>
                         <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: barColor, transition: 'width .3s' }} />
-                        <div style={{ position: 'absolute', top: -3, left: `${mevPct}%`, width: 2, height: 12, background: 'var(--accent)', borderRadius: 1 }} title={`MEV: ${lm.mev}`} />
+                        <div style={{ position: 'absolute', top: -3, left: `${mevPct}%`, width: 2, height: 12, background: 'var(--ember)', borderRadius: 1 }} title={`MEV: ${lm.mev}`} />
                       </div>
                     </div>
                   )
@@ -467,43 +471,24 @@ export default function TreinoPage() {
       })()}
 
       {/* ── Card principal ─────────────────────────────────── */}
-      <div style={{
-        background: 'linear-gradient(180deg, rgba(18,24,38,.9), rgba(14,20,34,.9))',
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius)',
-        margin: '12px 16px 0',
-        overflow: 'hidden',
-        boxShadow: 'var(--shadow)',
-      }}>
+      <div className="training-shell">
 
         {/* ── card-header ────────────────────────────────────── */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 16px 12px',
-          borderBottom: '1px solid var(--line)',
-        }}>
-          <div style={{ flex: 1 }}>
-            <b style={{ fontSize: 14, fontWeight: 700 }}>🏋️ Treino</b>
-            <span style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+        <div className="training-header">
+          <div className="training-header-info">
+            <b className="training-title">Treino</b>
+            <span className="training-subtitle">
               Séries · reps · carga · progressão
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div className="training-header-actions">
             <button type="button" title="Histórico" style={iconBtnStyle} onClick={() => setTmplHistOpen(true)}>📊</button>
             <button type="button" title="Guia de Volume" style={iconBtnStyle} onClick={() => setCoachGuideOpen(true)}>📖</button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              style={{
-                height: 36, padding: '0 14px',
-                borderRadius: 'var(--radius-xs)', border: 'none',
-                background: saved ? 'rgba(52,211,153,.15)' : 'var(--accent)',
-                color: saved ? 'var(--good)' : '#fff',
-                fontFamily: 'var(--font)', fontSize: 13, fontWeight: 700,
-                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                transition: 'background .2s, color .2s',
-              }}
+              className={`training-save-btn${saved ? ' saved' : ''}`}
             >
               {saving ? '...' : saved ? '✓ Salvo' : 'Salvar ▶'}
             </button>
@@ -511,29 +496,20 @@ export default function TreinoPage() {
         </div>
 
         {/* ── card-body ──────────────────────────────────────── */}
-        <div style={{ padding: '14px 16px 16px' }}>
+        <div className="training-body">
 
           {/* ── Seção Rotinas ─────────────────────────────────── */}
-          <div
+          <button
+            type="button"
             onClick={() => setTmplOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '6px 4px 8px', cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className={`training-section-toggle${tmplOpen ? ' open' : ''}`}
           >
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', letterSpacing: '.01em' }}>
-              📋 Rotinas
-            </span>
-            <span style={{
-              fontSize: 12, color: 'var(--text3)',
-              transition: 'transform .2s', display: 'inline-block',
-              transform: tmplOpen ? 'rotate(90deg)' : 'none',
-            }}>▸</span>
-          </div>
+            <span>Rotinas</span>
+            <span className="chevron">▸</span>
+          </button>
 
           {tmplOpen && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, marginTop: 4 }}>
+            <div className="training-routine-grid">
               {templates.map(tmpl => {
                 const label = tmpl.nome.includes('—') ? tmpl.nome.split('—')[0].trim() : tmpl.nome
                 const preview = tmpl.exercicios.slice(0, 3)
@@ -554,25 +530,13 @@ export default function TreinoPage() {
                       if (hasFilledSets && !window.confirm(`Trocar para "${label}"?\nOs dados do treino atual serão apagados.`)) return
                       applyTemplate(tmpl)
                     }}
-                    style={{
-                      position: 'relative',
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '10px 38px 10px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: isActive ? '1px solid rgba(124,92,255,.4)' : '1px solid var(--line)',
-                      background: isActive
-                        ? 'linear-gradient(135deg,rgba(124,92,255,.3),rgba(124,92,255,.1))'
-                        : 'var(--surface2)',
-                      color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 13,
-                      fontWeight: 600, cursor: 'pointer', minHeight: 44,
-                      textAlign: 'left', WebkitTapHighlightColor: 'transparent',
-                    }}
+                    className={`training-routine-btn${isActive ? ' active' : ''}`}
                   >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: tmpl.cor, flexShrink: 0 }} />
-                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
+                    <span className="training-routine-dot" style={{ background: tmpl.cor }} />
+                    <span className="training-routine-copy">
+                      <span className="training-routine-name">{label}</span>
                       {preview && (
-                        <span style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                        <span className="training-routine-preview">
                           {preview}{more}
                         </span>
                       )}
@@ -580,13 +544,7 @@ export default function TreinoPage() {
                     {/* ✏️ abre o editor (original L6309) */}
                     <span
                       onClick={e => { e.stopPropagation(); openTmplEditor(tmpl) }}
-                      style={{
-                        position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
-                        width: 24, height: 24, borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, color: 'var(--text3)', background: 'rgba(255,255,255,.06)',
-                        cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                      }}
+                      className="training-routine-edit"
                     >✏️</span>
                   </button>
                 )
@@ -594,14 +552,7 @@ export default function TreinoPage() {
               <button
                 type="button"
                 onClick={createNewTemplate}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '9px 14px', borderRadius: 'var(--radius-sm)',
-                  border: '1px dashed var(--line)', background: 'transparent',
-                  color: 'var(--text3)', fontFamily: 'var(--font)', fontSize: 12,
-                  fontWeight: 700, cursor: 'pointer', minHeight: 40,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
+                className="btn ghost sm"
               >+ Nova rotina</button>
             </div>
           )}
@@ -610,29 +561,16 @@ export default function TreinoPage() {
           <button
             type="button"
             onClick={() => { reloadWorkoutRows(); setRecommendOpen(true) }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              width: '100%', padding: '9px 12px', marginBottom: 10,
-              borderRadius: 'var(--radius-xs)',
-              border: '1px solid rgba(124,92,255,.2)',
-              background: 'rgba(124,92,255,.07)',
-              color: 'var(--accent2)', fontFamily: 'var(--font)',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className="training-recommend-btn"
           >
-            <span>💡</span>
             <span>O que treinar hoje?</span>
           </button>
 
           {/* ── ex-list ────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="training-ex-list">
 
             {state.exercicios.length === 0 && (
-              <div style={{
-                padding: '20px 0', textAlign: 'center',
-                color: 'var(--text3)', fontSize: 12, fontWeight: 600,
-              }}>
+              <div className="training-empty">
                 Sem exercícios. Escolha um template acima ou adicione abaixo.
               </div>
             )}
@@ -665,20 +603,12 @@ export default function TreinoPage() {
               return (
                 <div
                   key={exIdx}
-                  style={{
-                    background: 'var(--surface)', border: '1px solid var(--line)',
-                    borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-                  }}
+                  className={`training-ex-card${isOpen ? ' open' : ''}`}
                 >
                   {/* ex-item-header */}
                   <div
                     onClick={() => toggleEx(exIdx)}
-                    style={{
-                      display: 'flex', alignItems: 'center',
-                      padding: '10px 12px', cursor: 'pointer',
-                      WebkitTapHighlightColor: 'transparent',
-                      gap: 6,
-                    }}
+                    className="training-ex-head"
                   >
                     {/* 📊 btn */}
                     <button
@@ -689,21 +619,13 @@ export default function TreinoPage() {
                     >📊</button>
 
                     {/* nome + grupos */}
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{nome}</span>
+                    <div className="training-ex-main">
+                      <span className="training-ex-name">{nome}</span>
                       {grupo && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                          <span style={{
-                            fontSize: 9, fontWeight: 700, color: 'var(--accent)',
-                            background: 'rgba(124,92,255,.1)', border: '1px solid rgba(124,92,255,.2)',
-                            borderRadius: 10, padding: '1px 6px', whiteSpace: 'nowrap',
-                          }}>{grupo}</span>
+                        <div className="training-chip-row">
+                          <span className="training-muscle-chip">{grupo}</span>
                           {secs.map(s => (
-                            <span key={s} style={{
-                              fontSize: 9, fontWeight: 600, color: 'var(--text3)',
-                              background: 'var(--surface2)', border: '1px solid var(--line)',
-                              borderRadius: 10, padding: '1px 6px', whiteSpace: 'nowrap',
-                            }}>{s}</span>
+                            <span key={s} className="training-secondary-chip">{s}</span>
                           ))}
                         </div>
                       )}
@@ -711,13 +633,7 @@ export default function TreinoPage() {
 
                     {/* prev-ref inline */}
                     {prev && lastMax > 0 && (
-                      <span style={{
-                        fontSize: 10, color: 'var(--text3)',
-                        padding: '4px 8px',
-                        background: 'rgba(124,92,255,.06)',
-                        borderRadius: 'var(--radius-xs)',
-                        whiteSpace: 'nowrap', flexShrink: 0,
-                      }}>
+                      <span className="training-ref-badge">
                         últ: {lastMax}kg{' '}
                         {arrow === '=' && <span style={{ color: 'var(--warn)', fontWeight: 800 }}>=</span>}
                         {arrow && arrow.startsWith('▲') && <span style={{ color: 'var(--good)', fontWeight: 800 }}>{arrow}</span>}
@@ -727,18 +643,14 @@ export default function TreinoPage() {
 
                     {/* volume */}
                     {exVol > 0 && (
-                      <span style={{ fontSize: 10, color: 'var(--text2)', fontWeight: 700, flexShrink: 0 }}>
+                      <span className="training-volume-badge">
                         {exVol > 999 ? `${(exVol / 1000).toFixed(1)}k` : exVol}
                         <span style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 600 }}> vol</span>
                       </span>
                     )}
 
                     {/* badge */}
-                    <span style={{
-                      fontSize: 10, color: 'var(--text3)', fontWeight: 600,
-                      background: 'var(--surface2)', padding: '3px 8px', borderRadius: 999,
-                      flexShrink: 0,
-                    }}>{badge}</span>
+                    <span className="training-count-badge">{badge}</span>
 
                     {/* swap btn */}
                     <button
@@ -765,29 +677,25 @@ export default function TreinoPage() {
                   </div>
 
                   {/* ex-item-body: set-table */}
-                  <div style={{
-                    maxHeight: isOpen ? 800 : 0,
-                    overflow: 'hidden',
-                    transition: 'max-height .3s ease',
-                  }}>
-                    <div style={{ padding: '0 10px 10px' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <div className="training-ex-body">
+                    <div className="training-set-wrap">
+                      <table className="training-set-table">
                         <thead>
                           <tr>
-                            <th style={{ width: 28, fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>#</th>
-                            <th style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>Reps</th>
-                            <th style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }}>Carga (kg)</th>
-                            <th style={{ width: 30, fontSize: 9, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', padding: '3px 2px', textAlign: 'center' }} title="Aquecimento — não conta para volume/MEV">W</th>
-                            <th style={{ width: 34, padding: '3px 2px' }}></th>
+                            <th style={{ width: 28 }}>#</th>
+                            <th>Reps</th>
+                            <th>Carga (kg)</th>
+                            <th style={{ width: 34 }} title="Aquecimento — não conta para volume/MEV">W</th>
+                            <th style={{ width: 36 }}></th>
                           </tr>
                         </thead>
                         <tbody>
                           {series.map((s, si) => (
                             <tr key={si}>
-                              <td style={{ padding: '3px 2px', textAlign: 'center', fontSize: 12, fontWeight: 800, color: 'var(--text3)', width: 24 }}>
+                              <td className="training-set-index">
                                 {si + 1}
                               </td>
-                              <td style={{ padding: '3px 2px', textAlign: 'center' }}>
+                              <td>
                                 <input
                                   inputMode="numeric"
                                   placeholder="12"
@@ -797,7 +705,7 @@ export default function TreinoPage() {
                                   className="set-input"
                                 />
                               </td>
-                              <td style={{ padding: '3px 2px', textAlign: 'center' }}>
+                              <td>
                                 <input
                                   inputMode="decimal"
                                   placeholder="0"
@@ -807,33 +715,19 @@ export default function TreinoPage() {
                                   className="set-input"
                                 />
                               </td>
-                              <td style={{ padding: '3px 2px', textAlign: 'center' }}>
+                              <td>
                                 <button
                                   type="button"
                                   title="Marcar como aquecimento (não conta para volume/MEV)"
                                   onClick={() => toggleWarmup(exIdx, si)}
-                                  style={{
-                                    width: 28, height: 28, borderRadius: '50%',
-                                    border: `1px solid ${s.warmup ? 'rgba(251,191,36,.4)' : 'rgba(255,255,255,.1)'}`,
-                                    background: s.warmup ? 'rgba(251,191,36,.15)' : 'transparent',
-                                    color: s.warmup ? '#fbbf24' : 'var(--text3)',
-                                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontFamily: 'var(--font)',
-                                  }}
+                                  className={`training-round-btn warmup${s.warmup ? ' active' : ''}`}
                                 >W</button>
                               </td>
-                              <td style={{ padding: '3px 2px', textAlign: 'center' }}>
+                              <td>
                                 <button
                                   type="button"
                                   onClick={() => removeSet(exIdx, si)}
-                                  style={{
-                                    width: 28, height: 28, borderRadius: '50%',
-                                    border: '1px solid rgba(248,113,113,.15)',
-                                    background: 'transparent', color: 'var(--bad)',
-                                    fontSize: 14, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  }}
+                                  className="training-round-btn danger"
                                 >✕</button>
                               </td>
                             </tr>
@@ -845,15 +739,7 @@ export default function TreinoPage() {
                       <button
                         type="button"
                         onClick={() => addSet(exIdx)}
-                        style={{
-                          marginTop: 4, padding: '6px 12px',
-                          borderRadius: 'var(--radius-xs)',
-                          border: '1px dashed var(--line)', background: 'transparent',
-                          color: 'var(--text3)', fontFamily: 'var(--font)',
-                          fontSize: 11, fontWeight: 700,
-                          cursor: 'pointer', width: '100%', textAlign: 'center',
-                          WebkitTapHighlightColor: 'transparent',
-                        }}
+                        className="training-add-btn"
                       >+ Série</button>
                     </div>
                   </div>
@@ -867,93 +753,80 @@ export default function TreinoPage() {
           <button
             type="button"
             onClick={openAdd}
-            style={{
-              width: '100%', padding: '10px 12px', margin: '10px 0',
-              borderRadius: 'var(--radius-xs)', border: '1px dashed var(--line)',
-              background: 'transparent', color: 'var(--text3)',
-              fontFamily: 'var(--font)', fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', textAlign: 'center',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className="training-add-btn"
           >＋ Exercício</button>
 
           {/* ── Accordion Cardio (original L2632–2641, JS L6654–6680) ── */}
-          <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: 8, background: 'var(--surface)' }}>
+          <div className="training-panel">
             <button
               type="button"
               onClick={() => setAccCardioOpen(o => !o)}
-              style={accTriggerStyle}
+              className={`training-panel-trigger${accCardioOpen ? ' open' : ''}`}
             >
-              ❤️ Cardio
-              <span style={{ fontSize: 12, color: 'var(--text3)', transition: 'transform .2s', display: 'inline-block', transform: accCardioOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+              <span className="training-panel-title">
+                <span className="training-panel-mark">HR</span>
+                Cardio
+              </span>
+              <span className="chevron">▾</span>
             </button>
             {accCardioOpen && (
-              <div style={{ padding: '0 14px 14px' }}>
+              <div className="training-panel-body">
                 {state.cardio.map((c, ci) => (
-                  <div key={ci} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    <select
-                      value={c.tipo}
-                      onChange={e => {
-                        const ct = CARDIO_TYPES.find(t => t.id === e.target.value)
-                        updateCardio(ci, { ...c, tipo: e.target.value, kcalPerMin: ct?.kcalMin ?? 6 })
-                      }}
-                      style={{
-                        flex: 1, border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
-                        color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 13,
-                        fontWeight: 700, padding: '8px 6px', borderRadius: 'var(--radius-xs)',
-                        outline: 'none', WebkitAppearance: 'none', appearance: 'none',
-                      }}
-                    >
-                      {CARDIO_TYPES.map(ct => (
-                        <option key={ct.id} value={ct.id}>{ct.nome}</option>
-                      ))}
-                    </select>
-                    <input
-                      inputMode="numeric"
-                      placeholder="min"
-                      value={c.minutos || ''}
-                      onChange={e => updateCardio(ci, { ...c, minutos: Number(e.target.value) || 0 })}
-                      style={{
-                        width: 64, border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
-                        color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 16,
-                        fontWeight: 700, padding: '8px 8px', borderRadius: 'var(--radius-xs)',
-                        outline: 'none', textAlign: 'center',
-                      }}
-                    />
+                  <div key={ci} className="training-cardio-row">
+                    <label className="training-cardio-field">
+                      <span>Modalidade</span>
+                      <select
+                        value={c.tipo}
+                        onChange={e => {
+                          const ct = CARDIO_TYPES.find(t => t.id === e.target.value)
+                          updateCardio(ci, { ...c, tipo: e.target.value, kcalPerMin: ct?.kcalMin ?? 6 })
+                        }}
+                        className="training-field training-cardio-select"
+                      >
+                        {CARDIO_TYPES.map(ct => (
+                          <option key={ct.id} value={ct.id}>{cleanCardioName(ct.nome)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="training-cardio-field min">
+                      <span>Min</span>
+                      <input
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={c.minutos || ''}
+                        onChange={e => updateCardio(ci, { ...c, minutos: Number(e.target.value) || 0 })}
+                        className="training-field training-cardio-min"
+                      />
+                    </label>
                     <button
                       type="button"
                       onClick={() => removeCardio(ci)}
-                      style={{
-                        width: 40, height: 40, borderRadius: 'var(--radius-xs)',
-                        border: '1px solid rgba(248,113,113,.2)', background: 'transparent',
-                        color: 'var(--bad)', fontSize: 14, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0, WebkitTapHighlightColor: 'transparent',
-                      }}
+                      className="training-round-btn danger"
+                      title="Remover cardio"
                     >✕</button>
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={() => addCardio({ tipo: CARDIO_TYPES[0].id, minutos: 0, kcalPerMin: CARDIO_TYPES[0].kcalMin })}
-                  style={addSetBtnStyle}
+                  className="training-add-btn training-cardio-add"
                 >+ Adicionar cardio</button>
               </div>
             )}
           </div>
 
           {/* ── Accordion Timer (original L2646–2675, CSS L1876–1889, JS L6715–6879) ── */}
-          <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: 8, background: 'var(--surface)' }}>
+          <div className="training-panel">
             <button
               type="button"
               onClick={() => setAccTimerOpen(o => !o)}
-              style={accTriggerStyle}
+              className={`training-panel-trigger${accTimerOpen ? ' open' : ''}`}
             >
               ⏱ Timer de Pausa
-              <span style={{ fontSize: 12, color: 'var(--text3)', transition: 'transform .2s', display: 'inline-block', transform: accTimerOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+              <span className="chevron">▾</span>
             </button>
             {accTimerOpen && (
-              <div style={{ padding: '0 14px 14px' }}>
+              <div className="training-panel-body">
 
                 {/* Tabs Timer / Cronômetro */}
                 <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -964,8 +837,8 @@ export default function TreinoPage() {
                       onClick={() => setTimerTab(tab)}
                       style={{
                         flex: 1, padding: '8px 0', borderRadius: 8,
-                        border: `1.5px solid ${timerTab === tab ? 'var(--accent)' : 'var(--line)'}`,
-                        background: timerTab === tab ? 'var(--accent)' : 'transparent',
+                        border: `1.5px solid ${timerTab === tab ? 'var(--ember)' : 'var(--line)'}`,
+                        background: timerTab === tab ? 'var(--gradient-action)' : 'transparent',
                         color: timerTab === tab ? '#fff' : 'var(--text2)',
                         fontSize: 13, fontWeight: 600, fontFamily: 'var(--font)',
                         cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
@@ -985,7 +858,7 @@ export default function TreinoPage() {
                       letterSpacing: '.03em', lineHeight: 1,
                       fontVariantNumeric: 'tabular-nums',
                       margin: '6px 0 14px',
-                      color: timerFinished ? 'var(--accent2)' : timerRunning ? 'var(--accent)' : 'var(--text)',
+                      color: timerFinished ? 'var(--energy)' : timerRunning ? 'var(--ember)' : 'var(--text)',
                       transition: 'color .2s',
                     }}>
                       {fmtSecs(timerRemain)}
@@ -1000,8 +873,8 @@ export default function TreinoPage() {
                           style={{
                             flex: 1, minWidth: 52, padding: '11px 4px',
                             borderRadius: 10,
-                            border: `1.5px solid ${timerRunning && secs === timerSecs ? 'var(--accent)' : 'var(--line)'}`,
-                            background: timerRunning && secs === timerSecs ? 'var(--accent)' : 'var(--surface2)',
+                            border: `1.5px solid ${timerRunning && secs === timerSecs ? 'var(--ember)' : 'var(--line)'}`,
+                            background: timerRunning && secs === timerSecs ? 'var(--gradient-action)' : 'var(--surface2)',
                             color: timerRunning && secs === timerSecs ? '#fff' : 'var(--text)',
                             fontSize: 14, fontWeight: 700, fontFamily: 'var(--font)',
                             cursor: 'pointer', textAlign: 'center',
@@ -1037,7 +910,7 @@ export default function TreinoPage() {
                       letterSpacing: '.03em', lineHeight: 1,
                       fontVariantNumeric: 'tabular-nums',
                       margin: '6px 0 14px',
-                      color: swRunning ? 'var(--accent)' : 'var(--text)',
+                      color: swRunning ? 'var(--ember)' : 'var(--text)',
                       transition: 'color .2s',
                     }}>
                       {fmtSecs(swElapsed)}
@@ -1048,7 +921,7 @@ export default function TreinoPage() {
                         onClick={swToggle}
                         style={{
                           ...timerCtrlBtnStyle,
-                          background: 'var(--accent)', color: '#fff',
+                          background: 'var(--gradient-action)', color: '#fff',
                           border: 'none',
                         }}
                       >{swRunning ? 'Pausar' : 'Iniciar'}</button>
@@ -1067,38 +940,29 @@ export default function TreinoPage() {
 
           {/* ── Nota do treino (original L2680–2683) ────────────── */}
           <div style={{ marginBottom: 10 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', display: 'block', marginBottom: 6 }}>
-              📝 Observação do treino
+            <label className="training-note-label">
+              Observação do treino
             </label>
             <input
               placeholder="Como foi o treino, dores, energia..."
               value={state.nota}
               onChange={e => setNota(e.target.value)}
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                border: '1px solid var(--line)', background: 'rgba(0,0,0,.15)',
-                color: 'var(--text)', fontFamily: 'var(--font)',
-                fontSize: 16, fontWeight: 600, padding: '10px 12px',
-                borderRadius: 'var(--radius-xs)', outline: 'none',
-              }}
+              className="training-field"
+              style={{ width: '100%', padding: '10px 12px' }}
             />
           </div>
 
           {/* ── Workout Summary ─────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, marginTop: 10 }}>
+          <div className="training-summary-grid">
             {[
-              { val: totalSeries,            lbl: '🔁 Séries'     },
-              { val: Math.round(totalVolume), lbl: '🏋️ Volume kg'  },
-              { val: totalCardioMin,          lbl: '❤️ Cardio min' },
-              { val: totalKcal,               lbl: '🔥 kcal est.'  },
+              { val: totalSeries,            lbl: 'Séries'     },
+              { val: Math.round(totalVolume), lbl: 'Volume kg'  },
+              { val: totalCardioMin,          lbl: 'Cardio min' },
+              { val: totalKcal,               lbl: 'kcal est.'  },
             ].map(({ val, lbl }) => (
-              <div key={lbl} style={{
-                textAlign: 'center', padding: '8px 2px',
-                background: 'var(--surface)', border: '1px solid var(--line)',
-                borderRadius: 'var(--radius-xs)',
-              }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{val}</div>
-                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text3)', marginTop: 2, lineHeight: 1.3 }}>{lbl}</div>
+              <div key={lbl} className="training-summary-item">
+                <div className="training-summary-val">{val}</div>
+                <div className="training-summary-lbl">{lbl}</div>
               </div>
             ))}
           </div>
@@ -1137,20 +1001,6 @@ const actionBtnStyle: React.CSSProperties = {
 }
 
 // setInputStyle removido — usar className="set-input" (index.css) para suporte a :focus
-
-const accTriggerStyle: React.CSSProperties = {
-  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  gap: 8, padding: '12px 14px', background: 'none', border: 'none',
-  color: 'var(--text)', fontFamily: 'var(--font)', fontSize: 13, fontWeight: 700,
-  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-}
-
-const addSetBtnStyle: React.CSSProperties = {
-  marginTop: 4, padding: '6px 12px', borderRadius: 'var(--radius-xs)',
-  border: '1px dashed var(--line)', background: 'transparent',
-  color: 'var(--text3)', fontFamily: 'var(--font)', fontSize: 11, fontWeight: 700,
-  cursor: 'pointer', width: '100%', textAlign: 'center',
-}
 
 const timerCtrlBtnStyle: React.CSSProperties = {
   flex: 1, padding: '10px 0', borderRadius: 'var(--radius-xs)',

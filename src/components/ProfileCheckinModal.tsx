@@ -17,10 +17,12 @@ type View = 'profile' | 'form' | 'history'
 function ProfileView({
   settings,
   lastCheckin,
+  nowMs,
   onOpenHistory,
 }: {
   settings: UserSettingsData
   lastCheckin: CheckinRow | null
+  nowMs: number
   onOpenHistory: () => void
 }) {
   const { bf, leanKg, hasSF } = calcProfileMetrics(settings)
@@ -39,7 +41,7 @@ function ProfileView({
   if (lastCheckin) {
     const lastDate = new Date(lastCheckin.date + 'T12:00:00')
       .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-    const daysDiff = Math.round((Date.now() - new Date(lastCheckin.date + 'T12:00:00').getTime()) / 86400000)
+    const daysDiff = Math.round((nowMs - new Date(lastCheckin.date + 'T12:00:00').getTime()) / 86400000)
     const daysLabel = daysDiff === 0 ? 'hoje' : daysDiff === 1 ? 'há 1 dia' : `há ${daysDiff} dias`
 
     let deltaEl: React.ReactNode = null
@@ -63,7 +65,7 @@ function ProfileView({
           <span className="checkin-last-sub">{lastDate} · {daysLabel}</span>
         </div>
         <button className="checkin-history-link" type="button" onClick={onOpenHistory}>
-          📋 Histórico
+          HIST
         </button>
       </div>
     )
@@ -86,13 +88,13 @@ function ProfileView({
         </div>
         {bf != null && Number.isFinite(bf) && (
           <div className="checkin-row">
-            <span className="checkin-row-label">🧍 Gordura corporal</span>
+            <span className="checkin-row-label">Gordura corporal</span>
             <span className="checkin-row-value">{bf.toFixed(1)}%</span>
           </div>
         )}
         {leanKg != null && (
           <div className="checkin-row">
-            <span className="checkin-row-label">💪 Massa magra</span>
+            <span className="checkin-row-label">Massa magra</span>
             <span className="checkin-row-value">{leanKg.toFixed(1)} kg</span>
           </div>
         )}
@@ -107,15 +109,15 @@ function ProfileView({
         <div className="checkin-section">
           <div className="checkin-section-label">Energia</div>
           <div className="checkin-row">
-            <span className="checkin-row-label">🔥 BMR (metabolismo basal)</span>
+            <span className="checkin-row-label">BMR (metabolismo basal)</span>
             <span className="checkin-row-value">{Math.round(settings.bmr)} kcal</span>
           </div>
           <div className="checkin-row">
-            <span className="checkin-row-label">⚡ TDEE (gasto total)</span>
+            <span className="checkin-row-label">TDEE (gasto total)</span>
             <span className="checkin-row-value">{Math.round(settings.tdee ?? 0)} kcal</span>
           </div>
           <div className="checkin-row">
-            <span className="checkin-row-label">🎯 Meta diária</span>
+            <span className="checkin-row-label">Meta diária</span>
             <span className="checkin-row-value accent">{Math.round(settings.kcalTarget ?? 0)} kcal</span>
           </div>
         </div>
@@ -126,15 +128,15 @@ function ProfileView({
         <div className="checkin-section">
           <div className="checkin-section-label">Macros diários</div>
           <div className="checkin-row">
-            <span className="checkin-row-label">🥩 Proteína</span>
+            <span className="checkin-row-label">Proteína</span>
             <span className="checkin-row-value">{Math.round(settings.pTarget)} g</span>
           </div>
           <div className="checkin-row">
-            <span className="checkin-row-label">🥔 Carboidrato</span>
+            <span className="checkin-row-label">Carboidrato</span>
             <span className="checkin-row-value">{Math.round(settings.cTarget ?? 0)} g</span>
           </div>
           <div className="checkin-row">
-            <span className="checkin-row-label">🥑 Gordura</span>
+            <span className="checkin-row-label">Gordura</span>
             <span className="checkin-row-value">{Math.round(settings.gTarget ?? 0)} g</span>
           </div>
         </div>
@@ -196,7 +198,7 @@ function CheckinFormView({
       <div className="checkin-form-body">
         <div className="checkin-form-row">
           <div className="checkin-form-field">
-            <label htmlFor="ci-weight">⚖️ Peso (kg)</label>
+            <label htmlFor="ci-weight">Peso (kg)</label>
             <input
               id="ci-weight" type="number" inputMode="decimal" step={0.1} min={30} max={300}
               placeholder="76.0" value={weight}
@@ -204,7 +206,7 @@ function CheckinFormView({
             />
           </div>
           <div className="checkin-form-field">
-            <label htmlFor="ci-waist">📏 Cintura (cm)</label>
+            <label htmlFor="ci-waist">Cintura (cm)</label>
             <input
               id="ci-waist" type="number" inputMode="decimal" step={0.5} min={40} max={200}
               placeholder="88" value={waist}
@@ -214,7 +216,7 @@ function CheckinFormView({
         </div>
         <div className="checkin-form-row">
           <div className="checkin-form-field">
-            <label htmlFor="ci-bf">🧍 BF% (opcional)</label>
+            <label htmlFor="ci-bf">BF% (opcional)</label>
             <input
               id="ci-bf" type="number" inputMode="decimal" step={0.1} min={3} max={60}
               placeholder="—" value={bf}
@@ -224,7 +226,7 @@ function CheckinFormView({
           <div />
         </div>
         <div className="checkin-form-field">
-          <label htmlFor="ci-note">📝 Como foi sua semana?</label>
+          <label htmlFor="ci-note">Como foi sua semana?</label>
           <textarea
             id="ci-note" placeholder="Semana boa, dormi bem..."
             value={note} onChange={e => setNote(e.target.value)}
@@ -234,7 +236,7 @@ function CheckinFormView({
       <div className="checkin-form-footer">
         <button className="btn ghost" type="button" onClick={onCancel} disabled={saving}>Cancelar</button>
         <button className="btn primary" type="button" onClick={handleSave} disabled={saving}>
-          {saving ? 'Salvando…' : 'Salvar check-in ✅'}
+          {saving ? 'Salvando...' : 'Salvar check-in'}
         </button>
       </div>
     </>
@@ -252,7 +254,7 @@ function CheckinHistoryView({ checkins }: { checkins: CheckinRow[] }) {
     return (
       <div className="checkin-history-body">
         <div className="checkin-history-empty">
-          Nenhum check-in registrado ainda.<br />Use "Check-in ✅" no perfil para começar.
+          Nenhum check-in registrado ainda.<br />Use "Check-in" no perfil para começar.
         </div>
       </div>
     )
@@ -280,33 +282,33 @@ function CheckinHistoryView({ checkins }: { checkins: CheckinRow[] }) {
         }
 
         const trainStr = (c.trainingSessions ?? 0) > 0
-          ? `💪 ${c.trainingSessions} treino${(c.trainingSessions ?? 0) > 1 ? 's' : ''} · avg ${c.avgTrainingKcal} kcal · ${c.activityType}`
-          : '💪 Sem treinos registrados'
+          ? `${c.trainingSessions} treino${(c.trainingSessions ?? 0) > 1 ? 's' : ''} · avg ${c.avgTrainingKcal} kcal · ${c.activityType}`
+          : 'Sem treinos registrados'
         const nutrStr = (c.avgConsumed ?? 0) > 0
-          ? `🥗 avg ${(c.avgConsumed ?? 0).toLocaleString('pt-BR')} kcal · ${c.adherencePct}% aderência`
-          : '🥗 Sem dados de nutrição'
+          ? `avg ${(c.avgConsumed ?? 0).toLocaleString('pt-BR')} kcal · ${c.adherencePct}% aderência`
+          : 'Sem dados de nutrição'
 
         return (
           <div key={c.id} className="checkin-hcard">
             <div className="checkin-hcard-top">
-              <span className="checkin-hcard-date">📅 {dateLabel}</span>
+              <span className="checkin-hcard-date">{dateLabel}</span>
               <span className="checkin-hcard-goal">{goalLabel}</span>
             </div>
             <div className="checkin-hcard-metrics">
               <span className="checkin-hcard-metric">
                 <strong>{c.weightKg ? `${c.weightKg} kg` : '—'}</strong>{deltaEl}
               </span>
-              {c.waistCm ? <span className="checkin-hcard-metric">📏 <strong>{c.waistCm} cm</strong></span> : null}
-              {c.bfPct   ? <span className="checkin-hcard-metric">🧍 <strong>{c.bfPct}%</strong> BF</span> : null}
+              {c.waistCm ? <span className="checkin-hcard-metric">Cintura <strong>{c.waistCm} cm</strong></span> : null}
+              {c.bfPct   ? <span className="checkin-hcard-metric">BF <strong>{c.bfPct}%</strong></span> : null}
             </div>
             {c.bmr ? (
               <div className="checkin-hcard-stat">
-                🔥 BMR {Math.round(c.bmr).toLocaleString('pt-BR')} · Meta {Math.round(c.kcalTarget ?? 0).toLocaleString('pt-BR')} kcal
+                BMR {Math.round(c.bmr).toLocaleString('pt-BR')} · Meta {Math.round(c.kcalTarget ?? 0).toLocaleString('pt-BR')} kcal
               </div>
             ) : null}
             <div className="checkin-hcard-stat">{trainStr}</div>
             <div className="checkin-hcard-stat">{nutrStr}</div>
-            {c.note ? <div className="checkin-hcard-note">📝 "{c.note}"</div> : null}
+            {c.note ? <div className="checkin-hcard-note">"{c.note}"</div> : null}
           </div>
         )
       })}
@@ -326,6 +328,7 @@ interface Props {
 export default function ProfileCheckinModal({ open, settings, onClose, onOpenWizard }: Props) {
   const { checkins, loadCheckins, saveCheckin, getLastCheckin } = useCheckins()
   const [view, setView] = useState<View>('profile')
+  const [nowMs, setNowMs] = useState(() => Date.now())
   const loadedRef = useRef(false)
 
   // Carrega check-ins ao abrir (lazy)
@@ -335,7 +338,18 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
       loadCheckins()
     }
     if (!open) {
-      setView('profile')
+      let cancelled = false
+      queueMicrotask(() => {
+        if (!cancelled) setView('profile')
+      })
+      return () => { cancelled = true }
+    }
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) setNowMs(Date.now())
+    })
+    return () => {
+      cancelled = true
     }
   }, [open, loadCheckins])
 
@@ -349,13 +363,16 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
   }
 
   const overlayStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 316,
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,.68)', backdropFilter: 'blur(2px)', zIndex: 316,
   }
   const sheetStyle: React.CSSProperties = {
     position: 'fixed', bottom: 0, left: 0, right: 0,
     maxHeight: '90dvh',
-    background: 'linear-gradient(180deg, #1a2035, #121828)',
+    background: 'var(--gradient-panel)',
+    border: '1px solid var(--line)',
+    borderBottom: 0,
     borderRadius: '18px 18px 0 0',
+    boxShadow: '0 -22px 50px rgba(0,0,0,.45)',
     zIndex: 317,
     display: 'flex', flexDirection: 'column', overflow: 'hidden',
   }
@@ -365,10 +382,10 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
       <>
         <div style={overlayStyle} onClick={() => setView('profile')} />
         <div style={{ ...sheetStyle, zIndex: 323 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+          <div className="sheet-handle" />
           <div className="profile-checkin-header">
             <div>
-              <div className="profile-checkin-title">📸 Novo check-in</div>
+              <div className="profile-checkin-title">Novo check-in</div>
             </div>
             <button className="profile-checkin-close" type="button" onClick={() => setView('profile')}>✕</button>
           </div>
@@ -387,9 +404,9 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
       <>
         <div style={{ ...overlayStyle, zIndex: 318 }} onClick={() => setView('profile')} />
         <div style={{ ...sheetStyle, zIndex: 319 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+          <div className="sheet-handle" />
           <div className="checkin-history-header">
-            <span className="checkin-history-title">📋 Histórico de Check-ins</span>
+            <span className="checkin-history-title">Histórico de check-ins</span>
             <button className="profile-checkin-close" type="button" onClick={() => setView('profile')}>✕</button>
           </div>
           <CheckinHistoryView checkins={checkins} />
@@ -403,22 +420,23 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
     <>
       <div style={overlayStyle} onClick={onClose} />
       <div style={sheetStyle}>
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+        <div className="sheet-handle" />
         <div className="profile-checkin-header">
           <div>
-            <div className="profile-checkin-title">🧬 Seu perfil nutricional</div>
+            <div className="profile-checkin-title">Perfil nutricional</div>
           </div>
           <button className="profile-checkin-close" type="button" onClick={onClose}>✕</button>
         </div>
         <ProfileView
           settings={settings}
           lastCheckin={lastCheckin}
+          nowMs={nowMs}
           onOpenHistory={() => setView('history')}
         />
         <div className="profile-checkin-footer">
           <button className="btn ghost" type="button" onClick={onClose}>Fechar</button>
           <button className="btn ghost" type="button" onClick={onOpenWizard}>Atualizar →</button>
-          <button className="btn primary" type="button" onClick={() => setView('form')}>Check-in ✅</button>
+          <button className="btn primary" type="button" onClick={() => setView('form')}>Check-in</button>
         </div>
       </div>
     </>

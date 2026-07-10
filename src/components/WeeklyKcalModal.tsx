@@ -77,7 +77,7 @@ function WeekBars({ energies, goal }: { energies: EnergyDay[]; goal: number }) {
           <div style={{
             position: 'absolute', left: 0, right: 0,
             bottom: metaPx + 14,
-            borderTop: '1.5px dashed var(--accent2)',
+            borderTop: '1.5px dashed color-mix(in srgb, var(--energy) 60%, transparent)',
             opacity: 0.45,
             pointerEvents: 'none',
             zIndex: 2,
@@ -112,7 +112,7 @@ function WeekBars({ energies, goal }: { energies: EnergyDay[]; goal: number }) {
                       background: 'var(--surface3)',
                       borderRadius: '4px 4px 0 0',
                       minHeight: 2,
-                      border: day.isToday ? '1.5px solid var(--accent2)' : 'none',
+                      border: day.isToday ? '1.5px solid color-mix(in srgb, var(--energy) 58%, transparent)' : 'none',
                       boxSizing: 'border-box',
                     }} />
                   )}
@@ -123,7 +123,7 @@ function WeekBars({ energies, goal }: { energies: EnergyDay[]; goal: number }) {
                       left: '50%', transform: 'translateX(-50%)',
                       width: '55%',
                       height: consumedH,
-                      background: 'var(--accent)',
+                      background: 'var(--ember)',
                       borderRadius: '4px 4px 0 0',
                       zIndex: 1,
                       minHeight: 2,
@@ -132,7 +132,7 @@ function WeekBars({ energies, goal }: { energies: EnergyDay[]; goal: number }) {
                 </div>
                 <div style={{
                   fontSize: '9px',
-                  color: day.isToday ? 'var(--accent2)' : 'var(--text2)',
+                  color: day.isToday ? 'var(--energy)' : 'var(--text2)',
                   textAlign: 'center',
                   whiteSpace: 'nowrap',
                 }}>
@@ -157,16 +157,25 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
   // Carrega kcal ingerida das datas da semana visível
   useEffect(() => {
     if (!open) return
+    let cancelled = false
     const days = getWeekDays(offset)
-    setLoading(true)
+    queueMicrotask(() => {
+      if (!cancelled) setLoading(true)
+    })
     getWeekKcal(days.map(d => d.iso))
-      .then(m => setKcalMap(prev => ({ ...prev, ...m })))
-      .finally(() => setLoading(false))
-  }, [open, offset])
+      .then(m => {
+        if (!cancelled) setKcalMap(prev => ({ ...prev, ...m }))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [open, offset, getWeekKcal])
 
   // Reset offset ao fechar
   useEffect(() => {
-    if (!open) setOffset(0)
+    if (open) return
+    queueMicrotask(() => setOffset(0))
   }, [open])
 
   if (!open) return null
@@ -201,7 +210,7 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.6)',
+          background: 'rgba(0,0,0,.68)',
           zIndex: 312,
         }}
       />
@@ -210,12 +219,13 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0,
         maxWidth: '600px', margin: '0 auto',
-        background: 'linear-gradient(180deg,#1a2035,#121828)',
+        background: 'var(--gradient-panel)',
         border: '1px solid var(--line)',
         borderBottom: 'none',
-        borderRadius: '20px 20px 0 0',
+        borderRadius: '18px 18px 0 0',
         zIndex: 313,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        boxShadow: '0 -22px 50px rgba(0,0,0,.45)',
       }}>
         {/* handle */}
         <div style={{
@@ -241,13 +251,13 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
               fontSize: '18px',
               color: 'var(--text)',
               cursor: 'pointer',
-              fontFamily: 'var(--font)',
+              fontFamily: 'var(--font-data)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               lineHeight: 1,
             }}
           >‹</button>
 
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', textAlign: 'center', flex: 1 }}>
+          <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text)', textAlign: 'center', flex: 1, fontFamily: 'var(--font-title)' }}>
             {title}
           </span>
 
@@ -263,7 +273,7 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
               fontSize: '18px',
               color: 'var(--text)',
               cursor: offset >= 0 ? 'default' : 'pointer',
-              fontFamily: 'var(--font)',
+              fontFamily: 'var(--font-data)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               lineHeight: 1,
               opacity: offset >= 0 ? 0.3 : 1,
@@ -280,7 +290,7 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
                   width: 24, height: 24,
                   borderRadius: '50%',
                   border: '2px solid transparent',
-                  borderTopColor: 'var(--accent)',
+                  borderTopColor: 'var(--ember)',
                   animation: 'spin 0.7s linear infinite',
                 }}
               />
@@ -311,7 +321,7 @@ export function WeeklyKcalModal({ open, onClose, getWeekKcal, workoutKcalByDate,
           {/* legenda */}
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '2px', background: 'var(--accent)' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '2px', background: 'var(--ember)' }} />
               <span style={{ fontSize: '10px', color: 'var(--text3)' }}>ingerido</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>

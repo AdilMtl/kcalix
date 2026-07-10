@@ -22,9 +22,11 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
   // Reseta ao abrir — original L7961–7962
   useEffect(() => {
     if (open) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setNome('');
       setGrupo(GRUPOS[0] ?? '');
       setSecundarios([]);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [open]);
 
@@ -71,8 +73,10 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
       {/* sheet — .modal-sheet (L2814) — z-index acima do ExerciseSelector */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -18px 46px rgba(0,0,0,.42)',
         zIndex: 331,
         maxHeight: '90dvh',
         overflowY: 'auto',
@@ -91,7 +95,7 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
           padding: '14px 16px 10px',
           borderBottom: '1px solid var(--line)',
         }}>
-          <b style={{ fontSize: 16 }}>＋ Criar exercício</b>
+          <b style={{ fontSize: 16, fontFamily: 'var(--font-title)' }}>Criar exercício</b>
           <button
             onClick={onClose}
             style={{
@@ -123,7 +127,8 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
                 padding: '10px 12px',
                 color: 'var(--text)',
                 outline: 'none',
-                fontFamily: 'var(--font)',
+                fontFamily: 'var(--font-data)',
+                minHeight: 44,
                 boxSizing: 'border-box',
               }}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
@@ -141,9 +146,9 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
               style={{
                 width: '100%',
                 border: '1px solid var(--line)',
-                background: 'rgba(0,0,0,.15)',
+                background: 'var(--surface2)',
                 color: 'var(--text)',
-                fontFamily: 'var(--font)',
+                fontFamily: 'var(--font-data)',
                 fontSize: 16,
                 fontWeight: 700,
                 padding: 8,
@@ -175,12 +180,12 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
                     padding: '4px 10px',
                     borderRadius: 20,
                     border: secundarios.includes(g)
-                      ? '1px solid var(--accent)'
+                      ? '1px solid var(--ember)'
                       : '1px solid var(--line)',
                     fontSize: 12,
                     fontWeight: 600,
                     color: secundarios.includes(g) ? '#fff' : 'var(--text2)',
-                    background: secundarios.includes(g) ? 'var(--accent)' : 'transparent',
+                    background: secundarios.includes(g) ? 'var(--gradient-action)' : 'transparent',
                     cursor: 'pointer',
                     transition: 'background 0.15s, color 0.15s',
                     fontFamily: 'var(--font)',
@@ -199,7 +204,7 @@ export function CustomExerciseModal({ open, onClose, onSave }: Props) {
             className="btn primary"
             style={{ width: '100%', minHeight: 44, fontSize: 15 }}
           >
-            ✅ Criar exercício
+            Criar exercício
           </button>
         </div>
       </div>

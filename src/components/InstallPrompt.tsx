@@ -127,11 +127,11 @@ export function InstallPrompt() {
       <div style={{
         position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))',
         left: 12, right: 12, zIndex: 400,
-        background: 'linear-gradient(135deg, #1e1540, #2a1f6b)',
-        border: '1px solid rgba(124,92,255,0.4)',
-        borderRadius: 16, padding: '14px 16px',
+        background: 'var(--gradient-panel)',
+        border: '1px solid var(--line)',
+        borderRadius: 10, padding: '14px 16px',
         display: 'flex', alignItems: 'center', gap: 12,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        boxShadow: 'var(--shadow)',
       }}>
         <span style={{ fontSize: 28 }}>📲</span>
         <div style={{ flex: 1 }}>
@@ -143,9 +143,10 @@ export function InstallPrompt() {
         <button
           onClick={handleInstallAndroid}
           style={{
-            background: '#7c5cff', color: '#fff', border: 'none',
-            borderRadius: 10, padding: '8px 14px',
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            background: 'var(--gradient-action)', color: '#fff', border: '1px solid color-mix(in srgb, var(--ember) 42%, white)',
+            borderRadius: 8, padding: '8px 14px',
+            fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap',
+            fontFamily: 'var(--font)',
           }}
         >
           Instalar
@@ -164,17 +165,17 @@ export function InstallPrompt() {
       <div style={{
         position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))',
         left: 12, right: 12, zIndex: 400,
-        background: 'linear-gradient(135deg, #1e1540, #2a1f6b)',
-        border: '1px solid rgba(124,92,255,0.4)',
-        borderRadius: 16, padding: '14px 16px',
+        background: 'var(--gradient-panel)',
+        border: '1px solid var(--line)',
+        borderRadius: 10, padding: '14px 16px',
         display: 'flex', alignItems: 'center', gap: 12,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        boxShadow: 'var(--shadow)',
       }}>
         <span style={{ fontSize: 26 }}>🧭</span>
         <div style={{ flex: 1 }}>
           <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Instale pelo Safari</div>
           <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2, lineHeight: 1.4 }}>
-            Abra <span style={{ color: '#a78bfa', fontWeight: 600 }}>kcalix.vercel.app</span> no Safari para instalar na tela inicial
+            Abra <span style={{ color: 'var(--energy)', fontWeight: 600 }}>kcalix.vercel.app</span> no Safari para instalar na tela inicial
           </div>
         </div>
         <button onClick={handleDismiss} style={{
@@ -194,19 +195,19 @@ export function InstallPrompt() {
         onClick={handleDismiss}
         style={{
           position: 'fixed', inset: 0, zIndex: 410,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.68)', backdropFilter: 'blur(2px)',
         }}
       />
 
       {/* Sheet */}
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 411,
-        background: 'linear-gradient(180deg, #1a2035, #121828)',
-        borderRadius: '20px 20px 0 0',
-        borderTop: '1px solid rgba(124,92,255,0.3)',
+        background: 'var(--gradient-panel)',
+        borderRadius: '18px 18px 0 0',
+        borderTop: '1px solid var(--line)',
         padding: '20px 24px',
         paddingBottom: 'calc(28px + env(safe-area-inset-bottom))',
-        boxShadow: '0 -8px 40px rgba(0,0,0,0.6)',
+        boxShadow: '0 -22px 50px rgba(0,0,0,.45)',
       }}>
         {/* Handle */}
         <div style={{
@@ -236,7 +237,7 @@ export function InstallPrompt() {
           {/* Passo 1 */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 14px',
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '12px 14px',
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
@@ -247,7 +248,7 @@ export function InstallPrompt() {
             </div>
             <div>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>
-                Toque em <span style={{ color: '#60a5fa' }}>Compartilhar</span>
+                Toque em <span style={{ color: 'var(--energy)' }}>Compartilhar</span>
               </div>
               <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>
                 Ícone da barra inferior do Safari
@@ -262,19 +263,19 @@ export function InstallPrompt() {
           {/* Passo 2 */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 14px',
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '12px 14px',
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: 'rgba(124,92,255,0.15)', border: '1px solid rgba(124,92,255,0.3)',
+              background: 'color-mix(in srgb, var(--ember) 14%, transparent)', border: '1px solid color-mix(in srgb, var(--ember) 30%, transparent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--accent2)',
+              color: 'var(--energy)',
             }}>
               <AddToHomeIcon />
             </div>
             <div>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>
-                Toque em <span style={{ color: '#a78bfa' }}>"Adicionar à Tela de Início"</span>
+                Toque em <span style={{ color: 'var(--energy)' }}>"Adicionar à Tela de Início"</span>
               </div>
               <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>
                 Role o menu do Safari para encontrar
@@ -285,11 +286,11 @@ export function InstallPrompt() {
           {/* Passo 3 */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 14px',
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '12px 14px',
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)',
+              background: 'color-mix(in srgb, var(--good) 14%, transparent)', border: '1px solid color-mix(in srgb, var(--good) 30%, transparent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 18,
             }}>
@@ -297,7 +298,7 @@ export function InstallPrompt() {
             </div>
             <div>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>
-                Toque em <span style={{ color: '#34d399' }}>"Adicionar"</span> no canto superior direito
+                Toque em <span style={{ color: 'var(--good)' }}>"Adicionar"</span> no canto superior direito
               </div>
               <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 }}>
                 O Kcalix aparece na sua tela inicial
@@ -310,9 +311,9 @@ export function InstallPrompt() {
         <button
           onClick={handleDismiss}
           style={{
-            width: '100%', padding: '13px', borderRadius: 12,
-            background: 'rgba(124,92,255,0.2)', border: '1px solid rgba(124,92,255,0.35)',
-            color: '#a78bfa', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            width: '100%', padding: '13px', borderRadius: 8,
+            background: 'var(--gradient-action)', border: '1px solid color-mix(in srgb, var(--ember) 42%, white)',
+            color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer',
             fontFamily: 'var(--font)', marginBottom: 10,
           }}
         >

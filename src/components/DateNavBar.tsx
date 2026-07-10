@@ -41,16 +41,9 @@ export default function DateNavBar() {
   return (
     <>
       {/* Header: nome da página (esq) + date-pill (dir) */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 16px',
-        borderBottom: '1px solid var(--line)',
-        background: 'var(--bg)',
-      }}>
+      <div className="date-nav">
         {/* Nome da página */}
-        <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>
+        <span className="date-nav-title">
           {pageLabel}
         </span>
 
@@ -59,76 +52,30 @@ export default function DateNavBar() {
           {/* Btn "hoje" — visível só quando não é hoje, à esquerda da pill */}
           <button
             onClick={goToToday}
+            className="date-nav-today"
             style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              fontFamily: 'var(--font)',
-              color: 'var(--accent2)',
-              background: 'rgba(167,139,250,.08)',
-              border: '1px solid rgba(167,139,250,.18)',
-              borderRadius: '999px',
-              padding: '4px 9px',
-              cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-              whiteSpace: 'nowrap',
               opacity: today ? 0 : 1,
               pointerEvents: today ? 'none' : 'auto',
-              transition: 'opacity .2s',
             }}
           >
             hoje
           </button>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'var(--surface2)',
-            border: '1px solid var(--line)',
-            borderRadius: '999px',
-            padding: '6px 12px',
-            fontSize: '12px',
-            color: 'var(--text)',
-            backdropFilter: 'blur(12px)',
-          }}>
+          <div className="date-pill">
             <button
               onClick={goToPrev}
-              style={{
-                background: 'transparent',
-                border: 0,
-                color: 'var(--text3)',
-                fontSize: '15px',
-                fontWeight: 700,
-                lineHeight: 1,
-                padding: '0 3px',
-                cursor: 'pointer',
-                minWidth: '20px',
-                textAlign: 'center',
-                flexShrink: 0,
-                fontFamily: 'var(--font)',
-              }}
             >
               ‹
             </button>
 
-            <span style={{ fontWeight: 600, userSelect: 'none' }}>
+            <span style={{ fontWeight: 700, userSelect: 'none' }}>
               {formatDate(selectedDate)}
             </span>
 
             <button
               onClick={goToNext}
               style={{
-                background: 'transparent',
-                border: 0,
                 color: today ? 'rgba(255,255,255,.2)' : 'var(--text3)',
-                fontSize: '15px',
-                fontWeight: 700,
-                lineHeight: 1,
-                padding: '0 3px',
                 cursor: today ? 'default' : 'pointer',
-                minWidth: '20px',
-                textAlign: 'center',
-                flexShrink: 0,
-                fontFamily: 'var(--font)',
               }}
             >
               ›
@@ -140,35 +87,12 @@ export default function DateNavBar() {
 
       {/* Banner "Editando [data]" — aparece abaixo do header quando não é hoje */}
       {!today && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '8px',
-          background: 'rgba(124,92,255,.10)',
-          border: '1px solid rgba(124,92,255,.20)',
-          borderRadius: 'var(--radius-xs)',
-          padding: '8px 12px',
-          margin: '8px 16px 0',
-          fontSize: '12px',
-          color: 'var(--accent2)',
-        }}>
-          <span>📅 Editando: <b>{formatBanner(selectedDate)}</b></span>
+        <div className="date-edit-banner">
+          <span>Editando: <b>{formatBanner(selectedDate)}</b></span>
           <button
             onClick={goToToday}
-            style={{
-              background: 'transparent',
-              border: 0,
-              color: 'var(--accent2)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              padding: 0,
-              whiteSpace: 'nowrap',
-              fontFamily: 'var(--font)',
-            }}
           >
-            → Hoje
+            Hoje
           </button>
         </div>
       )}
