@@ -221,11 +221,29 @@ supabase/migrations/
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
 | 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (itens 1–10 + hidratação concluídos; v0.55.0 melhorias treino — 2026-03-28) |
+| 6B-H | Home Revamp v2 — dashboard contextual | CONCLUIDA (v0.58.0 — 2026-07-11) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
 | 6E | CI/CD + Loading states + OG Tags | Planejada |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
+
+---
+
+## FASE 6B-H — Home Revamp v2 — CONCLUIDA (v0.58.0 — 2026-07-11)
+
+- [x] Opção C adotada: narrativa de decisão com acabamento Ember.
+- [x] Recomendação usa `calcMuscleVolume` e MEV dos últimos 7 dias, compartilhada com `O que treinar hoje?`.
+- [x] Combinação de grupo grande + complementar e ranking dos 3 maiores déficits.
+- [x] Pós-treino com kcal, séries, duração opcional e comparação de progresso.
+- [x] Insight determinístico exibido somente quando há ação útil.
+- [x] Nutrição, hábitos recolhidos, gráfico semanal, energia, Nav e Coach preservados.
+- [x] Readiness abstrato, plano mínimo, pulso de hábitos, Coach duplicado e atalhos repetidos removidos.
+- [x] Compatibilidade com treinos antigos preservada; sem migration SQL.
+- [x] Build aprovado, lint escopado aprovado e 54/54 testes passando.
+- [x] QA manual realizado pelo usuário em produção.
+
+Spec: `memory/spec-home-revamp-v2.md`
 
 ---
 

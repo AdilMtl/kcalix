@@ -2,6 +2,31 @@
 
 ---
 
+## [0.58.0] — 2026-07-11
+
+### Adicionado
+- [feat] Recomendação contextual na Home usando o volume real dos últimos 7 dias contra o MEV, com combinação de grupo grande + complementar e ranking dos três grupos prioritários.
+- [feat] Resumo pós-treino com kcal, séries de trabalho, duração opcional e comparação de volume, repetições e melhores cargas.
+- [test] Cobertura do dashboard para ranking, exercícios personalizados, aquecimento, treino com zero kcal, progresso e dados não numéricos.
+
+### Melhorado
+- [improve] Home reorganizada conforme a Convergência C: treino contextual, nutrição, hábitos recolhidos, insight útil, gráfico semanal e snapshot de energia.
+- [improve] Home e sheet `O que treinar hoje?` agora compartilham a mesma regra tipada de volume/MEV.
+- [improve] Insights genéricos foram substituídos por regras contextuais; readiness abstrato, plano mínimo, pulso semanal duplicado, faixa Coach duplicada e atalhos repetidos foram removidos.
+- [improve] Duração de novos treinos pode ser persistida opcionalmente no JSONB sem invalidar registros antigos.
+
+### Validação
+- `npm.cmd run build` passou.
+- `npm.cmd test` passou: 3 arquivos, 54 testes.
+- Lint escopado passou para Home, Treino, helper e testes do dashboard.
+- Produção validada em `https://kcalix.vercel.app/home`; rota e bundle responderam `200 OK`.
+
+### Notas
+- `WorkoutDayData.durationMin` é opcional; nenhuma migration SQL foi necessária.
+- Ponto de restauração anterior ao revamp: commit `24ea26a`.
+
+---
+
 ## [0.57.0] — 2026-07-09
 
 ### Melhorado
