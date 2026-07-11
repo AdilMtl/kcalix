@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import { DEFAULT_TEMPLATES } from '../data/exerciseDb'
@@ -76,7 +76,7 @@ interface UseWorkoutReturn {
   updateCardio:    (index: number, entry: CardioEntry) => void
 
   // persistência
-  saveWorkout:     () => Promise<void>
+  saveWorkout:     (durationMin?: number) => Promise<void>
   saveTemplates:   (templates: WorkoutTemplate[]) => Promise<void>
 
   // leitura de histórico (para sessão 3B/3E)
@@ -105,6 +105,7 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>(DEFAULT_TEMPLATES)
   const [loading, setLoading]     = useState(true)
   const [saved, setSaved]         = useState(false)
+  const loadedDurationRef         = useRef<number | undefined>(undefined)
 
   // ── carregar treino do dia + templates ──
   useEffect(() => {
@@ -135,6 +136,7 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
 
       if (workoutRes.data?.data) {
         const d = workoutRes.data.data as WorkoutDayData
+        loadedDurationRef.current = d.durationMin
         setState({
           templateId: d.templateId,
           exercicios: (d.exercicios ?? []).map(sanitizeExercicio).filter((e): e is WorkoutExercise => e !== null),
@@ -143,6 +145,7 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
         })
         setSaved(true)
       } else {
+        loadedDurationRef.current = undefined
         setState(EMPTY_STATE)
       }
 
@@ -238,18 +241,21 @@ export function useWorkout(date: string = todayISO()): UseWorkoutReturn {
 
   // ── persistência ──
 
-  const saveWorkout = useCallback(async () => {
+  const saveWorkout = useCallback(async (durationMin?: number) => {
     if (!user) return
     const kcal = calcWorkoutKcal(state)
+    const storedDuration = durationMin ?? loadedDurationRef.current
     const payload: WorkoutDayData = {
       ...state,
       kcal,
       savedAt: new Date().toISOString(),
+      ...(storedDuration != null && storedDuration > 0 ? { durationMin: Math.round(storedDuration) } : {}),
     }
     const { error } = await supabase
       .from('workouts')
       .upsert({ user_id: user.id, date, data: payload }, { onConflict: 'user_id,date' })
     if (error) throw error
+    loadedDurationRef.current = storedDuration
     setSaved(true)
 
     // Atualiza kcalTreino no diary_entries do mesmo dia (para EnergyCard na Home)

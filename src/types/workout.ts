@@ -26,6 +26,7 @@ export type WorkoutDayData = {
   nota:        string;
   kcal:        number;
   savedAt:     string; // ISO timestamp
+  durationMin?: number; // opcional: registros antigos continuam válidos
 };
 
 // Linha completa da tabela workouts

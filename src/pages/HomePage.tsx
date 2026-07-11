@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useDiary } from '../hooks/useDiary'
 import { fetchAllWorkoutRows } from '../hooks/useWorkout'
-import { fetchAllBodyRows } from '../hooks/useBody'
-import BodyEvolutionModal from '../components/BodyEvolutionModal'
-import type { BodyRow } from '../types/body'
 import type { WorkoutDayData } from '../types/workout'
 import { useAuthStore } from '../store/authStore'
 import { useDateStore } from '../store/dateStore'
@@ -15,34 +12,28 @@ import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
 import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
-import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
 import Skeleton from '../components/Skeleton'
 import { useInstallStore } from '../store/installStore'
 import { useAppMessage } from '../hooks/useAppMessage'
 import AppMessageModal from '../components/AppMessageModal'
-import { DEFAULT_TEMPLATES, exById } from '../data/exerciseDb'
+import { useCustomExercises } from '../hooks/useCustomExercises'
 import { HABITS_DEF, type HabitsMap } from '../types/habit'
+import {
+  buildCompletedWorkoutSummary,
+  buildWorkoutRecommendation,
+  workoutFocusLabels,
+  type CompletedWorkoutSummary,
+  type WorkoutRecommendation,
+} from '../lib/homeDashboard'
 
 type WeekDay = { iso: string; label: string; isFuture: boolean; isToday: boolean }
 type WorkoutRow = WorkoutDayData & { date: string }
-type WorkoutPlan = {
-  title: string
-  focus: string
-  reason: string
-  start: string
-  minimum: string
-  readiness: number
-  cta: string
-}
+type HomeInsight = { kicker: string; title: string; text: string; tone: 'good' | 'warn' | 'bad' }
 
 function pct(value: number, total: number): number {
   if (total <= 0) return 0
   return Math.min(100, Math.round((value / total) * 100))
-}
-
-function clampText(value: string, max = 84): string {
-  return value.length > max ? `${value.slice(0, max - 1)}...` : value
 }
 
 function formatDate(iso: string): string {
@@ -53,12 +44,6 @@ function formatDate(iso: string): string {
     month: 'long',
   })
   return label.charAt(0).toUpperCase() + label.slice(1)
-}
-
-function daysBetween(fromIso: string, toIso: string): number {
-  const from = new Date(`${fromIso}T12:00:00`).getTime()
-  const to = new Date(`${toIso}T12:00:00`).getTime()
-  return Math.max(0, Math.round((to - from) / 86400000))
 }
 
 function getWeekDates(): WeekDay[] {
@@ -75,59 +60,6 @@ function getWeekDates(): WeekDay[] {
     const iso = d.toISOString().slice(0, 10)
     return { iso, label: labels[i], isFuture: iso > todayStr, isToday: iso === todayStr }
   })
-}
-
-function templateShortName(nome: string): string {
-  return nome.split(' - ')[0]?.replace('Treino ', '') || nome
-}
-
-function templateFocus(nome: string): string {
-  return nome.split(' - ')[1] ?? 'Sessao completa'
-}
-
-function exerciseName(id: string | undefined): string {
-  if (!id) return 'Exercicio principal'
-  return exById(id)?.nome ?? 'Exercicio principal'
-}
-
-function buildWorkoutPlan(rows: WorkoutRow[], selectedDate: string, todayWorkoutKcal: number): WorkoutPlan {
-  const pastRows = rows
-    .filter(row => row.date <= selectedDate)
-    .sort((a, b) => b.date.localeCompare(a.date))
-  const doneToday = todayWorkoutKcal > 0 || pastRows.some(row => row.date === selectedDate && (row.kcal ?? 0) > 0)
-  const lastBeforeSelected = rows
-    .filter(row => row.date < selectedDate)
-    .sort((a, b) => b.date.localeCompare(a.date))[0]
-
-  const lastTemplateId = lastBeforeSelected?.templateId ?? pastRows[0]?.templateId ?? null
-  const lastIndex = DEFAULT_TEMPLATES.findIndex(t => t.id === lastTemplateId)
-  const template = DEFAULT_TEMPLATES[(lastIndex + 1 + DEFAULT_TEMPLATES.length) % DEFAULT_TEMPLATES.length] ?? DEFAULT_TEMPLATES[0]
-  const days = lastBeforeSelected ? daysBetween(lastBeforeSelected.date, selectedDate) : null
-  const start = exerciseName(template.exercicios[0])
-  const second = exerciseName(template.exercicios[1])
-  const third = exerciseName(template.exercicios[3] ?? template.exercicios[2])
-
-  if (doneToday) {
-    return {
-      title: 'Treino registrado',
-      focus: `${Math.round(todayWorkoutKcal)} kcal de treino`,
-      reason: 'sessao de hoje ja entrou no diario',
-      start: 'Revisar treino salvo',
-      minimum: 'Manter recuperacao e fechar o diario',
-      readiness: 100,
-      cta: 'Revisar treino',
-    }
-  }
-
-  return {
-    title: templateShortName(template.nome),
-    focus: templateFocus(template.nome),
-    reason: days == null ? 'primeira sugestao da rotina base' : `ultimo treino ha ${days} dia${days === 1 ? '' : 's'}`,
-    start,
-    minimum: `25 min: ${start} + ${second} + ${third}`,
-    readiness: days == null ? 72 : Math.min(92, 58 + days * 8),
-    cta: 'Abrir treino',
-  }
 }
 
 function buildRunway({
@@ -152,7 +84,7 @@ function buildRunway({
   return `ate ${pLeft}P / ${cLeft}C / ${gLeft}G na proxima refeicao`
 }
 
-function buildAlert({
+function buildHomeInsight({
   p,
   pTarget,
   c,
@@ -160,6 +92,9 @@ function buildAlert({
   kcal,
   kcalTarget,
   workoutDone,
+  habits,
+  date,
+  settingsConfigured,
 }: {
   p: number
   pTarget: number
@@ -168,32 +103,38 @@ function buildAlert({
   kcal: number
   kcalTarget: number
   workoutDone: boolean
-}): { title: string; text: string } {
+  habits: HabitsMap
+  date: string
+  settingsConfigured: boolean
+}): HomeInsight | null {
+  if (date !== todayISO()) return null
+  if (!settingsConfigured) {
+    return { kicker: 'Dados incompletos', title: 'Configure suas metas nutricionais.', text: 'Sem metas, o dashboard não consegue interpretar seu saldo do dia.', tone: 'warn' }
+  }
+
+  const hour = new Date().getHours()
   const pPct = pct(p, pTarget)
   const kcalLeft = kcalTarget > 0 ? Math.round(kcalTarget - kcal) : 0
   const cLeft = cTarget > 0 ? Math.round(cTarget - c) : 0
 
-  if (pTarget > 0 && pPct < 55) {
-    return { title: 'Proteina baixa ate agora', text: 'Priorize uma refeicao com proteina clara antes de gastar carbo.' }
+  if (kcalTarget > 0 && kcal > kcalTarget) {
+    return { kicker: 'Ajuste útil agora', title: `${Math.round(kcal - kcalTarget)} kcal acima da meta.`, text: 'Feche o diário e preserve uma escolha mais leve na próxima refeição.', tone: 'bad' }
   }
-  if (!workoutDone) {
-    return { title: 'Treino pendente hoje', text: 'Uma sessao curta ja fecha o sinal principal do dia.' }
+  if (hour >= 14 && pTarget > 0 && pPct < 60) {
+    return { kicker: 'Ajuste útil agora', title: `Faltam ${Math.max(0, Math.round(pTarget - p))}g de proteína.`, text: 'Priorize 30–40g na próxima refeição; calorias e gordura ainda definem o tamanho final.', tone: 'warn' }
   }
-  if (kcalTarget > 0 && kcalLeft > 350 && cLeft > 35) {
-    return { title: 'Boa margem para jantar', text: 'Carbo moderado cabe bem sem estourar a meta.' }
+  if (hour >= 17 && !workoutDone) {
+    return { kicker: 'Pendência do dia', title: 'Treino ainda não registrado.', text: 'Abra a recomendação acima para decidir o grupo prioritário sem sair da Home.', tone: 'warn' }
   }
-  return { title: 'Dia sob controle', text: 'Mantenha o diario fechado e preserve a recuperacao.' }
-}
-
-function weekHabitAdherence(habits: HabitsMap, weekDates: string[]): number {
-  const validDates = weekDates.filter(date => date <= todayISO())
-  if (validDates.length === 0) return 0
-  const total = validDates.length * HABITS_DEF.length
-  const done = validDates.reduce((sum, date) => {
-    const row = habits[date]
-    return sum + HABITS_DEF.filter(h => row?.[h.id as keyof typeof row]).length
-  }, 0)
-  return Math.round((done / total) * 100)
+  const habitRow = habits[date]
+  const incompleteHabits = HABITS_DEF.filter(habit => !habitRow?.[habit.id as keyof typeof habitRow]).length
+  if (hour >= 20 && incompleteHabits > 0) {
+    return { kicker: 'Fechamento do dia', title: `${incompleteHabits} hábito${incompleteHabits === 1 ? '' : 's'} ainda aberto${incompleteHabits === 1 ? '' : 's'}.`, text: 'Revise somente o que realmente foi concluído antes de encerrar o dia.', tone: 'warn' }
+  }
+  if (hour >= 17 && kcalLeft > 350 && cLeft > 35) {
+    return { kicker: 'Margem disponível', title: `${kcalLeft} kcal livres para o restante do dia.`, text: `Até ${Math.max(0, Math.round(pTarget - p))}P / ${cLeft}C ainda cabem dentro das metas.`, tone: 'good' }
+  }
+  return null
 }
 
 function HomeCard({ children, className = '', onClick }: {
@@ -208,42 +149,112 @@ function HomeCard({ children, className = '', onClick }: {
   )
 }
 
-function WorkoutHero({ plan, onOpen }: { plan: WorkoutPlan; onOpen: () => void }) {
+function WorkoutDashboard({
+  isToday,
+  loading,
+  recommendation,
+  summary,
+  focus,
+  onRecommend,
+  onOpenWorkout,
+}: {
+  isToday: boolean
+  loading: boolean
+  recommendation: WorkoutRecommendation
+  summary: CompletedWorkoutSummary | null
+  focus: string[]
+  onRecommend: () => void
+  onOpenWorkout: () => void
+}) {
+  if (loading) {
+    return <HomeCard className="home-workout-decision"><Skeleton height="190px" /></HomeCard>
+  }
+
+  if (summary) {
+    const positiveProgress = summary.prCount > 0 || (summary.volumeDeltaPct ?? 0) > 0 || (summary.repsDelta ?? 0) > 0
+    return (
+      <section className="home-workout-decision completed">
+        <div className="home-workout-label-row">
+          <span className="home-chip">{isToday ? 'Sessão concluída' : 'Treino registrado'}</span>
+          <span className="home-workout-status">salvo</span>
+        </div>
+        <h1>{focus.length > 0 ? focus.join(' + ') : 'Treino concluído'}</h1>
+        <p>{positiveProgress ? 'Sessão salva com avanço em relação às referências anteriores.' : 'Sessão salva e disponível para revisão.'}</p>
+
+        <div className="home-session-kpis">
+          <div><small>Gasto</small><strong>{summary.kcal}</strong><span>kcal</span></div>
+          <div><small>Trabalho</small><strong>{summary.workSets}</strong><span>séries</span></div>
+          <div><small>Duração</small><strong>{summary.durationMin ?? '--'}</strong><span>{summary.durationMin == null ? 'não registrada' : 'min'}</span></div>
+        </div>
+
+        <div className={`home-session-progress${positiveProgress ? ' positive' : ''}`}>
+          <strong>{positiveProgress ? 'Progresso confirmado' : summary.hasComparison ? 'Sessão registrada' : 'Primeira referência salva'}</strong>
+          <div>
+            {summary.volumeDeltaPct != null && <span>Volume {summary.volumeDeltaPct > 0 ? '+' : ''}{summary.volumeDeltaPct}%</span>}
+            {summary.repsDelta != null && summary.repsDelta !== 0 && <span>Reps {summary.repsDelta > 0 ? '+' : ''}{summary.repsDelta}</span>}
+            {summary.prCount > 0 && <span>{summary.prCount} PR{summary.prCount > 1 ? 's' : ''}</span>}
+            {!summary.hasComparison && <span>Use esta sessão como base para a próxima comparação.</span>}
+          </div>
+        </div>
+        <button className="home-workout-primary" type="button" onClick={onOpenWorkout}>Ver treino salvo</button>
+      </section>
+    )
+  }
+
+  if (!isToday) {
+    return (
+      <HomeCard className="home-workout-empty">
+        <span className="home-chip">Histórico de treino</span>
+        <strong>Nenhum treino registrado</strong>
+        <small>Esta data não possui uma sessão salva.</small>
+      </HomeCard>
+    )
+  }
+
+  const { large, complementary, ranked, allAtMinimum } = recommendation
+  const pair = [large, complementary].filter((item): item is NonNullable<typeof item> => item != null)
   return (
     <>
-      <section className="home-workout-hero">
-        <div className="home-workout-copy">
+      <section className="home-workout-decision">
+        <div className="home-workout-label-row">
           <span className="home-chip">Treino de hoje</span>
-          <h1>{plan.title}</h1>
-          <p>{clampText(`${plan.focus} / ${plan.reason}.`)}</p>
+          <span className="home-workout-status">por volume semanal</span>
         </div>
-        <div className="home-readiness">
-          <strong>{plan.readiness}</strong>
-          <span>pronto</span>
-        </div>
+        <h1>O que treinar hoje?</h1>
+        {allAtMinimum ? (
+          <p>Todos os grupos atingiram o mínimo semanal. Abra o painel para escolher pela sua rotina e recuperação.</p>
+        ) : (
+          <p><strong>{pair.map(item => item.label).join(' + ')}</strong> é a combinação prioritária: os grupos estão mais distantes da faixa mínima nos últimos 7 dias.</p>
+        )}
+
+        {pair.length > 0 && (
+          <div className={`home-recommended-pair${pair.length === 1 ? ' single' : ''}`}>
+            {pair.map((item, index) => (
+              <div key={item.group}>
+                <small>{item.category === 'large' ? 'Grupo grande' : 'Complementar'}</small>
+                <strong>{item.label}</strong>
+                <span>{item.sets} de {item.mev} séries</span>
+                {index === 0 && pair.length > 1 && <b>+</b>}
+              </div>
+            ))}
+          </div>
+        )}
+        <button className="home-workout-primary" type="button" onClick={onRecommend}>Abrir Que Treinar Hoje</button>
       </section>
 
-      <HomeCard className="home-next-workout">
-        <div>
-          <span>Comecar por</span>
-          <strong>{plan.start}</strong>
-          <small>{plan.title === 'Treino registrado' ? plan.minimum : 'Depois siga para o segundo bloco da rotina.'}</small>
-        </div>
-        <button type="button" onClick={onOpen}>{plan.cta}</button>
-      </HomeCard>
-
-      <div className="home-reason-grid">
-        <HomeCard>
-          <span className="home-card-kicker">Por que hoje</span>
-          <strong>{plan.reason}</strong>
-          <small>{plan.focus}</small>
+      {!allAtMinimum && (
+        <HomeCard className="home-muscle-ranking">
+          <div className="home-section-head"><strong>Mais abaixo da faixa</strong><span>séries / MEV</span></div>
+          {ranked.slice(0, 3).map((item, index) => (
+            <div className="home-muscle-row" key={item.group}>
+              <b>{index + 1}</b>
+              <span>{item.label}<small>{item.category === 'large' ? 'grupo grande' : 'complementar'}</small></span>
+              <div><i style={{ width: `${item.fillPct}%` }} /></div>
+              <strong>{item.sets}/{item.mev}</strong>
+            </div>
+          ))}
         </HomeCard>
-        <HomeCard>
-          <span className="home-card-kicker">Plano minimo</span>
-          <strong>25 min</strong>
-          <small>{clampText(plan.minimum, 74)}</small>
-        </HomeCard>
-      </div>
+      )}
     </>
   )
 }
@@ -426,66 +437,6 @@ function WeeklyChart({ weekDays, weekKcal, goal, todayKcal, bmr, workoutKcalByDa
   )
 }
 
-function WeekPulse({ habits, weekDates, onOpenHistory }: {
-  habits: HabitsMap
-  weekDates: string[]
-  onOpenHistory: () => void
-}) {
-  const adherence = weekHabitAdherence(habits, weekDates)
-  return (
-    <HomeCard className="home-pulse">
-      <div className="home-section-head">
-        <strong>Semana em pulso</strong>
-        <button type="button" onClick={onOpenHistory}>{adherence}% aderencia</button>
-      </div>
-      <div className="home-pulse-days">
-        {weekDates.map(date => (
-          <div key={date} className={date === todayISO() ? 'today' : ''}>
-            {HABITS_DEF.map(habit => {
-              const row = habits[date]
-              const checked = !!(row?.[habit.id as keyof typeof row])
-              return (
-                <i
-                  key={habit.id}
-                  className={checked ? 'on' : ''}
-                  style={{ ['--habit-color' as string]: habit.color }}
-                />
-              )
-            })}
-          </div>
-        ))}
-      </div>
-    </HomeCard>
-  )
-}
-
-function ActionGrid({ onNavigate, onOpenProfile, onOpenEvolution }: {
-  onNavigate: (path: string) => void
-  onOpenProfile: () => void
-  onOpenEvolution: () => void
-}) {
-  return (
-    <div className="home-action-grid">
-      <button type="button" onClick={() => onNavigate('/diario')}><span>D</span>Diario</button>
-      <button type="button" onClick={() => onNavigate('/treino')}><span>T</span>Treino</button>
-      <button type="button" onClick={onOpenEvolution}><span>E</span>Evolucao</button>
-      <button type="button" onClick={onOpenProfile}><span>P</span>Perfil</button>
-    </div>
-  )
-}
-
-function CoachStrip({ alert }: { alert: { title: string; text: string } }) {
-  return (
-    <section className="home-coach-strip">
-      <span>AI</span>
-      <div>
-        <strong>Coach insight</strong>
-        <p>{alert.title}. {alert.text}</p>
-      </div>
-    </section>
-  )
-}
-
 export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -493,11 +444,10 @@ export default function HomePage() {
   const { settings, loading: loadingSettings, saveSettings } = useSettings()
   const { diary, loading: loadingDiary, getWeekKcal, getAllDiaryRows } = useDiary(selectedDate)
   const { habits, toggleHabit, getAllHabits } = useHabits()
+  const { customExercises, loading: loadingCustomExercises } = useCustomExercises()
   const [habitHistOpen, setHabitHistOpen] = useState(false)
   const [diaryHistOpen, setDiaryHistOpen] = useState(false)
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [wizardOpen, setWizardOpen] = useState(false)
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
   const [onboardingDismissed, setOnboardingDismissed] = useState(() => localStorage.getItem('kcalix_onboarding_dismissed') === '1')
   const { triggerInstallPrompt } = useInstallStore()
@@ -507,11 +457,10 @@ export default function HomePage() {
   const [weekKcal, setWeekKcal] = useState<Record<string, number>>({})
   const [workoutKcalByDate, setWorkoutKcalByDate] = useState<Record<string, number>>({})
   const [workoutRows, setWorkoutRows] = useState<WorkoutRow[]>([])
-  const [evolutionOpen, setEvolutionOpen] = useState(false)
-  const [bodyRows, setBodyRows] = useState<BodyRow[]>([])
+  const [workoutLoading, setWorkoutLoading] = useState(true)
   const weekDays = useMemo(() => getWeekDates(), [])
   const todayIso = todayISO()
-  const habitWeekDates = getHabitWeekDates(todayIso)
+  const habitWeekDates = getHabitWeekDates(selectedDate)
   const autoWizardVisible = autoWizardOpen || (!loadingSettings && settings === null && !onboardingDismissed)
 
   useEffect(() => {
@@ -519,15 +468,16 @@ export default function HomePage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!user) return
-    fetchAllWorkoutRows(user.id).then(rows => {
-      const map: Record<string, number> = {}
-      for (const row of rows) {
-        map[row.date] = (map[row.date] ?? 0) + (row.kcal ?? 0)
-      }
-      setWorkoutKcalByDate(map)
-      setWorkoutRows(rows)
-    })
+    if (!user) { queueMicrotask(() => setWorkoutLoading(false)); return }
+    queueMicrotask(() => setWorkoutLoading(true))
+    fetchAllWorkoutRows(user.id)
+      .then(rows => {
+        const map: Record<string, number> = {}
+        for (const row of rows) map[row.date] = (map[row.date] ?? 0) + (row.kcal ?? 0)
+        setWorkoutKcalByDate(map)
+        setWorkoutRows(rows)
+      })
+      .finally(() => setWorkoutLoading(false))
   }, [user])
 
   useEffect(() => {
@@ -543,36 +493,52 @@ export default function HomePage() {
     setWeeklyModalOpen(true)
   }, [])
 
-  const handleOpenEvolution = useMemo(() => async () => {
-    if (user && bodyRows.length === 0) {
-      const rows = await fetchAllBodyRows(user.id)
-      setBodyRows(rows)
-    }
-    setEvolutionOpen(true)
-  }, [user, bodyRows.length])
-
   const loading = loadingSettings || loadingDiary
   const { kcalTarget = 0, pTarget = 0, cTarget = 0, gTarget = 0, bmr, tdee } = settings ?? {}
   const { totals, kcalTreino } = diary
-  const workoutPlan = useMemo(
-    () => buildWorkoutPlan(workoutRows, selectedDate, kcalTreino),
-    [workoutRows, selectedDate, kcalTreino],
+  const isToday = selectedDate === todayIso
+  const currentWorkout = useMemo(
+    () => workoutRows.find(row => row.date === selectedDate) ?? null,
+    [workoutRows, selectedDate],
   )
-  const alert = buildAlert({
+  const recommendation = useMemo(
+    () => buildWorkoutRecommendation(workoutRows, customExercises, selectedDate),
+    [workoutRows, customExercises, selectedDate],
+  )
+  const workoutSummary = useMemo(
+    () => currentWorkout == null ? null : buildCompletedWorkoutSummary(currentWorkout, workoutRows, customExercises),
+    [currentWorkout, workoutRows, customExercises],
+  )
+  const workoutFocus = useMemo(
+    () => currentWorkout == null ? [] : workoutFocusLabels(currentWorkout, customExercises),
+    [currentWorkout, customExercises],
+  )
+  const insight = buildHomeInsight({
     p: totals.p,
     pTarget,
     c: totals.c,
     cTarget,
     kcal: totals.kcal,
     kcalTarget,
-    workoutDone: kcalTreino > 0,
+    workoutDone: currentWorkout != null,
+    habits,
+    date: selectedDate,
+    settingsConfigured: settings != null,
   })
 
   return (
     <div className="home-page">
       <div className="home-date-line">{formatDate(selectedDate)}</div>
 
-      <WorkoutHero plan={workoutPlan} onOpen={() => navigate('/treino')} />
+      <WorkoutDashboard
+        isToday={isToday}
+        loading={workoutLoading || loadingCustomExercises}
+        recommendation={recommendation}
+        summary={workoutSummary}
+        focus={workoutFocus}
+        onRecommend={() => navigate('/treino?recommend=1')}
+        onOpenWorkout={() => navigate('/treino')}
+      />
 
       <ProgressCard
         kcalConsumed={totals.kcal}
@@ -591,31 +557,27 @@ export default function HomePage() {
       <HabitTracker
         habits={habits}
         weekDates={habitWeekDates}
-        todayStr={todayIso}
+        todayStr={selectedDate}
         onToggle={toggleHabit}
         onOpenHistory={() => setHabitHistOpen(true)}
       />
 
-      <HomeCard className="home-alert">
-        <span>Insight</span>
-        <strong>{alert.title}</strong>
-        <small>{alert.text}</small>
-      </HomeCard>
-
-      <WeekPulse
-        habits={habits}
-        weekDates={habitWeekDates}
-        onOpenHistory={() => setHabitHistOpen(true)}
-      />
+      {insight && (
+        <HomeCard className={`home-alert ${insight.tone}`}>
+          <span>{insight.kicker}</span>
+          <strong>{insight.title}</strong>
+          <small>{insight.text}</small>
+        </HomeCard>
+      )}
 
       <WeeklyChart
         weekDays={weekDays}
         weekKcal={weekKcal}
         goal={kcalTarget}
-        todayKcal={totals.kcal}
+        todayKcal={isToday ? totals.kcal : (weekKcal[todayIso] ?? 0)}
         bmr={bmr}
         workoutKcalByDate={workoutKcalByDate}
-        todayWorkoutKcal={kcalTreino}
+        todayWorkoutKcal={isToday ? kcalTreino : (workoutKcalByDate[todayIso] ?? 0)}
         onOpenDetail={handleOpenWeeklyModal}
       />
 
@@ -627,35 +589,10 @@ export default function HomePage() {
         kcalTarget={kcalTarget}
       />
 
-      <CoachStrip alert={alert} />
-
-      <ActionGrid
-        onNavigate={navigate}
-        onOpenProfile={() => setProfileOpen(true)}
-        onOpenEvolution={handleOpenEvolution}
-      />
-
       <HabitHistoryModal
         open={habitHistOpen}
         onClose={() => setHabitHistOpen(false)}
         getAllHabits={getAllHabits}
-      />
-
-      {settings && (
-        <ProfileCheckinModal
-          open={profileOpen}
-          settings={settings}
-          onClose={() => setProfileOpen(false)}
-          onOpenWizard={() => { setProfileOpen(false); setWizardOpen(true) }}
-        />
-      )}
-
-      <CalcWizardModal
-        open={wizardOpen}
-        isNewUser={false}
-        initialData={settings}
-        onSave={async (result) => { await saveSettings(result); setWizardOpen(false); setProfileOpen(true) }}
-        onClose={() => setWizardOpen(false)}
       />
 
       <CalcWizardModal
@@ -675,12 +612,6 @@ export default function HomePage() {
         onClose={() => setDiaryHistOpen(false)}
         getAllDiaryRows={getAllDiaryRows}
         kcalTarget={kcalTarget}
-      />
-
-      <BodyEvolutionModal
-        open={evolutionOpen}
-        onClose={() => setEvolutionOpen(false)}
-        rows={bodyRows}
       />
 
       <WeeklyKcalModal

@@ -4,13 +4,14 @@
 // JS fiel: L6280–6879 (renderExList, cardio, saveTreino, timer, cronômetro)
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useWorkout } from '../hooks/useWorkout'
 import { useCustomExercises } from '../hooks/useCustomExercises'
 import { useDateStore } from '../store/dateStore'
 import { useHabits } from '../hooks/useHabits'
 import { exById, CARDIO_TYPES, MUSCLE_ORDER, MUSCLE_LANDMARKS } from '../data/exerciseDb'
 import { EX_SECONDARY } from '../data/exerciseDb'
-import { calcMuscleVolume } from '../hooks/useMuscleVolume'
+import { buildWorkoutRecommendation } from '../lib/homeDashboard'
 import { todayISO } from '../lib/dateUtils'
 import ExerciseSelector from '../components/ExerciseSelector'
 import { CustomExerciseModal } from '../components/CustomExerciseModal'
@@ -47,6 +48,7 @@ function cleanCardioName(nome: string): string {
 }
 
 export default function TreinoPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { selectedDate } = useDateStore()
   const { autoCheckHabit } = useHabits()
   const {
@@ -104,6 +106,11 @@ export default function TreinoPage() {
   const timerStartedAtRef = useRef<number>(0)
   const swIntervalRef     = useRef<ReturnType<typeof setInterval> | null>(null)
   const swStartedAtRef    = useRef<number>(0)
+  const sessionStartedAtRef = useRef<number | null>(null)
+
+  const markSessionStart = useCallback(() => {
+    if (sessionStartedAtRef.current == null) sessionStartedAtRef.current = Date.now()
+  }, [])
 
   // ExerciseSelector state
   const [exSelOpen, setExSelOpen]       = useState(false)
@@ -156,6 +163,15 @@ export default function TreinoPage() {
 
   // RecommendSheet state
   const [recommendOpen, setRecommendOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('recommend') !== '1') return
+    reloadWorkoutRows()
+    queueMicrotask(() => setRecommendOpen(true))
+    const next = new URLSearchParams(searchParams)
+    next.delete('recommend')
+    setSearchParams(next, { replace: true })
+  }, [reloadWorkoutRows, searchParams, setSearchParams])
 
   // Prev-ref cache: exercicioId → último treino
   const [prevData, setPrevData] = useState<Record<string, WorkoutSet[] | null>>({})
@@ -236,12 +252,13 @@ export default function TreinoPage() {
 
   const swToggle = useCallback(() => {
     if (swRunning) { swStop(); return }
+    markSessionStart()
     setSwRunning(true)
     swStartedAtRef.current = Date.now() - swElapsed * 1000
     swIntervalRef.current = setInterval(() => {
       setSwElapsed(Math.floor((Date.now() - swStartedAtRef.current) / 1000))
     }, 250)
-  }, [swRunning, swElapsed, swStop])
+  }, [swRunning, swElapsed, swStop, markSessionStart])
 
   // ── Workout summary ───────────────────────────────────────
   const totalSeries    = state.exercicios.reduce((acc, ex) =>
@@ -298,6 +315,7 @@ export default function TreinoPage() {
 
   // ── Mutação de séries inline ──────────────────────────────
   const updateSet = (exIdx: number, setIdx: number, field: 'reps' | 'carga', value: string) => {
+    markSessionStart()
     const sets = state.exercicios[exIdx].series.map((s, i) =>
       i === setIdx ? { ...s, [field]: value } : s
     )
@@ -305,6 +323,7 @@ export default function TreinoPage() {
   }
 
   const toggleWarmup = (exIdx: number, setIdx: number) => {
+    markSessionStart()
     const sets = state.exercicios[exIdx].series.map((s, i) =>
       i === setIdx ? { ...s, warmup: !s.warmup } : s
     )
@@ -312,11 +331,13 @@ export default function TreinoPage() {
   }
 
   const addSet = (exIdx: number) => {
+    markSessionStart()
     const sets = [...state.exercicios[exIdx].series, { reps: '', carga: '' }]
     updateSeries(exIdx, sets)
   }
 
   const removeSet = (exIdx: number, setIdx: number) => {
+    markSessionStart()
     const sets = state.exercicios[exIdx].series.filter((_, i) => i !== setIdx)
     updateSeries(exIdx, sets)
   }
@@ -324,7 +345,14 @@ export default function TreinoPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await saveWorkout()
+      const measuredSeconds = swElapsed > 0
+        ? swElapsed
+        : sessionStartedAtRef.current == null
+          ? 0
+          : Math.floor((Date.now() - sessionStartedAtRef.current) / 1000)
+      const durationMin = measuredSeconds >= 60 ? Math.max(1, Math.round(measuredSeconds / 60)) : undefined
+      await saveWorkout(durationMin)
+      sessionStartedAtRef.current = null
       reloadWorkoutRows() // atualiza histórico em background após salvar
       // auto-check hábitos ao salvar (original L6710–6711)
       if (state.exercicios.length > 0) autoCheckHabit('treino')
@@ -409,10 +437,8 @@ export default function TreinoPage() {
       {/* ── RecommendSheet — z-index 310/311 ───────────────── */}
       {recommendOpen && (() => {
         const today = todayISO()
-        const d = new Date(today + 'T00:00:00')
-        d.setDate(d.getDate() - 6)
-        const weekStart = d.toISOString().slice(0, 10)
-        const vol = calcMuscleVolume(workoutRows, weekStart, today, customExercises)
+        const recommendation = buildWorkoutRecommendation(workoutRows, customExercises, today)
+        const vol = recommendation.volume
         return (
           <>
             <div
