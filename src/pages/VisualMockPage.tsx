@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import './VisualMockPage.css'
 
-type DirectionId = 'aurora' | 'ember'
+type DirectionId = 'aurora' | 'ember' | 'convergence'
 type MockTab = 'home' | 'diario' | 'treino' | 'corpo' | 'coach'
 type WorkoutMoment = 'before' | 'after'
 
@@ -32,6 +32,16 @@ const directions: Direction[] = [
     name: 'Opcao B — Painel analitico',
     label: 'Mais dados visiveis para decidir e acompanhar evolucao',
     premise: 'Um cockpit compacto: ranking de grupos abaixo da faixa, recomendacao combinada e comparativos da sessao ocupam o primeiro bloco.',
+    titleFont: 'Sora',
+    bodyFont: 'Inter',
+    dataFont: 'IBM Plex Mono',
+    palette: ['#6d5dfc', '#ff5c35', '#ff2f7d', '#ffd166'],
+  },
+  {
+    id: 'convergence',
+    name: 'Opcao C — Convergencia',
+    label: 'Narrativa da A com acabamento visual da B',
+    premise: 'A recomendacao escrita conduz a decisao, o ranking comprova a escolha e toda a interface usa a linguagem Ember ja adotada no Kcalix.',
     titleFont: 'Sora',
     bodyFont: 'Inter',
     dataFont: 'IBM Plex Mono',
@@ -76,7 +86,7 @@ const muscleNeeds = [
 const weekCalories = [72, 84, 68, 91, 78, 62, 0]
 
 export default function VisualMockPage() {
-  const [directionId, setDirectionId] = useState<DirectionId>('ember')
+  const [directionId, setDirectionId] = useState<DirectionId>('convergence')
   const [activeTab, setActiveTab] = useState<MockTab>('home')
   const [workoutMoment, setWorkoutMoment] = useState<WorkoutMoment>('before')
 
@@ -95,7 +105,7 @@ export default function VisualMockPage() {
         <a className="vm-back" href="/home">Voltar ao app</a>
       </header>
 
-      <section className="vm-direction-strip two" aria-label="Direcoes visuais">
+      <section className="vm-direction-strip" aria-label="Direcoes visuais">
         {directions.map(item => (
           <button
             key={item.id}
@@ -258,6 +268,59 @@ function HomeMock({ direction, moment }: { direction: DirectionId; moment: Worko
           <small>Priorize 30–40g no jantar. Calorias e gordura ainda comportam uma refeicao completa.</small>
         </section>
         <HomeWeeklyDashboard />
+        <HomeEnergyCards />
+        <HomeQuickActions />
+      </div>
+    )
+  }
+
+  if (direction === 'convergence') {
+    return (
+      <div className="vm-home-lab vm-home-improve vm-home-option-c">
+        <section className={`vm-decision-hero vm-convergence-hero ${isBefore ? '' : 'completed'}`}>
+          <div className="vm-convergence-label">
+            <span className="vm-chip">{isBefore ? 'Treino de hoje' : 'Sessao concluida'}</span>
+            <span className={`vm-status-pill ${isBefore ? '' : 'done'}`}>{isBefore ? 'por volume semanal' : 'salvo'}</span>
+          </div>
+          {isBefore ? (
+            <>
+              <h2>O que treinar hoje?</h2>
+              <p><strong>Costas + triceps</strong> e a melhor combinacao hoje. Costas lidera o deficit entre os grupos grandes; triceps e o grupo pequeno mais distante da faixa recomendada.</p>
+              <div className="vm-recommended-pair convergence">
+                <div><small>Grupo grande</small><strong>Costas</strong><span>9 de 16 series</span></div>
+                <b>+</b>
+                <div><small>Grupo pequeno</small><strong>Triceps</strong><span>7 de 12 series</span></div>
+              </div>
+              <button className="vm-decision-cta" type="button">Abrir Que Treinar Hoje</button>
+            </>
+          ) : (
+            <>
+              <h2>Costas + triceps</h2>
+              <p>Treino salvo com mais volume e melhor eficiencia que a sessao anterior.</p>
+              <div className="vm-session-kpis convergence">
+                <div><small>Gasto</small><strong>438</strong><span>kcal</span></div>
+                <div><small>Trabalho</small><strong>18</strong><span>series</span></div>
+                <div><small>Duracao</small><strong>52</strong><span>min</span></div>
+              </div>
+              <div className="vm-convergence-progress">
+                <div><span>Carga total</span><strong>+4,8%</strong></div>
+                <div><span>Repeticoes</span><strong>+6</strong></div>
+                <div><span>Melhores marcas</span><strong>2 PRs</strong></div>
+              </div>
+              <button className="vm-decision-cta" type="button">Ver treino salvo</button>
+            </>
+          )}
+        </section>
+
+        {isBefore && <MuscleRanking compact />}
+        <HomeNutrition />
+        <HomeHabitsCompact />
+        <section className="vm-smart-insight analyst">
+          <span>Ajuste util agora</span>
+          <strong>Faltam 42g de proteina para fechar o dia.</strong>
+          <small>Priorize 30–40g no jantar. O saldo atual comporta a refeicao sem ultrapassar calorias ou gordura.</small>
+        </section>
+        <HomeWeeklyDashboard analyst />
         <HomeEnergyCards />
         <HomeQuickActions />
       </div>

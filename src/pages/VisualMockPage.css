@@ -39,7 +39,8 @@
   mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 72%);
 }
 
-.vm-ember {
+.vm-ember,
+.vm-convergence {
   --vm-bg: #09090f;
   --vm-violet: #6d5dfc;
   --vm-hot: #ff5c35;
@@ -2274,6 +2275,65 @@
 .vm-performance-list i { color: #21d4b4; font: normal 800 8px var(--vm-data); text-align: right; }
 .vm-analyst-full { width: 100%; background: var(--vm-surface2); border: 1px solid var(--vm-line); }
 .vm-dashboard-split { display: flex; flex-direction: column; gap: 10px; }
+
+.vm-convergence-hero {
+  border-color: color-mix(in srgb, var(--vm-hot) 34%, var(--vm-line));
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--vm-violet) 24%, transparent), transparent 43%),
+    linear-gradient(145deg, #12141d, #0d0f16);
+}
+
+.vm-convergence-hero.completed {
+  border-color: color-mix(in srgb, #21d4b4 30%, var(--vm-line));
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, #21d4b4 17%, transparent), transparent 42%),
+    linear-gradient(145deg, #12141d, #0d0f16);
+}
+
+.vm-convergence-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vm-convergence-hero > p strong { color: var(--vm-text); }
+
+.vm-recommended-pair.convergence > div {
+  border-color: rgba(255,255,255,.13);
+  background: rgba(255,255,255,.055);
+}
+
+.vm-recommended-pair.convergence > div:first-child {
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--vm-violet) 70%, white);
+}
+
+.vm-recommended-pair.convergence > div:last-child {
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--vm-pink) 70%, white);
+}
+
+.vm-session-kpis.convergence > div { gap: 1px; }
+.vm-session-kpis.convergence small { color: var(--vm-faint); font-size: 8px; text-transform: uppercase; }
+
+.vm-convergence-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 11px;
+}
+
+.vm-convergence-progress > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border-left: 2px solid #21d4b4;
+  background: rgba(255,255,255,.035);
+}
+
+.vm-convergence-progress span { color: var(--vm-faint); font-size: 8px; }
+.vm-convergence-progress strong { color: #21d4b4; font: 800 11px var(--vm-data); }
 
 @media (max-width: 430px) {
   .vm-analyst-kpi-grid { grid-template-columns: repeat(2, 1fr); }
