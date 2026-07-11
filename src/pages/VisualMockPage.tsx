@@ -3,6 +3,7 @@ import './VisualMockPage.css'
 
 type DirectionId = 'aurora' | 'ember'
 type MockTab = 'home' | 'diario' | 'treino' | 'corpo' | 'coach'
+type WorkoutMoment = 'before' | 'after'
 
 type Direction = {
   id: DirectionId
@@ -18,9 +19,9 @@ type Direction = {
 const directions: Direction[] = [
   {
     id: 'aurora',
-    name: 'Aurora Ritual Board',
-    label: 'Home mais sensorial, assimetrica e guiada por habitos',
-    premise: 'Uma tela inicial com foco em ritmo do dia: placar grande, habitos como trilhas visuais e energia em leitura editorial.',
+    name: 'Opcao A — Decisao primeiro',
+    label: 'Uma recomendacao clara no topo e detalhes sob demanda',
+    premise: 'O topo responde o que fazer agora. Antes do treino, combina um grupo grande com um pequeno; depois, vira um resumo de sessao e progresso.',
     titleFont: 'Bricolage Grotesque',
     bodyFont: 'Instrument Sans',
     dataFont: 'Azeret Mono',
@@ -28,9 +29,9 @@ const directions: Direction[] = [
   },
   {
     id: 'ember',
-    name: 'Ember Ritual Home',
-    label: 'Estrutura Aurora com acabamento tecnico Ember',
-    premise: 'Mantem o treino de hoje e o ritual board como protagonistas, mas com superficies solidas, contraste alto e cores Ember.',
+    name: 'Opcao B — Painel analitico',
+    label: 'Mais dados visiveis para decidir e acompanhar evolucao',
+    premise: 'Um cockpit compacto: ranking de grupos abaixo da faixa, recomendacao combinada e comparativos da sessao ocupam o primeiro bloco.',
     titleFont: 'Sora',
     bodyFont: 'Inter',
     dataFont: 'IBM Plex Mono',
@@ -66,27 +67,18 @@ const homeHabits = [
   { id: 'medidas', label: 'Medidas', short: 'ME', done: true, streak: 6, trend: 76, color: '#ffd166' },
 ]
 
-const habitWeek = [
-  [1, 1, 1, 0, 1],
-  [1, 1, 0, 1, 1],
-  [1, 1, 1, 0, 0],
-  [1, 1, 0, 1, 1],
-  [1, 1, 0, 0, 1],
-  [0, 1, 0, 0, 0],
-  [0, 0, 0, 0, 0],
+const muscleNeeds = [
+  { name: 'Costas', current: 9, target: 16, pct: 56, kind: 'grande' },
+  { name: 'Ombros', current: 8, target: 14, pct: 57, kind: 'medio' },
+  { name: 'Triceps', current: 7, target: 12, pct: 58, kind: 'pequeno' },
 ]
 
-const workoutPlan = {
-  split: 'Push A',
-  focus: 'Peito + ombro',
-  reason: 'ultimo push ha 4 dias',
-  readiness: 82,
-  exercises: ['Supino inclinado', 'Desenvolvimento', 'Triceps corda'],
-}
+const weekCalories = [72, 84, 68, 91, 78, 62, 0]
 
 export default function VisualMockPage() {
   const [directionId, setDirectionId] = useState<DirectionId>('ember')
   const [activeTab, setActiveTab] = useState<MockTab>('home')
+  const [workoutMoment, setWorkoutMoment] = useState<WorkoutMoment>('before')
 
   const direction = useMemo(
     () => directions.find(item => item.id === directionId) ?? directions[0],
@@ -146,7 +138,11 @@ export default function VisualMockPage() {
           </div>
           <div className="vm-layout-notes">
             <strong>Inputs aplicados</strong>
-            <span>Compare a aba Home nos dois modelos. As outras abas continuam como contexto do sistema visual.</span>
+            <span>Compare os dois momentos da Home. Calorias, habitos, grafico semanal, atalhos e Coach permanecem disponiveis.</span>
+          </div>
+          <div className="vm-moment-switch" aria-label="Momento do treino">
+            <button className={workoutMoment === 'before' ? 'active' : ''} onClick={() => setWorkoutMoment('before')} type="button">Antes do treino</button>
+            <button className={workoutMoment === 'after' ? 'active' : ''} onClick={() => setWorkoutMoment('after')} type="button">Depois do treino</button>
           </div>
         </aside>
 
@@ -157,7 +153,7 @@ export default function VisualMockPage() {
             <MockHeader activeTab={activeTab} />
             <CommandRail activeTab={activeTab} />
             <div className="vm-screen">
-              {activeTab === 'home' && <HomeMock direction={direction.id} />}
+              {activeTab === 'home' && <HomeMock direction={direction.id} moment={workoutMoment} />}
               {activeTab === 'diario' && <DiaryMock direction={direction.id} />}
               {activeTab === 'treino' && <WorkoutMock direction={direction.id} />}
               {activeTab === 'corpo' && <BodyMock direction={direction.id} />}
@@ -218,283 +214,182 @@ function CommandRail({ activeTab }: { activeTab: MockTab }) {
   )
 }
 
-function HomeMock({ direction }: { direction: DirectionId }) {
+function HomeMock({ direction, moment }: { direction: DirectionId; moment: WorkoutMoment }) {
+  const isBefore = moment === 'before'
+
   if (direction === 'aurora') {
     return (
-      <div className="vm-aurora-home vm-home-lab">
-        <section className="vm-home-aurora-hero">
-          <div className="vm-home-aurora-copy">
-            <span className="vm-chip">Treino de hoje</span>
-            <h2>{workoutPlan.split}</h2>
-            <p>{workoutPlan.focus} / {workoutPlan.reason}. Intensidade sugerida moderada-alta.</p>
-          </div>
-          <div className="vm-home-score-orb">
-            <strong>{workoutPlan.readiness}</strong>
-            <span>pronto</span>
-          </div>
-        </section>
-
-        <section className="vm-next-workout-card aurora">
-          <div>
-            <small>Comecar por</small>
-            <strong>{workoutPlan.exercises[0]}</strong>
-            <span>3 series de aquecimento + carga alvo da ultima sessao</span>
-          </div>
-          <button type="button">Abrir treino</button>
-        </section>
-
-        <section className="vm-workout-reason aurora">
-          <article>
-            <small>Por que hoje</small>
-            <strong>{workoutPlan.reason}</strong>
-            <span>Peito recuperado, ombro sem excesso de volume e costas ainda no alvo semanal.</span>
-          </article>
-          <article>
-            <small>Plano minimo</small>
-            <strong>25 min</strong>
-            <span>Supino + desenvolvimento + triceps. O resto fica opcional.</span>
-          </article>
-        </section>
-
-        <section className="vm-daily-calories aurora">
-          <div className="vm-section-head">
-            <strong>Calorias hoje</strong>
-            <span>508 livres</span>
-          </div>
-          <div className="vm-calorie-main">
-            <strong>1.842</strong>
-            <span>/ 2.350 kcal</span>
-          </div>
-          <div className="vm-calorie-bar"><i style={{ width: '78%' }} /></div>
-          <div className="vm-calorie-macros">
-            <span>P 146g</span>
-            <span>C 192g</span>
-            <span>G 58g</span>
-          </div>
-          <div className="vm-calorie-runway">
-            <strong>Dica para jantar</strong>
-            <span>ate 45P / 55C / 12G sem passar da meta</span>
-          </div>
-        </section>
-
-        <section className="vm-habit-dropdown collapsed">
-          <button type="button">
-            <span>Habitos diarios</span>
-            <strong>3/5</strong>
-            <div className="vm-habit-summary-dots">
-              {homeHabits.map(habit => (
-                <b
-                  key={habit.id}
-                  className={habit.done ? 'on' : ''}
-                  style={{ ['--habit-color' as string]: habit.color }}
-                />
-              ))}
-            </div>
-            <i>Editar lista</i>
-          </button>
-          <div className="vm-habit-menu">
-            {homeHabits.map(habit => (
-              <article
-                key={habit.id}
-                className={habit.done ? 'done' : ''}
-                style={{ ['--habit-color' as string]: habit.color }}
-              >
-                <span>{habit.short}</span>
-                <strong>{habit.label}</strong>
-                <small>{habit.done ? `${habit.streak}d` : 'pendente'}</small>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="vm-alert-stack aurora">
-          <article>
-            <small>Alerta discreto</small>
-            <strong>Proteina ok, carbo livre</strong>
-            <span>Bom cenario para treinar antes do jantar.</span>
-          </article>
-        </section>
-
-        <section className="vm-week-pulse">
-          <div className="vm-section-head">
-            <strong>Semana em pulso</strong>
-            <span>76% aderencia</span>
-          </div>
-          <div className="vm-pulse-days">
-            {habitWeek.map((day, dayIdx) => (
-              <div key={dayIdx} className={dayIdx === 4 ? 'today' : ''}>
-                {day.map((value, habitIdx) => (
-                  <i
-                    key={habitIdx}
-                    className={value ? 'on' : ''}
-                    style={{ ['--habit-color' as string]: homeHabits[habitIdx].color }}
-                  />
-                ))}
+      <div className="vm-home-lab vm-home-improve vm-home-option-a">
+        <section className={`vm-decision-hero ${isBefore ? '' : 'completed'}`}>
+          <span className="vm-chip">{isBefore ? 'Proxima decisao' : 'Treino de hoje'}</span>
+          {isBefore ? (
+            <>
+              <h2>O que treinar hoje?</h2>
+              <p>Costas e triceps formam a melhor combinacao: os dois estao abaixo da faixa semanal e nao foram treinados nas ultimas 72h.</p>
+              <div className="vm-recommended-pair">
+                <div><small>Grupo grande</small><strong>Costas</strong><span>faltam 7 series</span></div>
+                <b>+</b>
+                <div><small>Grupo pequeno</small><strong>Triceps</strong><span>faltam 5 series</span></div>
               </div>
-            ))}
-          </div>
+              <button className="vm-decision-cta" type="button">Montar Costas + triceps</button>
+              <button className="vm-text-action" type="button">Ver ranking completo</button>
+            </>
+          ) : (
+            <>
+              <h2>Treino concluido</h2>
+              <p>Costas + triceps / volume acima da ultima sessao e dois avancos de performance.</p>
+              <div className="vm-session-kpis">
+                <div><strong>438</strong><span>kcal</span></div>
+                <div><strong>18</strong><span>series</span></div>
+                <div><strong>52</strong><span>min</span></div>
+              </div>
+              <div className="vm-progress-callout"><span>↗</span><div><strong>Progresso confirmado</strong><small>+4,8% de carga / +6 repeticoes / 2 melhores marcas</small></div></div>
+              <button className="vm-decision-cta" type="button">Ver treino salvo</button>
+            </>
+          )}
         </section>
 
-        <section className="vm-home-bottom-grid">
-          <article>
-            <small>Energia</small>
-            <strong>508</strong>
-            <span>kcal livres</span>
-          </article>
-          <article>
-            <small>Proximo foco</small>
-            <strong>Treino</strong>
-            <span>pendente hoje</span>
-          </article>
+        {isBefore && <MuscleRanking compact />}
+        <HomeNutrition />
+        <HomeHabitsCompact />
+        <section className="vm-smart-insight">
+          <span>Insight pelos seus dados</span>
+          <strong>Faltam 42g de proteina para fechar o dia.</strong>
+          <small>Priorize 30–40g no jantar. Calorias e gordura ainda comportam uma refeicao completa.</small>
         </section>
-
-        <section className="vm-coach-strip aurora">
-          <span>AI</span>
-          <div>
-            <strong>Decisao sugerida</strong>
-            <p>Faça o Push A antes do jantar. Depois use carbo moderado e mantenha a semana em deficit.</p>
-          </div>
-        </section>
+        <HomeWeeklyDashboard />
+        <HomeEnergyCards />
+        <HomeQuickActions />
       </div>
     )
   }
 
   return (
-    <div className="vm-ember-home vm-home-lab vm-hybrid-home">
-      <section className="vm-home-aurora-hero">
-        <div className="vm-home-aurora-copy">
-          <span className="vm-chip">Treino de hoje</span>
-          <h2>{workoutPlan.split}</h2>
-          <p>{workoutPlan.focus} / {workoutPlan.reason}. Estrutura Aurora, leitura Ember.</p>
-        </div>
-        <div className="vm-home-score-orb">
-          <strong>{workoutPlan.readiness}</strong>
-          <span>pronto</span>
-        </div>
-      </section>
-
-      <section className="vm-next-workout-card ember">
-        <div>
-          <small>Comecar por</small>
-          <strong>{workoutPlan.exercises[0]}</strong>
-          <span>Depois {workoutPlan.exercises[1].toLowerCase()} e finalizador de triceps</span>
-        </div>
-        <button type="button">Abrir treino</button>
-      </section>
-
-      <section className="vm-workout-reason ember">
-        <article>
-          <small>Por que hoje</small>
-          <strong>{workoutPlan.reason}</strong>
-          <span>Peito recuperado, ombro sem excesso de volume e costas ainda no alvo semanal.</span>
-        </article>
-        <article>
-          <small>Plano minimo</small>
-          <strong>25 min</strong>
-          <span>Supino + desenvolvimento + triceps. O resto fica opcional.</span>
-        </article>
-      </section>
-
-      <section className="vm-daily-calories ember">
-        <div className="vm-section-head">
-          <strong>Calorias hoje</strong>
-          <span>508 livres</span>
-        </div>
-        <div className="vm-calorie-main">
-          <strong>1.842</strong>
-          <span>/ 2.350 kcal</span>
-        </div>
-        <div className="vm-calorie-bar"><i style={{ width: '78%' }} /></div>
-        <div className="vm-calorie-macros">
-          <span>P 146g</span>
-          <span>C 192g</span>
-          <span>G 58g</span>
-        </div>
-        <div className="vm-calorie-runway">
-          <strong>Dica para jantar</strong>
-          <span>ate 45P / 55C / 12G sem passar da meta</span>
-        </div>
-      </section>
-
-      <section className="vm-habit-dropdown ember collapsed">
-        <button type="button">
-          <span>Habitos diarios</span>
-          <strong>3/5</strong>
-          <div className="vm-habit-summary-dots">
-            {homeHabits.map(habit => (
-              <b
-                key={habit.id}
-                className={habit.done ? 'on' : ''}
-                style={{ ['--habit-color' as string]: habit.color }}
-              />
-            ))}
+    <div className="vm-home-lab vm-home-improve vm-home-option-b">
+      <section className="vm-analyst-board">
+        <div className="vm-analyst-heading">
+          <div>
+            <span className="vm-chip">{isBefore ? 'Radar de treino' : 'Performance da sessao'}</span>
+            <h2>{isBefore ? 'Decisao por volume' : 'Costas + triceps'}</h2>
           </div>
-          <i>Editar lista</i>
-        </button>
-        <div className="vm-habit-menu">
-          {homeHabits.map(habit => (
-            <article
-              key={habit.id}
-              className={habit.done ? 'done' : ''}
-              style={{ ['--habit-color' as string]: habit.color }}
-            >
-              <span>{habit.short}</span>
-              <strong>{habit.label}</strong>
-              <small>{habit.done ? `${habit.streak}d` : 'pendente'}</small>
-            </article>
-          ))}
+          <span className={`vm-status-pill ${isBefore ? '' : 'done'}`}>{isBefore ? '3 grupos abaixo' : 'concluido'}</span>
         </div>
-      </section>
 
-      <section className="vm-alert-stack ember">
-        <article>
-          <small>Alerta discreto</small>
-          <strong>Proteina ok, carbo livre</strong>
-          <span>Bom cenario para treinar antes do jantar.</span>
-        </article>
-      </section>
-
-      <section className="vm-week-pulse ember">
-        <div className="vm-section-head">
-          <strong>Semana em pulso</strong>
-          <span>76% aderencia</span>
-        </div>
-        <div className="vm-pulse-days">
-          {habitWeek.map((day, dayIdx) => (
-            <div key={dayIdx} className={dayIdx === 4 ? 'today' : ''}>
-              {day.map((value, habitIdx) => (
-                <i
-                  key={habitIdx}
-                  className={value ? 'on' : ''}
-                  style={{ ['--habit-color' as string]: homeHabits[habitIdx].color }}
-                />
-              ))}
+        {isBefore ? (
+          <>
+            <MuscleRanking />
+            <div className="vm-analyst-recommendation">
+              <div><small>Combinacao recomendada</small><strong>Costas + triceps</strong><span>Grupo grande + pequeno / deficit total de 12 series</span></div>
+              <button type="button">Abrir sugestao</button>
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="vm-analyst-kpi-grid">
+              <article><small>Gasto</small><strong>438</strong><span>kcal</span></article>
+              <article><small>Volume</small><strong>8,7t</strong><span>+4,8%</span></article>
+              <article><small>Series</small><strong>18</strong><span>+2 vs anterior</span></article>
+              <article><small>Duracao</small><strong>52m</strong><span>-3 min</span></article>
+            </div>
+            <div className="vm-performance-list">
+              <div><span>Remada baixa</span><strong>61 → 64 kg</strong><i>+4,9%</i></div>
+              <div><span>Puxada alta</span><strong>10 → 12 reps</strong><i>+2</i></div>
+              <div><span>Triceps corda</span><strong>novo melhor set</strong><i>PR</i></div>
+            </div>
+            <button className="vm-analyst-full" type="button">Abrir analise do treino</button>
+          </>
+        )}
       </section>
 
-      <section className="vm-home-bottom-grid ember">
-        <article>
-          <small>Energia</small>
-          <strong>508</strong>
-          <span>kcal livres</span>
-        </article>
-        <article>
-          <small>Proteina</small>
-          <strong>146g</strong>
-          <span>86% da meta</span>
-        </article>
+      <div className="vm-dashboard-split">
+        <HomeNutrition />
+        <HomeHabitsCompact />
+      </div>
+      <section className="vm-smart-insight analyst">
+        <span>Excecao detectada</span>
+        <strong>Proteina abaixo do ritmo para este horario.</strong>
+        <small>Voce consumiu 74% da meta; em dias parecidos costuma terminar entre 92–98%.</small>
       </section>
-
-      <section className="vm-coach-strip">
-        <span>AI</span>
-        <div>
-          <strong>Coach insight</strong>
-          <p>Treine Push A hoje. Se faltar tempo, mantenha supino e desenvolvimento; cardio pode ficar para amanha.</p>
-        </div>
-      </section>
+      <HomeWeeklyDashboard analyst />
+      <HomeEnergyCards />
+      <HomeQuickActions />
     </div>
+  )
+}
+
+function MuscleRanking({ compact = false }: { compact?: boolean }) {
+  return (
+    <section className={`vm-muscle-ranking ${compact ? 'compact' : ''}`}>
+      <div className="vm-section-head"><strong>Mais abaixo da faixa</strong><span>series / semana</span></div>
+      {muscleNeeds.map((muscle, index) => (
+        <div className="vm-muscle-row" key={muscle.name}>
+          <b>{index + 1}</b>
+          <span>{muscle.name}<small>{muscle.kind}</small></span>
+          <div><i style={{ width: `${muscle.pct}%` }} /></div>
+          <strong>{muscle.current}/{muscle.target}</strong>
+        </div>
+      ))}
+    </section>
+  )
+}
+
+function HomeNutrition() {
+  return (
+    <section className="vm-daily-calories vm-home-nutrition">
+      <div className="vm-section-head"><strong>Calorias hoje</strong><button type="button">+ Adicionar</button></div>
+      <div className="vm-calorie-main"><strong>1.842</strong><span>/ 2.350 kcal</span></div>
+      <div className="vm-calorie-bar"><i style={{ width: '78%' }} /></div>
+      <div className="vm-calorie-macros"><span>P 146g</span><span>C 192g</span><span>G 58g</span></div>
+      <div className="vm-calorie-runway"><strong>508 kcal livres</strong><span>42P / 55C / 12G restantes</span></div>
+    </section>
+  )
+}
+
+function HomeHabitsCompact() {
+  return (
+    <section className="vm-habit-dropdown collapsed vm-home-habits">
+      <button type="button">
+        <span>Habitos diarios</span><strong>3/5</strong>
+        <div className="vm-habit-summary-dots">
+          {homeHabits.map(habit => <b key={habit.id} className={habit.done ? 'on' : ''} style={{ ['--habit-color' as string]: habit.color }} />)}
+        </div>
+        <i>Expandir</i>
+      </button>
+    </section>
+  )
+}
+
+function HomeWeeklyDashboard({ analyst = false }: { analyst?: boolean }) {
+  return (
+    <section className={`vm-week-dashboard ${analyst ? 'analyst' : ''}`}>
+      <div className="vm-section-head"><strong>Semana kcal</strong><span>-286 kcal/dia</span></div>
+      <div className="vm-week-bars-new">
+        {weekCalories.map((height, index) => (
+          <div key={index} className={index === 4 ? 'today' : ''}><i style={{ height: `${height}%` }} /><b style={{ height: `${Math.max(0, height - 13)}%` }} /><span>{['S', 'T', 'Q', 'Q', 'S', 'S', 'D'][index]}</span></div>
+        ))}
+      </div>
+      <div className="vm-week-legend"><span><i />Consumido</span><span><i />Gasto base + treino</span></div>
+    </section>
+  )
+}
+
+function HomeEnergyCards() {
+  return (
+    <section className="vm-home-bottom-grid vm-home-energy">
+      <article><small>Energia</small><strong>508</strong><span>kcal livres</span></article>
+      <article><small>Saldo</small><strong>-286</strong><span>TDEE 2.410</span></article>
+    </section>
+  )
+}
+
+function HomeQuickActions() {
+  return (
+    <section className="vm-home-quick-actions">
+      <button type="button"><span>D</span>Diario</button>
+      <button type="button"><span>T</span>Treino</button>
+      <button type="button"><span>E</span>Evolucao</button>
+      <button type="button"><span>P</span>Perfil</button>
+    </section>
   )
 }
 
