@@ -6,9 +6,10 @@
 import { useState, useEffect } from 'react'
 import { EXERCISE_DB } from '../data/exerciseDb'
 import { normalizeGroup } from '../lib/normalizeGroup'
+import { CUSTOM_EXERCISE_GROUP, customExercisesForGroup } from '../lib/exerciseCatalog'
 import type { CustomExercise } from '../types/workout'
 
-const CUSTOM_EX_GROUP = '⭐ Meus exercícios' // original L6135
+const CUSTOM_EX_GROUP = CUSTOM_EXERCISE_GROUP // original L6135
 const GROUPS = [...Object.keys(EXERCISE_DB), CUSTOM_EX_GROUP]
 
 // Rename inline state — substitui o grid por row de edição (original L6594–6652)
@@ -63,9 +64,7 @@ export default function ExerciseSelector({
       ? customExercises
       : [
           ...(EXERCISE_DB[selectedGroup] ?? []),
-          ...customExercises.filter(e =>
-            normalizeGroup(e.grupo) === selectedGroup
-          ),
+          ...customExercisesForGroup(customExercises, selectedGroup),
         ]
     : []
 

@@ -8,11 +8,10 @@ import { useState, useEffect } from 'react'
 import { EXERCISE_DB, CARDIO_TYPES, exById } from '../data/exerciseDb'
 import type { WorkoutTemplate } from '../types/workout'
 import type { CustomExercise } from '../types/workout'
+import { CUSTOM_EXERCISE_GROUP, customExercisesForGroup } from '../lib/exerciseCatalog'
 
 // TMPL_COLORS fiel ao original L7748
 const TMPL_COLORS = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#fb923c', '#f472b6', '#22d3ee']
-
-const CUSTOM_EX_GROUP = '⭐ Meus exercícios'
 
 interface Props {
   open:            boolean
@@ -192,18 +191,23 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
 
     let exs: { id: string; nome: string; grupo?: string; isCustom?: boolean }[] = []
 
-    if (catActive === CUSTOM_EX_GROUP) {
-      exs = customExercises.filter(e => !e.arquivado).map(e => ({
+    if (catActive === CUSTOM_EXERCISE_GROUP) {
+      exs = customExercisesForGroup(customExercises, catActive).map(e => ({
         id: e.id, nome: e.nome, grupo: e.grupo, isCustom: true,
       }))
     } else {
-      exs = (EXERCISE_DB[catActive] ?? []).map(e => ({ id: e.id, nome: e.nome }))
+      exs = [
+        ...(EXERCISE_DB[catActive] ?? []).map(e => ({ id: e.id, nome: e.nome })),
+        ...customExercisesForGroup(customExercises, catActive).map(e => ({
+          id: e.id, nome: e.nome, grupo: e.grupo, isCustom: true,
+        })),
+      ]
     }
 
     if (exs.length === 0) {
       return (
         <div style={{ padding: '16px 0', color: 'var(--text3)', fontSize: 12, textAlign: 'center' }}>
-          {catActive === CUSTOM_EX_GROUP
+          {catActive === CUSTOM_EXERCISE_GROUP
             ? 'Nenhum exercício personalizado ainda.'
             : 'Nenhum exercício neste grupo.'}
         </div>
@@ -468,9 +472,9 @@ export function TemplateEditorModal({ open, template, isNew, customExercises, on
             ))}
             <button
               type="button"
-              onClick={() => setCatActive(CUSTOM_EX_GROUP)}
-              style={catTabStyle(catActive === CUSTOM_EX_GROUP)}
-            >{CUSTOM_EX_GROUP}</button>
+              onClick={() => setCatActive(CUSTOM_EXERCISE_GROUP)}
+              style={catTabStyle(catActive === CUSTOM_EXERCISE_GROUP)}
+            >{CUSTOM_EXERCISE_GROUP}</button>
           </div>
 
           {/* Grid de exercícios */}

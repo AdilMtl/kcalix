@@ -11,10 +11,12 @@ export function normalizeGroup(g: string): string {
   if (!g) return g
   // Já está no formato correto
   if ((MUSCLE_ORDER as readonly string[]).includes(g)) return g
-  // Tenta casar pelo sufixo sem emoji (strip todos os chars emoji/espaço do início)
-  const stripped = g.replace(/^[\p{Emoji}\s]+/u, '').trim()
+  // Tenta casar pelo texto sem o prefixo visual. Usar \p{Emoji} isoladamente
+  // deixa variation selectors (ex.: U+FE0F em 🏋️), quebrando o match.
+  const stripPrefix = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+  const stripped = stripPrefix(g)
   const match = MUSCLE_ORDER.find(
-    m => m.replace(/^[\p{Emoji}\s]+/u, '').trim() === stripped
+    m => stripPrefix(m) === stripped
   )
   return match ?? g
 }

@@ -11,6 +11,7 @@ import {
   calcMuscleAvg4weeks,
   calcFrequencyAlert,
   buildInsightsByGroup,
+  buildExerciseInsights,
   resolveExName,
   resolvePrimaryGroup,
 } from '../hooks/useMuscleVolume'
@@ -218,6 +219,9 @@ function PanelEquip({ workoutRows, customExercises }: PanelEquipProps) {
     : []
 
   const prCarga = sessions.length > 0 ? Math.max(...sessions.map(s => s.maxCarga)) : 0
+  const exerciseInsights = selectedExId
+    ? buildExerciseInsights(workoutRows, customExercises, selectedExId)
+    : []
 
   // Agrupar opções por grupo para o select
   const groups: Record<string, typeof exWithHistory> = {}
@@ -258,6 +262,31 @@ function PanelEquip({ workoutRows, customExercises }: PanelEquipProps) {
         <p style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center', padding: '16px 0' }}>
           Sem sessões registradas para este exercício.
         </p>
+      )}
+
+      {exerciseInsights.length > 0 && (
+        <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
+          {exerciseInsights.map((insight, index) => (
+            <div
+              key={`${insight.exercicioId ?? selectedExId}_${index}`}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 'var(--radius-xs)',
+                background: insight.nivel === 'warning'
+                  ? 'rgba(248,113,113,.12)'
+                  : 'color-mix(in srgb, var(--ember) 12%, transparent)',
+                color: insight.nivel === 'warning' ? 'var(--bad)' : 'var(--ember)',
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 700 }}>
+                {insight.icone} {insight.titulo}
+              </div>
+              <div style={{ marginTop: 3, fontSize: 11, lineHeight: 1.45, color: 'var(--text3)' }}>
+                {insight.resumo ?? insight.detalhe}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {sessions.length > 0 && (

@@ -14,6 +14,7 @@ import {
   EXERCISE_DB,
 } from '../data/exerciseDb'
 import type { CustomExercise, WorkoutExercise } from '../types/workout'
+import { normalizeGroup } from '../lib/normalizeGroup'
 
 export type MuscleGroup = typeof MUSCLE_ORDER[number]
 
@@ -55,6 +56,7 @@ export type Insight = {
   resumo?: string
   detalhe: string
   grupo:   MuscleGroup | null
+  exercicioId?: string
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -75,11 +77,10 @@ export function resolvePrimaryGroup(
   // Custom
   const cust = customExercises.find(e => e.id === exercicioId)
   if (cust) {
-    const g = cust.grupo as MuscleGroup
-    if (MUSCLE_ORDER.includes(g)) return g
-    // Fallback: grupo salvo sem emoji (migração stripEmojiPrefix) — casa pelo sufixo
-    const match = MUSCLE_ORDER.find(m => m.replace(/^[\p{Emoji}\s]+/u, '').trim() === g.trim())
-    return match ?? null
+    const normalized = normalizeGroup(cust.grupo)
+    return MUSCLE_ORDER.includes(normalized as MuscleGroup)
+      ? normalized as MuscleGroup
+      : null
   }
   // Built-in
   for (const [grp, exs] of Object.entries(EXERCISE_DB)) {
@@ -94,7 +95,11 @@ export function getSecondaryGroups(
   customExercises: CustomExercise[]
 ): MuscleGroup[] {
   const cust = customExercises.find(e => e.id === exercicioId)
-  if (cust) return (cust.secundarios ?? []) as MuscleGroup[]
+  if (cust) {
+    return (cust.secundarios ?? [])
+      .map(normalizeGroup)
+      .filter((group): group is MuscleGroup => MUSCLE_ORDER.includes(group as MuscleGroup))
+  }
   return (EX_SECONDARY[exercicioId] ?? []) as MuscleGroup[]
 }
 
@@ -262,39 +267,45 @@ function getUserLevel(rows: WorkoutRowLike[]): 'iniciante' | 'intermediario' | '
 /** INSIGHT 1: Plateau de carga por exercício */
 function detectPlateaus(
   rows: WorkoutRowLike[],
-  customExercises: CustomExercise[]
+  customExercises: CustomExercise[],
+  exerciseIds?: readonly string[],
 ): Insight[] {
   const level  = getUserLevel(rows)
   const nWeeks = level === 'iniciante' ? 2 : 3
   const today  = todayISO()
   const cutoff = shiftDateStr(today, -(nWeeks * 7))
+  const activeCutoff = shiftDateStr(today, -7)
 
-  const allExIds = new Set<string>()
-  for (const row of rows) for (const ex of row.exercicios) allExIds.add(ex.exercicioId)
+  const allExIds = new Set<string>(exerciseIds)
+  if (!exerciseIds) {
+    for (const row of rows) for (const ex of row.exercicios) allExIds.add(ex.exercicioId)
+  }
 
   const insights: Insight[] = []
   for (const exId of allExIds) {
     const sessions = getAllExSessions(rows, exId, 20)
-    if (sessions.length < 2) continue
+    if (sessions.length < 3 || sessions[0].date < activeCutoff) continue
     const recent = sessions.filter(s => s.date >= cutoff)
     const older  = sessions.filter(s => s.date <  cutoff)
-    if (recent.length === 0 || older.length === 0) continue
+    // Um treino isolado depois de uma pausa não caracteriza platô.
+    if (recent.length < 2 || older.length === 0) continue
     const currentMax    = Math.max(...recent.map(s => s.maxCarga))
     const historicalMax = Math.max(...older.map(s => s.maxCarga))
     if (currentMax > historicalMax) continue
     if (currentMax === 0 && historicalMax === 0) continue
     const exNome = resolveExName(exId, customExercises)
     const detalhe = level === 'iniciante'
-      ? `${exNome} parado há ${nWeeks} semanas — incomum para iniciantes. Verifique: as séries estão chegando perto da falha? A dieta está adequada? Carga atual: ${currentMax}kg | Melhor anterior: ${historicalMax}kg`
-      : `${exNome} sem progressão há ${nWeeks} semanas. Considere: 3–4 séries/semana por 2 semanas, mantendo a carga (${currentMax}kg).`
+      ? `${exNome} sem aumentar a carga nas últimas ${nWeeks} semanas — incomum para iniciantes. Verifique: as séries estão chegando perto da falha? A dieta está adequada? Carga atual: ${currentMax}kg | Melhor anterior: ${historicalMax}kg`
+      : `${exNome} sem progressão nas últimas ${nWeeks} semanas. Considere: 3–4 séries/semana por 2 semanas, mantendo a carga (${currentMax}kg).`
     insights.push({
       nivel:  'warning', icone: '⚠',
-      titulo:  `${exNome} — sem progressão há ${nWeeks} sem.`,
+      titulo:  `${exNome} — sem progressão nas últimas ${nWeeks} sem.`,
       resumo:  level === 'iniciante'
         ? 'Incomum para iniciantes. Verifique se as séries chegam perto da falha.'
         : 'Normal para seu nível. Considere um ciclo de redução de volume.',
       detalhe,
       grupo: resolvePrimaryGroup(exId, customExercises),
+      exercicioId: exId,
     })
   }
   return insights
@@ -368,13 +379,20 @@ function detectVolumeCyclingNeed(
 /** INSIGHT 3: Rep Range Monotonia */
 function detectRepMonotony(
   rows: WorkoutRowLike[],
-  customExercises: CustomExercise[]
+  customExercises: CustomExercise[],
+  exerciseIds?: readonly string[],
 ): Insight[] {
-  const allExIds = new Set<string>()
-  for (const row of rows) for (const ex of row.exercicios) allExIds.add(ex.exercicioId)
+  const today = todayISO()
+  const activeCutoff = shiftDateStr(today, -14)
+  const historyCutoff = shiftDateStr(today, -56)
+  const allExIds = new Set<string>(exerciseIds)
+  if (!exerciseIds) {
+    for (const row of rows) for (const ex of row.exercicios) allExIds.add(ex.exercicioId)
+  }
   const insights: Insight[] = []
   for (const exId of allExIds) {
-    const sessions = getAllExSessions(rows, exId, 8)
+    const sessions = getAllExSessions(rows, exId, 8).filter(s => s.date >= historyCutoff)
+    if (sessions[0]?.date < activeCutoff) continue
     if (sessions.length < 4) continue
     const last4 = sessions.slice(0, 4)
     const means = last4.map(s => {
@@ -400,6 +418,7 @@ function detectRepMonotony(
           resumo: 'Reps sempre abaixo de 8. Considere uma fase com reps mais altas.',
           detalhe: `${exNome} com cargas pesadas há 6 sessões. Para proteger os tendões, considere uma fase com reps mais altas (12–15) por algumas semanas.`,
           grupo: resolvePrimaryGroup(exId, customExercises),
+          exercicioId: exId,
         })
         continue
       }
@@ -414,6 +433,7 @@ function detectRepMonotony(
         resumo: 'Variar a faixa pode trazer novos estímulos e melhorar conforto articular.',
         detalhe: `${exNome} sempre entre ${minR}–${maxR} reps há ${last4.length} sessões. Variar a faixa pode trazer novos estímulos e melhorar o conforto articular.`,
         grupo: resolvePrimaryGroup(exId, customExercises),
+        exercicioId: exId,
       })
     }
   }
@@ -512,10 +532,8 @@ export function buildInsightsByGroup(
 
   const allNeg = [
     ...detectVolumeCyclingNeed(rows, customExercises),
-    ...detectPlateaus(rows, customExercises),
     ...detectMuscleImbalance(rows, customExercises),
     ...detectChronicLowVolume(rows, customExercises),
-    ...detectRepMonotony(rows, customExercises),
   ]
   for (const ins of allNeg) {
     if (ins.grupo && map[ins.grupo]) map[ins.grupo].push(ins)
@@ -537,6 +555,22 @@ export function buildInsightsByGroup(
     }
   }
   return map
+}
+
+/**
+ * Insights cuja comparação só é válida para o mesmo exercício/equipamento.
+ * São exibidos sob seleção explícita na aba "Por exercício", nunca agregados ao grupo.
+ */
+export function buildExerciseInsights(
+  rows: WorkoutRowLike[],
+  customExercises: CustomExercise[],
+  exercicioId: string,
+): Insight[] {
+  if (!exercicioId) return []
+  return [
+    ...detectPlateaus(rows, customExercises, [exercicioId]),
+    ...detectRepMonotony(rows, customExercises, [exercicioId]),
+  ]
 }
 
 // ── hook ──────────────────────────────────────────────────────────────────
