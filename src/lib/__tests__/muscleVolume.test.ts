@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  buildCurrentVolumeInsight,
   buildExerciseInsights,
   buildInsightsByGroup,
   calcMuscleVolume,
@@ -100,5 +101,19 @@ describe('analytics de volume muscular', () => {
     ]
 
     expect(buildExerciseInsights(rows, customExercises, 'peito-a')).toEqual([])
+  })
+
+  it('classifica a janela atual sem transformar uma semana alta em deload automático', () => {
+    expect(buildCurrentVolumeInsight('🏋️ Peito', 7)?.titulo).toBe('Abaixo do MEV')
+    expect(buildCurrentVolumeInsight('🦵 Quad', 13)?.titulo).toBe('Faixa produtiva')
+    expect(buildCurrentVolumeInsight('🦅 Costas', 20)?.titulo).toBe('Volume alto')
+
+    const aboveMrv = buildCurrentVolumeInsight('🦵 Posterior', 21.5)
+    expect(aboveMrv?.titulo).toBe('Acima do MRV')
+    expect(aboveMrv?.detalhe).toContain('Uma semana isolada não exige deload')
+  })
+
+  it('não cria status semanal quando não há séries válidas', () => {
+    expect(buildCurrentVolumeInsight('🧱 Core', 0)).toBeNull()
   })
 })

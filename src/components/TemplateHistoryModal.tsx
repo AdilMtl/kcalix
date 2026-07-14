@@ -367,8 +367,9 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
         let borderColor = 'var(--text3)'
         let barColor    = 'var(--text3)'
         const opacity   = total === 0 ? 0.5 : 1
-        if (total >= lm.mrv)      { borderColor = 'var(--bad)';  barColor = 'var(--bad)' }
-        else if (total >= lm.mev) { borderColor = 'var(--good)'; barColor = 'var(--good)' }
+        if (total >= lm.mrv)       { borderColor = 'var(--bad)';   barColor = 'var(--bad)' }
+        else if (total > lm.mav)   { borderColor = 'var(--ember)'; barColor = 'var(--ember)' }
+        else if (total >= lm.mev)  { borderColor = 'var(--good)';  barColor = 'var(--good)' }
 
         const barPct = Math.min(total / lm.mrv, 1) * 100
         const mevPct = Math.min(lm.mev / lm.mrv, 1) * 100
@@ -494,7 +495,7 @@ function PanelGrupo({ workoutRows, customExercises }: PanelGrupoProps) {
 
       {/* nota de rodapé */}
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text3)' }}>
-        Linha laranja na barra = MEV (mínimo efetivo). Séries via compostos valem 0.5x. Baseado em protocolos Lucas Campos / RP.
+        Linha na barra = MEV (mínimo efetivo). Verde até MAV; laranja acima do MAV; vermelho no MRV ou acima. Séries via compostos valem 0.5x. Referências orientativas — recuperação e desempenho prevalecem.
       </div>
     </>
   )

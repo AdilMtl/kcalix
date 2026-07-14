@@ -59,6 +59,51 @@ export type Insight = {
   exercicioId?: string
 }
 
+/** Status imediato da janela móvel de 7 dias, sem diagnosticar recuperação. */
+export function buildCurrentVolumeInsight(
+  grupo: MuscleGroup,
+  total: number,
+): Insight | null {
+  if (total <= 0) return null
+
+  const lm = MUSCLE_LANDMARKS[grupo]
+  const rounded = Math.round(total * 2) / 2
+
+  if (total < lm.mev) {
+    return {
+      nivel: 'warning', icone: '↓', titulo: 'Abaixo do MEV',
+      resumo: `Abaixo da referência mínima de ${lm.mev} séries.`,
+      detalhe: `${grupo} com ${rounded} séries nos últimos 7 dias, abaixo da referência MEV (${lm.mev}). Se a semana ainda está em andamento, use como orientação — não como cobrança.`,
+      grupo,
+    }
+  }
+
+  if (total <= lm.mav) {
+    return {
+      nivel: 'ok', icone: '✅', titulo: 'Faixa produtiva',
+      resumo: `Entre as referências MEV (${lm.mev}) e MAV (${lm.mav}).`,
+      detalhe: `${grupo} com ${rounded} séries nos últimos 7 dias — entre as referências MEV (${lm.mev}) e MAV (${lm.mav}). Mantenha se a recuperação e o desempenho estão bons.`,
+      grupo,
+    }
+  }
+
+  if (total < lm.mrv) {
+    return {
+      nivel: 'info', icone: '↗', titulo: 'Volume alto',
+      resumo: `Acima da referência MAV (${lm.mav}), ainda abaixo do MRV (${lm.mrv}).`,
+      detalhe: `${grupo} com ${rounded} séries nos últimos 7 dias — acima da referência MAV (${lm.mav}), mas ainda abaixo do MRV (${lm.mrv}). Evite aumentar automaticamente e monitore recuperação e desempenho.`,
+      grupo,
+    }
+  }
+
+  return {
+    nivel: 'warning', icone: '⚠', titulo: 'Acima do MRV',
+    resumo: `No limite ou acima da referência recuperável (${lm.mrv}).`,
+    detalhe: `${grupo} com ${rounded} séries nos últimos 7 dias — no limite ou acima da referência MRV (${lm.mrv}). Uma semana isolada não exige deload; mantenha ou reduza se houver fadiga persistente ou queda de desempenho.`,
+    grupo,
+  }
+}
+
 // ── helpers ────────────────────────────────────────────────────────────────
 
 function shiftDateStr(dateStr: string, days: number): string {
@@ -539,20 +584,11 @@ export function buildInsightsByGroup(
     if (ins.grupo && map[ins.grupo]) map[ins.grupo].push(ins)
   }
 
-  // Chip positivo: volume ideal + sem alertas
+  // Status da janela atual aparece sempre; alertas históricos continuam abaixo dele.
   for (const grupo of MUSCLE_ORDER) {
-    if (map[grupo].length > 0) continue
     const total = vol[grupo]?.total ?? 0
-    const lm    = MUSCLE_LANDMARKS[grupo]
-    if (total === 0) continue
-    if (total >= lm.mev && total < lm.mrv) {
-      map[grupo].push({
-        nivel: 'ok', icone: '✅',
-        titulo:  'Volume ideal',
-        detalhe: `${grupo} com ${Math.round(total * 2) / 2} séries esta semana — dentro da faixa ideal (MEV: ${lm.mev}, MRV: ${lm.mrv} séries).`,
-        grupo,
-      })
-    }
+    const currentStatus = buildCurrentVolumeInsight(grupo, total)
+    if (currentStatus) map[grupo].unshift(currentStatus)
   }
   return map
 }
