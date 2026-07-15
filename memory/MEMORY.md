@@ -29,6 +29,39 @@
 - Pós-Ember — abrir nova branch depois de fechar/mergear `feature-ember-design-system` para substituir emojis por ícones bonitos/consistentes (ex.: biblioteca de ícones ou sistema próprio), sem misturar com a migração visual atual.
 - [Broadcasts Fase 6C — spec detalhada por fase](spec-broadcasts.md) — canal admin→usuário; 4 fases (texto→imagem→survey→feed); migration 014; iniciar com "implementar Fase 6C-1"
 
+## Sessão Treino — templates e analytics de volume — 2026-07-14
+**Status:** concluída, publicada e aprovada em produção; release de encerramento `0.58.1`.
+
+**Problemas corrigidos:**
+- O editor de templates listava exercícios personalizados somente em `Meus exercícios`; agora cada personalizado também aparece na aba do seu grupo muscular.
+- A normalização de grupos falhava com algumas combinações de emoji/variation selector e podia ignorar dados migrados como `Peito` no catálogo e no MEV.
+- `Por grupo` misturava granularidades: platô e monotonia de todos os IDs históricos apareciam dentro do card muscular, inclusive máquinas antigas de outras academias.
+- O chip `Volume ideal` cobria qualquer valor entre MEV e MRV, mesmo quando acima do MAV, e o MRV não tinha orientação textual imediata.
+
+**Decisões implementadas:**
+- `customExercisesForGroup()` centraliza o catálogo ativo e usa `normalizeGroup()` para dados com ou sem emoji.
+- Séries continuam agregadas por grupo: série direta vale `1`, secundária vale `0.5`, aquecimento e série sem reps valem `0`.
+- Insights de grupo preservados: volume crônico alto/baixo, desequilíbrio, queda de força e fracionamento.
+- Insights específicos de máquina ficam em `Por exercício`; platô exige exercício usado nos últimos 7 dias e tentativas recentes suficientes; monotonia exige uso nos últimos 14 dias e histórico limitado a 8 semanas.
+- Status semanal: abaixo do MEV; faixa produtiva até MAV; volume alto entre MAV e MRV; acima do MRV no limite ou além. Uma semana isolada não dispara deload automático.
+- Valores de `MUSCLE_LANDMARKS` não foram alterados; nenhuma migration SQL foi necessária.
+
+**Arquivos centrais:**
+- `src/components/ExerciseSelector.tsx`
+- `src/components/TemplateEditorModal.tsx`
+- `src/components/TemplateHistoryModal.tsx`
+- `src/hooks/useMuscleVolume.ts`
+- `src/lib/exerciseCatalog.ts`
+- `src/lib/normalizeGroup.ts`
+- `src/lib/__tests__/exerciseCatalog.test.ts`
+- `src/lib/__tests__/muscleVolume.test.ts`
+
+**Validação e publicação:**
+- `npm test`: 5 arquivos, 61 testes passando.
+- ESLint escopado e `npm run build` aprovados.
+- QA manual do usuário aprovado no PWA em produção.
+- Commits funcionais: `6779582` e `963e033`, ambos publicados na `main`.
+
 ## Sessao Ember Design System — 2026-07-09
 **Status:** concluída e aprovada; Fase 8 IA/Coach concluída, QA visual manual aprovado pelo usuário, ajustes finais aplicados e branch liberada para commit/push/merge.
 

@@ -220,13 +220,30 @@ supabase/migrations/
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
-| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (itens 1–10 + hidratação concluídos; v0.55.0 melhorias treino — 2026-03-28) |
+| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (recorte treino templates + analytics concluído na v0.58.1 — 2026-07-14) |
 | 6B-H | Home Revamp v2 — dashboard contextual | CONCLUIDA (v0.58.0 — 2026-07-11) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
 | 6E | CI/CD + Loading states + OG Tags | Planejada |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
+
+---
+
+## FASE 6B — Templates e analytics de volume — RECORTE CONCLUÍDO (v0.58.1 — 2026-07-14)
+
+- [x] Exercícios personalizados aparecem em `Meus exercícios` e na aba do grupo muscular ao editar templates.
+- [x] Grupos com e sem emoji são normalizados de forma única no catálogo, volume direto e volume secundário.
+- [x] Soma semanal permanece por grupo muscular, sem tratar IDs diferentes como séries extras.
+- [x] Insights específicos de exercício foram isolados em `Por exercício` e ganharam critérios de recência.
+- [x] Insights de grupo e recomendações MEV/MAV/MRV foram preservados.
+- [x] Status semanal refinado: abaixo do MEV, faixa produtiva, volume alto e acima do MRV.
+- [x] Deload não é recomendado por uma semana isolada; recorrência e queda de desempenho continuam sendo os gatilhos.
+- [x] Nenhuma migration SQL; valores de `MUSCLE_LANDMARKS` preservados.
+- [x] 61/61 testes, lint escopado e build aprovados.
+- [x] QA manual realizado pelo usuário e bundles confirmados em produção.
+
+Commits funcionais: `6779582`, `963e033`.
 
 ---
 

@@ -2,6 +2,35 @@
 
 ---
 
+## [0.58.1] — 2026-07-14
+
+### Adicionado
+- [test] Cobertura de regressão para catálogo de exercícios personalizados, normalização de grupos, soma de séries por grupo, aquecimento, recência dos insights e faixas MEV/MAV/MRV.
+
+### Melhorado
+- [improve] A aba `Por grupo` agora separa status semanal e alertas históricos: abaixo do MEV, faixa produtiva, volume alto e acima do MRV.
+- [improve] Dicas de platô e monotonia permanecem disponíveis em `Por exercício`, com critérios de recência e sessões suficientes para evitar recomendações sobre equipamentos antigos.
+- [improve] A orientação acima do MRV deixou explícito que uma semana isolada não exige deload; recuperação e desempenho prevalecem.
+
+### Corrigido
+- [fix] Exercícios personalizados agora aparecem tanto em `Meus exercícios` quanto na aba do grupo muscular correspondente ao criar ou editar um template.
+- [fix] Grupos personalizados migrados sem emoji, como `Peito`, agora são normalizados corretamente no catálogo e nos cálculos de volume direto/indireto.
+- [fix] A aba `Por grupo` deixou de misturar alertas de todos os IDs históricos de máquinas e exercícios no mesmo card muscular.
+- [fix] O status `Volume ideal` deixou de cobrir toda a faixa até o MRV; volumes acima do MAV e no MRV agora recebem cautela visual coerente.
+
+### Validação
+- `npm test` passou: 5 arquivos, 61 testes.
+- ESLint escopado passou para os componentes, helpers e testes alterados.
+- `npm run build` passou; bundle PWA gerado com sucesso.
+- QA manual aprovado pelo usuário em produção; bundles atualizados confirmados em `https://kcalix.vercel.app`.
+
+### Notas
+- MEV, MAV e MRV não tiveram seus valores alterados; a mudança corrige classificação, copy e associação de exercícios personalizados aos grupos.
+- Nenhuma migration SQL ou alteração de schema foi necessária.
+- Commits funcionais: `6779582` e `963e033`.
+
+---
+
 ## [0.58.0] — 2026-07-11
 
 ### Adicionado
