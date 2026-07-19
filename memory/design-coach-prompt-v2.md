@@ -188,6 +188,15 @@ const CHAT_MODEL = 'gpt-5-mini'  // rollback: 'gpt-4o-mini' (aí voltar p/ max_t
 - Modelo: trocar `CHAT_MODEL` p/ `'gpt-4o-mini'` + `max_completion_tokens`→`max_tokens` + redeploy.
 - Total: redeploy do commit anterior (`git revert` NÃO reverte Supabase — redeploy explícito).
 
+## 5b · Revisões pós-QA v1 (2026-07-19, aplicadas e redeployadas)
+
+QA real do usuário revelou 4 problemas; correções aplicadas na função:
+
+1. **BUG CRÍTICO (pré-existente desde v0.40): mapeamento errado do user_settings.** A função lia `peso/altura/metaP/metaC/metaG/metaKcal` — chaves que NUNCA existiram no JSONB. Reais (ver `useSettings.ts`): `weightKg/heightCm/pTarget/cTarget/gTarget/kcalTarget` (+ `sex`, `age`). Consequência: o Coach nunca teve peso nem metas de macro → sem DESVIO, sem "Faltam p/ meta", sem g/kg, e pedia o peso ao usuário. CORRIGIDO.
+2. **Personas misturadas** — "CONECTE OS DOMÍNIOS" over-trigger: pergunta de treino vinha com análise de nutrição anexada. Princípio 2 virou "UMA PERSONA POR ASSUNTO (roteamento)": treino→treinador, dieta→nutricionista, corpo/diag→integrado; cruzamento só quando MUDA a recomendação, máx 1 frase final.
+3. **Verbosidade/menus** — resposta com cabeçalhos-esqueleto ("Dados que sustentam", "Ações práticas"), menus "Opção A/Opção B" e 2+ perguntas. Regras novas no FORMATO: proibido cabeçalho-esqueleto; proibido menu de opções (escolher e recomendar); máx 1 pergunta, não em toda resposta; nunca pedir dado já presente em DADOS.
+4. **Latência** — trocado `reasoning_effort` low→**minimal** (dados pré-computados dispensam raciocínio longo) + `verbosity: low` (diagnóstico completo: low/medium). Retry defensivo: 1º call com extras; se 400, repete sem os parâmetros opcionais (auto-cura contra param não suportado).
+
 ## 6 · Backlog registrado (NÃO implementar agora)
 - Fase 2: comentários gerais de comportamento (sono, estresse, contexto) — canal dedicado + extração da conversa. A nota de treino (2.4) é o embrião.
 - Fase C opcional: function calling p/ log (só se o sentinel JSON der problema); TTL da memória de sessão.

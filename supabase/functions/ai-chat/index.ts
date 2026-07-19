@@ -112,9 +112,13 @@ O usuário abre o chat esperando um coach de verdade: que olha os dados antes de
 
 ## PRINCÍPIOS
 1. DADOS ANTES DE OPINIÃO. Toda afirmação relevante cita número e data reais (ex.: "ontem (18/07) você fechou com 132g de proteína, 43g abaixo da meta"). Nunca invente valor que não está no bloco DADOS DO USUÁRIO. Se o dado necessário não existe, diga qual falta e como registrá-lo no app.
-2. CONECTE OS DOMÍNIOS. Nutrição, treino e corpo são um sistema só: pergunta de treino → considere energia e proteína recentes; pergunta de dieta → considere se hoje tem treino; peso estagnado → cheque aderência calórica E volume de treino antes de sugerir mudança.
-3. RESPONDA A PERGUNTA FEITA. Primeiro a resposta direta, depois o porquê. Não despeje análise que não foi pedida.
-4. UMA DIREÇÃO CLARA. Feche com no máximo 1–2 ações concretas e específicas ("adiciona 40g de whey na ceia de hoje", não "tenta comer mais proteína"). Se os dados forem ambíguos para decidir, faça no máximo 1 pergunta de afunilamento — específica, nunca genérica.
+2. UMA PERSONA POR ASSUNTO (roteamento). Identifique o domínio da pergunta e responda SÓ com essa persona:
+   - Pergunta de treino → responda como treinador (volume, progressão, recuperação).
+   - Pergunta de dieta/comida → responda como nutricionista (macros, refeições, aderência).
+   - Pergunta de peso/medidas ou pedido de análise geral → integre os domínios.
+   Cruze domínios APENAS quando um dado de outro domínio MUDA a recomendação (ex.: vai treinar agora e a proteína do dia está muito baixa) — e nesse caso em NO MÁXIMO 1 frase no final, nunca uma seção inteira. NUNCA anexe análise de nutrição a uma pergunta de treino "por completude", nem o contrário.
+3. RESPONDA A PERGUNTA FEITA. Primeiro a resposta direta, depois o porquê. Não despeje análise que não foi pedida. Avaliar uma sessão de treino ou um dia de dieta cabe em ~6–8 linhas.
+4. UMA DIREÇÃO CLARA. Feche com no máximo 1–2 ações concretas e específicas ("adiciona 40g de whey na ceia de hoje", não "tenta comer mais proteína"). NUNCA ofereça menus de opções ("Opção A / Opção B", "responda A ou B") — escolha a melhor opção você mesmo e recomende; só apresente alternativa se o usuário pedir. Se os dados forem ambíguos para decidir, faça no máximo 1 pergunta de afunilamento — específica, nunca genérica.
 5. HONESTIDADE SEM DRAMA. Sem elogio vazio, sem bronca. Aponte o problema com número, proponha o ajuste, siga em frente. Comemore progresso real (PR, semana de aderência) citando o dado que o comprova.
 6. PROFUNDIDADE PROPORCIONAL. Pergunta objetiva = resposta curta e certeira (2–6 linhas: resposta direta + 1–2 dados que a sustentam + ação); o usuário pede aprofundamento se quiser. Pergunta aberta = análise média. Diagnóstico completo só quando pedido. Nunca corte análise importante por brevidade; nunca infle resposta simples.
 7. LIMITES. Você não diagnostica lesão nem condição de saúde — dor persistente ou sintoma clínico → recomende avaliação profissional e ajuste o plano em volta.
@@ -124,6 +128,8 @@ O usuário abre o chat esperando um coach de verdade: que olha os dados antes de
 - Permitido: **negrito** em números-chave e conclusões; listas com "- "; parágrafos curtos separados por linha em branco.
 - Emoji com propósito: status (✅ progresso/na meta, ⚠️ atenção) e ilustrar um ponto-chave quando facilitar a leitura. Nunca como decoração ou separador de parágrafo; no máximo ~1 por bloco de ideia.
 - Proibido: títulos com #, tabelas, blocos de código, links.
+- Proibido: cabeçalhos-esqueleto tipo "Dados que sustentam", "O que isso significa", "Por que", "Ações práticas" — escreva texto corrido natural, com no máximo UMA lista curta por resposta (fora do diagnóstico completo).
+- No máximo 1 pergunta por resposta, sempre no final, e só quando realmente necessária — NÃO termine toda resposta com pergunta. NUNCA peça um dado que já está em DADOS DO USUÁRIO (peso, metas, treinos etc.).
 
 ## MODO LOG — detectar intenção de registrar refeição
 
@@ -525,16 +531,21 @@ interface CheckinRow {
   data: CheckinData
 }
 
+// Campos REAIS do user_settings.data (ver src/hooks/useSettings.ts — UserSettingsData).
+// ATENÇÃO: até v0.60 a função lia peso/altura/metaP/metaKcal — chaves que NUNCA
+// existiram no JSONB. O Coach ficava sem peso e sem metas de macro.
 interface SettingsData {
+  sex?: string
+  age?: number
+  weightKg?: number
+  heightCm?: number
   goal?: string
-  peso?: number
-  altura?: number
-  tmb?: number
+  bmr?: number
   tdee?: number
-  metaP?: number
-  metaC?: number
-  metaG?: number
-  metaKcal?: number
+  kcalTarget?: number
+  pTarget?: number
+  cTarget?: number
+  gTarget?: number
   waterGoalMl?: number
 }
 
@@ -603,7 +614,7 @@ function proteinByMeal(d: DiaryData): Record<string, number> {
 
 function formatDiary(rows: DiaryRow[], settings: SettingsData | null, todayISO: string): string {
   const meta = settings
-    ? { p: settings.metaP ?? 0, c: settings.metaC ?? 0, g: settings.metaG ?? 0, kcal: settings.metaKcal ?? 0 }
+    ? { p: settings.pTarget ?? 0, c: settings.cTarget ?? 0, g: settings.gTarget ?? 0, kcal: settings.kcalTarget ?? 0 }
     : null
 
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date))
@@ -999,17 +1010,19 @@ Deno.serve(async (req) => {
       const s = settings
       const parts: string[] = []
       if (s.goal) parts.push(`objetivo=${s.goal}`)
-      if (s.peso) parts.push(`${s.peso}kg`)
-      if (s.altura) parts.push(`${s.altura}cm`)
+      if (s.sex) parts.push(s.sex === 'female' ? 'mulher' : 'homem')
+      if (s.age) parts.push(`${s.age} anos`)
+      if (s.weightKg) parts.push(`${s.weightKg}kg`)
+      if (s.heightCm) parts.push(`${s.heightCm}cm`)
       if (s.tdee) parts.push(`TDEE ${s.tdee}kcal`)
       const metaParts: string[] = []
-      if (s.metaKcal) metaParts.push(`${s.metaKcal}kcal`)
-      if (s.metaP) {
-        const gkg = s.peso && s.peso > 0 ? ` (${(s.metaP / s.peso).toFixed(1)}g/kg)` : ''
-        metaParts.push(`P${s.metaP}g${gkg}`)
+      if (s.kcalTarget) metaParts.push(`${s.kcalTarget}kcal`)
+      if (s.pTarget) {
+        const gkg = s.weightKg && s.weightKg > 0 ? ` (${(s.pTarget / s.weightKg).toFixed(1)}g/kg)` : ''
+        metaParts.push(`P${s.pTarget}g${gkg}`)
       }
-      if (s.metaC) metaParts.push(`C${s.metaC}g`)
-      if (s.metaG) metaParts.push(`G${s.metaG}g`)
+      if (s.cTarget) metaParts.push(`C${s.cTarget}g`)
+      if (s.gTarget) metaParts.push(`G${s.gTarget}g`)
       if (s.waterGoalMl) metaParts.push(`água ${s.waterGoalMl}ml`)
       if (metaParts.length) parts.push(`Metas/dia: ${metaParts.join(' ')}`)
       if (parts.length) contextParts.push(`Perfil: ${parts.join(' | ')}`)
@@ -1036,22 +1049,41 @@ Deno.serve(async (req) => {
       )
     }
 
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Base sem parâmetros opcionais — usada no retry se a OpenAI rejeitar algum
+    const chatBody = {
+      model: CHAT_MODEL,
+      max_completion_tokens: maxCompletionTokens,
+      messages: [
+        { role: 'system', content: systemPrompt + contextBlock },
+        ...messages.slice(-16),  // cap defensivo de contexto (Fase A também limita no cliente)
+      ],
+    }
+    // Latência: minimal quase elimina o "pensar" (os dados já vêm pré-computados);
+    // verbosity low segura o tamanho da resposta. Diagnóstico completo ganha folga.
+    const chatExtras = {
+      reasoning_effort: fullDiag ? 'low' : 'minimal',
+      verbosity: fullDiag ? 'medium' : 'low',
+    }
+
+    const openaiHeaders = {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    }
+
+    let openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: CHAT_MODEL,
-        max_completion_tokens: maxCompletionTokens,
-        reasoning_effort: 'low',   // gpt-5: menor latência p/ chat. Se o modelo rejeitar, remover esta linha.
-        messages: [
-          { role: 'system', content: systemPrompt + contextBlock },
-          ...messages.slice(-16),  // cap defensivo de contexto (Fase A também limita no cliente)
-        ],
-      }),
+      headers: openaiHeaders,
+      body: JSON.stringify({ ...chatBody, ...chatExtras }),
     })
+
+    // 400 = provável parâmetro opcional não suportado → retry sem os extras
+    if (openaiRes.status === 400) {
+      openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: openaiHeaders,
+        body: JSON.stringify(chatBody),
+      })
+    }
 
     if (!openaiRes.ok) {
       const err = await openaiRes.text()
