@@ -4227,6 +4227,52 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   font-size: 20px;
 }
 
+.ai-chat-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.ai-chat-new {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text3);
+  cursor: pointer;
+  padding: 0 10px;
+  height: 34px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── ChatMarkdown: formatação das respostas do Coach ── */
+.ai-chat-bubble .cm-p {
+  margin: 0;
+  white-space: normal;
+}
+.ai-chat-bubble .cm-p + .cm-p,
+.ai-chat-bubble .cm-p + .cm-list,
+.ai-chat-bubble .cm-list + .cm-p,
+.ai-chat-bubble .cm-list + .cm-list {
+  margin-top: 8px;
+}
+.ai-chat-bubble .cm-list {
+  margin: 0;
+  padding-left: 18px;
+  white-space: normal;
+}
+.ai-chat-bubble .cm-list li {
+  margin: 2px 0;
+}
+.ai-chat-bubble .cm-p strong,
+.ai-chat-bubble .cm-list strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
 .ai-chat-messages {
   flex: 1;
   display: flex;

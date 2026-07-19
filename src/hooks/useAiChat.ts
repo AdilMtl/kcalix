@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { getFoodIndex, buildFoodLookup } from '../data/foodDb'
+import { todayISO } from '../lib/dateUtils'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -77,7 +78,9 @@ export function useAiChat() {
 
     try {
       const res = await supabase.functions.invoke('ai-chat', {
-        body: { messages: newMessages, foodIndex: getFoodIndex() },
+        // clientDate: data local do dispositivo (corrige "fala de outra data" à noite)
+        // slice(-16): estado local guarda tudo; ao servidor vão só as últimas 16 msgs
+        body: { messages: newMessages.slice(-16), foodIndex: getFoodIndex(), clientDate: todayISO() },
       })
 
       if (res.error) throw new Error(res.error.message)

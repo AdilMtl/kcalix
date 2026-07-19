@@ -7,6 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// ─── Modelo do chat (Coach) ───────────────────────────────────────────────────
+// ROLLBACK: trocar para 'gpt-4o-mini' e, na chamada, voltar max_completion_tokens
+// → max_tokens e remover reasoning_effort. parse-food e analyze-photo NÃO usam
+// esta constante (seguem em gpt-4o-mini, intocados).
+const CHAT_MODEL = 'gpt-5-mini'
+
 // ─── Mapa estático exercicioId → { nome, grupo } ──────────────────────────────
 // Cópia inline do EXERCISE_DB (frontend não disponível no Deno runtime)
 // Necessário para resolver nome/grupo dos exercícios salvos no JSONB do banco
@@ -96,9 +102,28 @@ const EX_MAP: Record<string, { nome: string; grupo: string }> = {
 
 // ─── System prompt modular ────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT_BASE = `Você é o Kcal Coach, coach de nutrição e treino de força (protocolos Lucas Campos / RP). Acesso aos dados reais do usuário no Kcalix.
+const SYSTEM_PROMPT_BASE = `Você é o Kcal Coach — o coach pessoal do usuário dentro do app Kcalix.
+Você combina três especialidades em uma só voz:
+- Nutricionista esportivo: aderência e distribuição de macros, ajuste da dieta ao objetivo.
+- Treinador de força (protocolos Renaissance Periodization / Lucas Campos): volume por grupo muscular (MEV/MAV/MRV), progressão de carga, fadiga e deload.
+- Coach comportamental: consistência acima de perfeição; orienta sem julgar.
 
-Seja direto, honesto, orientado a dados. Sem elogios vazios. Cite valores e datas reais. Responda sempre em português brasileiro.
+O usuário abre o chat esperando um coach de verdade: que olha os dados antes de opinar, responde exatamente o que foi perguntado e recomenda com convicção. Responda sempre em português brasileiro.
+
+## PRINCÍPIOS
+1. DADOS ANTES DE OPINIÃO. Toda afirmação relevante cita número e data reais (ex.: "ontem (18/07) você fechou com 132g de proteína, 43g abaixo da meta"). Nunca invente valor que não está no bloco DADOS DO USUÁRIO. Se o dado necessário não existe, diga qual falta e como registrá-lo no app.
+2. CONECTE OS DOMÍNIOS. Nutrição, treino e corpo são um sistema só: pergunta de treino → considere energia e proteína recentes; pergunta de dieta → considere se hoje tem treino; peso estagnado → cheque aderência calórica E volume de treino antes de sugerir mudança.
+3. RESPONDA A PERGUNTA FEITA. Primeiro a resposta direta, depois o porquê. Não despeje análise que não foi pedida.
+4. UMA DIREÇÃO CLARA. Feche com no máximo 1–2 ações concretas e específicas ("adiciona 40g de whey na ceia de hoje", não "tenta comer mais proteína"). Se os dados forem ambíguos para decidir, faça no máximo 1 pergunta de afunilamento — específica, nunca genérica.
+5. HONESTIDADE SEM DRAMA. Sem elogio vazio, sem bronca. Aponte o problema com número, proponha o ajuste, siga em frente. Comemore progresso real (PR, semana de aderência) citando o dado que o comprova.
+6. PROFUNDIDADE PROPORCIONAL. Pergunta objetiva = resposta curta e certeira (2–6 linhas: resposta direta + 1–2 dados que a sustentam + ação); o usuário pede aprofundamento se quiser. Pergunta aberta = análise média. Diagnóstico completo só quando pedido. Nunca corte análise importante por brevidade; nunca infle resposta simples.
+7. LIMITES. Você não diagnostica lesão nem condição de saúde — dor persistente ou sintoma clínico → recomende avaliação profissional e ajuste o plano em volta.
+
+## FORMATO
+- Texto livre. NUNCA envolva a resposta em JSON (única exceção: MODO LOG abaixo).
+- Permitido: **negrito** em números-chave e conclusões; listas com "- "; parágrafos curtos separados por linha em branco.
+- Emoji com propósito: status (✅ progresso/na meta, ⚠️ atenção) e ilustrar um ponto-chave quando facilitar a leitura. Nunca como decoração ou separador de parágrafo; no máximo ~1 por bloco de ideia.
+- Proibido: títulos com #, tabelas, blocos de código, links.
 
 ## MODO LOG — detectar intenção de registrar refeição
 
@@ -107,45 +132,58 @@ Se o usuário está RELATANDO o que comeu/bebeu (ex: "comi frango com arroz", "a
 
 NÃO use MODO LOG para perguntas sobre o diário (ex: "o que comi hoje?", "como foram meus macros?", "quanto comi de proteína?").
 NÃO use MODO LOG se a mensagem contém "?" ou verbos como "posso", "devo", "consigo", "o que", "quanto".
+Para TODO o resto (perguntas, análises, conselhos): responda em texto livre normal, NUNCA em JSON.
 
-## MODOS DE RESPOSTA (para tudo que NÃO é log)
+## DIAGNÓSTICO COMPLETO (só quando pedir análise geral: "analise", "como estou", "resumo", "visão geral", "relatório", "tudo")
 
-Responda sempre com: {"action":"chat","reply":"<sua resposta aqui>"}
+**Visão geral:** 2–3 bullets com os achados mais importantes — valores e datas.
+**Nutrição:** aderência da semana, refeição mais fraca, proteína g/kg.
+**Treino:** volume vs landmarks por grupo, progressões e platôs.
+**Corpo:** tendência de peso vs objetivo.
+**Plano da semana:** até 3 ações, em ordem de impacto.
+**Pergunta:** UMA pergunta de contexto que os dados não respondem.
 
-MODO A (pergunta simples): "posso", "devo", "quanto", "o que é", alimento/exercício específico → 1-3 frases, sem listas.
-MODO B (nutrição): macro, proteína, carbo, kcal, dieta, refeição, fome → dados de diário; aderência P/C/G, refeição que falha, proteína/kg. Máx 3 parágrafos.
-MODO C (treino): treino, série, volume, exercício, carga, progressão, MEV, MRV → dados de treino; volume vs landmarks, progressão. Máx 3 parágrafos.
-MODO D (corpo): peso, gordura, bf, medida, cintura, check-in → tendência kg/sem, BF%. Máx 2 parágrafos.
-MODO E (emocional): difícil, desanimado, falhei, frustrado → empatia (1 parágrafo) + 1 ajuste simples. Sem métricas.
-MODO F (diagnóstico): analise, como estou, resumo, visão geral, relatório → formato estruturado abaixo.
+## EXEMPLOS DE RESPOSTA (âncora de tom e formato — copie o jeito, não o conteúdo)
+Pergunta: "Preciso de descanso hoje?"
+Resposta:
+**Não — treina hoje.** Você descansou ontem e anteontem, e só acumulou 9 séries de peito na semana (MEV é 10).
 
-## FORMATO DO DIAGNÓSTICO COMPLETO (só MODO F)
+Sugestão: peito + tríceps hoje. Sua proteína ontem ficou em 132g — capricha no pós-treino.
 
-**Diagnóstico rápido:** 3 bullets com achados críticos — valores e datas reais.
-**O que está funcionando:** 1-2 pontos com dados.
-**Volume muscular:** grupos abaixo MEV / MAV / acima MRV.
-**Progressão:** 2-3 exercícios com avanço e os em platô.
-**Ajustes:** máx 3 ações concretas.
-**Alerta:** só se proteína cronicamente baixa, perda >1%/sem, grupo abaixo MEV 4+ sem ou queda de força.
-**Pergunta:** UMA pergunta de contexto.`
+Pergunta: "O que devo jantar hoje?"
+Resposta:
+Faltam **83g de proteína** e ~1000kcal pra fechar o dia. Você treinou hoje, então prioriza proteína + carbo:
 
-// Incluído apenas quando needsWorkout=true ou isFullDiag=true (~250 tokens)
+- 200g de frango grelhado (62g P) + 150g de arroz + salada
+- ou 150g de patinho + 200g de batata
+
+Qualquer uma fecha a proteína com folga pra ceia com whey. ✅`
+
+// Sempre incluído no system prompt do chat
 const KNOWLEDGE_WORKOUT = `
 
-## VOLUME — LANDMARKS (séries válidas/semana)
-Peito:10/15/22 | Costas:10/15/22 | Quad:8/14/22 | Post.coxa:6/12/20 | Glúteos:15/20/23 | Ombros:6/12/20 | Bíceps:6/12/20 | Tríceps:6/12/20 | Core:4/10/16
-(formato: MEV/MAV/MRV — série válida=reps>0; primária=1,0s; secundária=0,5s)
-Volume Cycling: acima MAV por 4+ sem → 3-4s/sem mantendo carga por 1-2 sem.
-Progressão: iniciante=quase toda sessão | intermediário=1-2 sem | avançado=2-3 sem | platô=sem progressão 2-3 sem.`
+## CONHECIMENTO — TREINO
+Landmarks (séries válidas/semana, MEV/MAV/MRV):
+Peito 10/15/22 | Costas 10/15/22 | Quad 8/14/22 | Post.coxa 6/12/20 | Glúteos 15/20/23 | Ombros 6/12/20 | Bíceps 6/12/20 | Tríceps 6/12/20 | Core 4/10/16
+(série válida = reps>0 ou "falha"; primária conta 1,0; secundária 0,5)
+- Abaixo do MEV: crescimento improvável → priorizar esse grupo.
+- Entre MEV e MAV: zona produtiva sustentável. Entre MAV e MRV: alto estímulo e alta fadiga — ok por 2–4 semanas.
+- Acima do MRV: recuperação comprometida → reduzir volume.
+Progressão: iniciante progride quase toda sessão; intermediário a cada 1–2 sem; avançado a cada 2–3 sem.
+Platô = 3+ sessões sem aumento de carga ou reps → mudar o estímulo: +1 rep alvo, +2,5kg, ou variação do exercício.
+Deload: só com sinais recorrentes (2+ semanas de queda de desempenho, dores, sono ruim) — nunca por 1 semana isolada de volume baixo.
+Use o bloco "Progressão por exercício" (pré-computado) como fonte — não recalcule a partir do histórico bruto.`
 
-// Incluído apenas quando needsDiary=true ou isFullDiag=true (~80 tokens)
+// Sempre incluído no system prompt do chat
 const KNOWLEDGE_NUTRITION = `
 
-## METAS POR OBJETIVO
-CUT: proteína 2.0-2.4g/kg, perda segura 0.5-1%/sem.
-BULK: surplus 200-350kcal, proteína 1.8-2.2g/kg.
-RECOMP: proteína 2.2-2.5g/kg, peso estável é normal.
-MANUTENÇÃO: monitorar estabilidade de peso e progressão.`
+## CONHECIMENTO — NUTRIÇÃO
+Metas por objetivo — CUT: déficit 300–500kcal, perda 0,5–1%/sem, proteína 2,0–2,4g/kg | BULK: surplus 200–350kcal, proteína 1,8–2,2g/kg | RECOMP: manutenção ±150kcal, proteína 2,2–2,5g/kg, peso estável é esperado | MANUTENÇÃO: estabilidade de peso + progressão de treino.
+Prática:
+- Proteína: distribuir em 3–5 refeições de ≥0,4g/kg cada (~25–45g); refeição pós-treino é prioritária. O total do dia importa mais que o horário perfeito.
+- Carbo: concentrar ao redor do treino. Em dia sem treino, se precisar cortar, corte carbo/gordura — nunca proteína.
+- Aderência semanal > perfeição diária: avalie a média de 7 dias antes de reagir a 1 dia ruim. Dia estourado se compensa com −100 a −200kcal nos 2–3 dias seguintes, nunca com jejum punitivo.
+- Água: compare consumo vs meta; déficit crônico distorce fome e desempenho.`
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -403,14 +441,6 @@ azeite: p=0 c=0 g=100 kcal=884 | manteiga: p=1 c=0 g=83 kcal=752`
 
 // ─── Tipos chat ───────────────────────────────────────────────────────────────
 
-interface Intent {
-  needsDiary: boolean
-  needsWorkout: boolean
-  needsBody: boolean
-  isFullDiag: boolean
-}
-
-
 interface FoodEntry {
   nome: string
   qty: number
@@ -443,8 +473,9 @@ interface DiaryRow {
 }
 
 interface SetData {
-  reps: string   // string — pode ser "10", "falha", "10-12"
-  carga: string  // string — pode ser "corpo", "60"
+  reps: string       // string — pode ser "10", "falha", "10-12"
+  carga: string      // string — pode ser "corpo", "60"
+  warmup?: boolean   // série de aquecimento — não conta para volume
 }
 
 interface ExerciseData {
@@ -452,8 +483,17 @@ interface ExerciseData {
   series: SetData[]
 }
 
+interface CardioData {
+  tipo?: string
+  minutos?: number
+  kcalPerMin?: number
+}
+
 interface WorkoutData {
   exercicios?: ExerciseData[]
+  cardio?: CardioData[]
+  nota?: string
+  durationMin?: number
 }
 
 interface WorkoutRow {
@@ -498,46 +538,27 @@ interface SettingsData {
   waterGoalMl?: number
 }
 
-// ─── PASSO 1: Detectar intenção — acumula flags de TODA a conversa ────────────
-// FIX 4: analysa todas as mensagens do user (não só a última) para manter
-// contexto coerente em conversas multi-turn
+// ─── PASSO 1: Detectar pedido de diagnóstico completo ─────────────────────────
+// v2: o Coach SEMPRE recebe diário + treino + corpo (o gating por regex causava
+// respostas rasas quando classificava o domínio errado). A única distinção que
+// resta é se o usuário pediu uma análise geral (formato + teto de tokens maior).
 
-function detectIntent(messages: Message[]): Intent {
-  // Concatena todas as mensagens do user para acumular intenção
-  const fullConversation = messages
-    .filter(m => m.role === 'user')
-    .map(m => m.content)
-    .join(' ')
-    .toLowerCase()
-
-  // Última mensagem tem peso extra — se vier uma pergunta nova muito diferente,
-  // a última mensagem guia o foco mas não apaga o contexto
+function isFullDiag(messages: Message[]): boolean {
   const lastMsg = (messages.filter(m => m.role === 'user').at(-1)?.content ?? '').toLowerCase()
+  return /analise|analisa|análise|como estou|resumo|visão geral|visao geral|panorama|tudo|relatório|relatorio|diagnóstico|diagnostico|visão completa|visao completa/.test(lastMsg)
+}
 
-  const isFullDiag = /analise|como estou|resumo|visão geral|visao geral|tudo|relatório|relatorio|diagnóstico|diagnostico/.test(lastMsg)
+// Resolve a data "de hoje" na perspectiva do usuário.
+// Prioridade: clientDate enviado pelo app (Fase A); senão, fuso America/Sao_Paulo.
+// Corrige o bug em que o servidor (UTC) virava o dia à meia-noite BRT-3.
+function resolveToday(clientDate?: string): string {
+  if (clientDate && /^\d{4}-\d{2}-\d{2}$/.test(clientDate)) return clientDate
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
+}
 
-  // needsDiary: ativo se última msg pede diário OU se foi mencionado na conversa
-  const needsDiary = isFullDiag
-    || /macro|proteína|proteina|carbo|carboidrato|gordura|kcal|caloria|comi|dieta|aderência|aderencia|refeição|refeicao|almoço|almoco|café|cafe|jantar|lanche|ceia|fome|nutrição|nutricao|água|agua|hidrat|beb|ml|litro|sede/.test(lastMsg)
-    || /macro|proteína|proteina|carbo|kcal|caloria|comi|dieta|refeição|refeicao|almoço|almoco|café|cafe|jantar|lanche|ceia|nutrição|nutricao/.test(fullConversation)
-
-  // needsWorkout: ativo se última msg pede treino OU se treino foi tema da conversa
-  const needsWorkout = isFullDiag
-    || /treino|série|serie|volume|exercício|exercicio|supino|agachamento|platô|plato|progressão|progressao|mev|mrv|mav|carga|rep|peito|costas|bíceps|biceps|tríceps|triceps|ombro|quad|glúteo|gluteo|posterior/.test(lastMsg)
-    || /treino|série|serie|volume|exercício|exercicio|supino|agachamento|progressão|progressao|mev|mrv|mav/.test(fullConversation)
-
-  const needsBody = isFullDiag
-    || /peso|gordura|bf|cintura|medida|perdi|engordei|check.in|balança|balanca|composição|composicao/.test(lastMsg)
-    || /peso|gordura|bf|cintura|medida|check.in/.test(fullConversation)
-
-  // Fallback: se nenhuma flag ativa na última mensagem, assume nutrição
-  const anyActive = needsDiary || needsWorkout || needsBody
-  return {
-    needsDiary: anyActive ? needsDiary : true,
-    needsWorkout,
-    needsBody,
-    isFullDiag,
-  }
+// dd/mm a partir de 'YYYY-MM-DD'
+function ddmm(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 }
 
 // ─── PASSO 3a: Formatar diário ────────────────────────────────────────────────
@@ -551,167 +572,260 @@ const MEAL_LABELS: Record<string, string> = {
   ceia: 'ceia',
 }
 
-function formatDiary(rows: DiaryRow[], settings: SettingsData | null): string {
-  if (!rows.length) return 'Diário: sem registros nos últimos 8 dias.'
+// Linhas de refeição de um dia (usado no bloco HOJE e no histórico)
+function mealLinesFor(d: DiaryData): string[] {
+  const meals = d.meals ?? {}
+  const out: string[] = []
+  for (const [key, label] of Object.entries(MEAL_LABELS)) {
+    const entries = (meals as Record<string, FoodEntry[]>)[key] ?? []
+    if (!entries.length) continue
+    let rP = 0, rC = 0, rG = 0, rKcal = 0
+    const foodNames: string[] = []
+    for (const e of entries) {
+      rP += e.p ?? 0; rC += e.c ?? 0; rG += e.g ?? 0; rKcal += e.kcal ?? 0
+      foodNames.push(`${e.nome} ${e.porcaoG ?? Math.round((e.qty ?? 1) * 100)}g`)
+    }
+    out.push(`  ${label}: P=${Math.round(rP)}g C=${Math.round(rC)}g G=${Math.round(rG)}g kcal=${Math.round(rKcal)} [${foodNames.join(', ')}]`)
+  }
+  return out
+}
 
+// Proteína somada por refeição (para achar a refeição mais fraca)
+function proteinByMeal(d: DiaryData): Record<string, number> {
+  const meals = d.meals ?? {}
+  const out: Record<string, number> = {}
+  for (const key of Object.keys(MEAL_LABELS)) {
+    const entries = (meals as Record<string, FoodEntry[]>)[key] ?? []
+    out[key] = entries.reduce((a, e) => a + (e.p ?? 0), 0)
+  }
+  return out
+}
+
+function formatDiary(rows: DiaryRow[], settings: SettingsData | null, todayISO: string): string {
   const meta = settings
     ? { p: settings.metaP ?? 0, c: settings.metaC ?? 0, g: settings.metaG ?? 0, kcal: settings.metaKcal ?? 0 }
     : null
 
-  // FIX 3: ordenar ascending para facilitar referência temporal pelo modelo
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date))
+  const todayRow = sorted.find(r => r.date === todayISO) ?? null
+  const history = sorted.filter(r => r.date < todayISO)   // dias anteriores a hoje
 
-  const lines: string[] = ['### Diário alimentar (últimos 8 dias)']
+  if (!todayRow && !history.length) return 'Diário: sem registros nos últimos 8 dias.'
 
-  for (const row of sorted) {
-    const d = row.data
-    const meals = d.meals ?? {}
-    const mealLines: string[] = []
+  const out: string[] = []
 
-    for (const [key, label] of Object.entries(MEAL_LABELS)) {
-      const entries = (meals as Record<string, FoodEntry[]>)[key] ?? []
-      if (!entries.length) continue
-
-      let rP = 0, rC = 0, rG = 0, rKcal = 0
-      const foodNames: string[] = []
-      for (const e of entries) {
-        rP += e.p ?? 0
-        rC += e.c ?? 0
-        rG += e.g ?? 0
-        rKcal += e.kcal ?? 0
-        foodNames.push(`${e.nome} ${e.porcaoG ?? Math.round((e.qty ?? 1) * 100)}g`)
-      }
-
-      mealLines.push(
-        `  ${label}: P=${Math.round(rP)}g C=${Math.round(rC)}g G=${Math.round(rG)}g kcal=${Math.round(rKcal)} [${foodNames.join(', ')}]`
-      )
+  // ── HOJE (parcial) ──────────────────────────────────────────────
+  out.push(`### HOJE (${todayISO}) — parcial`)
+  if (todayRow) {
+    const t = todayRow.data.totals ?? { p: 0, c: 0, g: 0, kcal: 0 }
+    out.push(`Consumido: ${Math.round(t.kcal)}kcal | P${Math.round(t.p)}g C${Math.round(t.c)}g G${Math.round(t.g)}g`)
+    const extra: string[] = [todayRow.data.kcalTreino ? `treino: ${todayRow.data.kcalTreino}kcal` : 'treino: não registrado']
+    if (todayRow.data.waterMl != null) {
+      extra.push(`água: ${todayRow.data.waterMl}ml${settings?.waterGoalMl ? `/${settings.waterGoalMl}` : ''}`)
     }
-
-    const t = d.totals ?? { p: 0, c: 0, g: 0, kcal: 0 }
-    const totalLine = `  TOTAL: P=${Math.round(t.p)}g C=${Math.round(t.c)}g G=${Math.round(t.g)}g kcal=${Math.round(t.kcal)}`
-
-    let desvioLine = ''
+    out.push('  ' + extra.join(' | '))
     if (meta && meta.kcal > 0) {
-      const dp = Math.round(t.p - meta.p)
-      const dc = Math.round(t.c - meta.c)
-      const dg = Math.round(t.g - meta.g)
-      const dk = Math.round(t.kcal - meta.kcal)
-      const pct = (n: number, base: number) => base > 0 ? `${n >= 0 ? '+' : ''}${Math.round((n / base) * 100)}%` : '—'
-      desvioLine = `  DESVIO: P=${dp >= 0 ? '+' : ''}${dp}g(${pct(dp, meta.p)}) C=${dc >= 0 ? '+' : ''}${dc}g(${pct(dc, meta.c)}) G=${dg >= 0 ? '+' : ''}${dg}g(${pct(dg, meta.g)}) kcal=${dk >= 0 ? '+' : ''}${dk}(${pct(dk, meta.kcal)})`
+      out.push(`Faltam p/ meta: ${Math.round(meta.kcal - t.kcal)}kcal | P${Math.round(meta.p - t.p)}g`)
+    }
+    out.push(...mealLinesFor(todayRow.data))
+  } else {
+    out.push('Nenhum registro ainda hoje.')
+  }
+
+  // ── Histórico (dias anteriores) ─────────────────────────────────
+  if (history.length) {
+    out.push('', '### DIÁRIO — dias anteriores')
+    for (const row of history) {
+      const d = row.data
+      const t = d.totals ?? { p: 0, c: 0, g: 0, kcal: 0 }
+      out.push(`${row.date} (${ddmm(row.date)}):`)
+      out.push(...mealLinesFor(d))
+      out.push(`  TOTAL: P=${Math.round(t.p)}g C=${Math.round(t.c)}g G=${Math.round(t.g)}g kcal=${Math.round(t.kcal)}`)
+      if (meta && meta.kcal > 0) {
+        const dk = Math.round(t.kcal - meta.kcal)
+        const dp = Math.round(t.p - meta.p)
+        out.push(`  DESVIO: kcal ${dk >= 0 ? '+' : ''}${dk} | P ${dp >= 0 ? '+' : ''}${dp}g`)
+      }
+      if (d.kcalTreino) out.push(`  kcal treino: ${d.kcalTreino}`)
+      if (d.waterMl != null) out.push(`  água: ${d.waterMl}ml`)
     }
 
-    lines.push(`${row.date}:`)
-    lines.push(...mealLines)
-    lines.push(totalLine)
-    if (desvioLine) lines.push(desvioLine)
-    if (d.kcalTreino) lines.push(`  kcal treino: ${d.kcalTreino}`)
-    if (d.waterMl != null) lines.push(`  água: ${d.waterMl}ml`)
+    // Médias do período + refeição mais fraca em proteína (pré-computado)
+    const n = history.length
+    const avgKcal = Math.round(history.reduce((a, r) => a + (r.data.totals?.kcal ?? 0), 0) / n)
+    const avgP = Math.round(history.reduce((a, r) => a + (r.data.totals?.p ?? 0), 0) / n)
+    const pctKcal = meta && meta.kcal > 0 ? ` (${Math.round(avgKcal / meta.kcal * 100)}% da meta)` : ''
+    const pctP = meta && meta.p > 0 ? ` (${Math.round(avgP / meta.p * 100)}%)` : ''
+    const diasNaMetaP = meta && meta.p > 0
+      ? history.filter(r => (r.data.totals?.p ?? 0) >= meta.p * 0.9).length
+      : null
+    out.push('', `Médias ${n}d: ${avgKcal}kcal${pctKcal} | P${avgP}g${pctP}`
+      + (diasNaMetaP != null ? ` | dias na meta de P (≥90%): ${diasNaMetaP}/${n}` : ''))
+
+    const sums: Record<string, number> = {}
+    const counts: Record<string, number> = {}
+    for (const r of history) {
+      for (const [k, v] of Object.entries(proteinByMeal(r.data))) {
+        if (v > 0) { sums[k] = (sums[k] ?? 0) + v; counts[k] = (counts[k] ?? 0) + 1 }
+      }
+    }
+    const meanByMeal = Object.keys(counts).map(k => ({ k, mean: sums[k] / counts[k] }))
+    if (meanByMeal.length) {
+      const weakest = meanByMeal.sort((a, b) => a.mean - b.mean)[0]
+      out.push(`Refeição mais fraca em proteína: ${MEAL_LABELS[weakest.k]} (média ${Math.round(weakest.mean)}g)`)
+    }
   }
 
   if (meta && meta.kcal > 0) {
-    lines.push(`Meta diária: P=${meta.p}g C=${meta.c}g G=${meta.g}g kcal=${meta.kcal}`)
+    out.push('', `Meta diária: P=${meta.p}g C=${meta.c}g G=${meta.g}g kcal=${meta.kcal}`)
   }
-  if (settings?.waterGoalMl) {
-    lines.push(`Meta de água: ${settings.waterGoalMl}ml/dia`)
-  }
+  if (settings?.waterGoalMl) out.push(`Meta de água: ${settings.waterGoalMl}ml/dia`)
 
-  return lines.join('\n')
+  return out.join('\n')
 }
 
 // ─── PASSO 3b: Formatar treinos ───────────────────────────────────────────────
 
-function formatWorkouts(rows: WorkoutRow[], exMap: Record<string, { nome: string; grupo: string }> = EX_MAP): string {
+// Índice da semana a partir de hoje: 0 = últimos 7 dias, 1 = 7–13 dias atrás, etc.
+function weekIndex(dateISO: string, todayISO: string): number {
+  const d = new Date(dateISO + 'T12:00:00Z').getTime()
+  const t = new Date(todayISO + 'T12:00:00Z').getTime()
+  return Math.floor(Math.floor((t - d) / 86400000) / 7)
+}
+
+// Melhor série numérica de um exercício na sessão (maior carga; desempate por reps).
+// Ignora séries de aquecimento e cargas não numéricas ("corpo").
+function bestSetOfSession(ex: ExerciseData): { carga: number; reps: number } | null {
+  let best: { carga: number; reps: number; score: number } | null = null
+  for (const s of ex.series ?? []) {
+    if (s.warmup) continue
+    const carga = parseFloat((s.carga ?? '').toString().replace(',', '.'))
+    if (!isFinite(carga) || carga <= 0) continue
+    const repsNum = parseFloat((s.reps ?? '').toString())
+    const reps = isFinite(repsNum) ? repsNum : 0
+    const score = carga * 1000 + reps
+    if (!best || score > best.score) best = { carga, reps, score }
+  }
+  return best ? { carga: best.carga, reps: best.reps } : null
+}
+
+function formatWorkouts(
+  rows: WorkoutRow[],
+  exMap: Record<string, { nome: string; grupo: string }> = EX_MAP,
+  todayISO: string = resolveToday(),
+): string {
   if (!rows.length) return 'Treinos: sem registros nos últimos 30 dias.'
 
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 7)
-  const cutoffISO = cutoff.toISOString().split('T')[0]
+  const MEV: Record<string, number> = { Peito: 10, Costas: 10, Quad: 8, 'Posterior de coxa': 6, 'Posterior de Coxa': 6, Glúteos: 15, Ombros: 6, Bíceps: 6, Tríceps: 6, Core: 4, Abdômen: 4 }
+  const MAV: Record<string, number> = { Peito: 15, Costas: 15, Quad: 14, 'Posterior de coxa': 12, 'Posterior de Coxa': 12, Glúteos: 20, Ombros: 12, Bíceps: 12, Tríceps: 12, Core: 10, Abdômen: 10 }
+  const MRV: Record<string, number> = { Peito: 22, Costas: 22, Quad: 22, 'Posterior de coxa': 20, 'Posterior de Coxa': 20, Glúteos: 23, Ombros: 20, Bíceps: 20, Tríceps: 20, Core: 16, Abdômen: 16 }
 
-  const volumeByGroup: Record<string, number> = {}
-  const lines: string[] = ['### Treinos (últimos 30 dias)']
-
-  // Ordenar ascending para leitura temporal
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date))
+
+  const volume: Record<string, number[]> = {}   // grupo → [w0=atual, w1, w2, w3]
+  const prog: Record<string, { date: string; carga: number; reps: number; score: number }[]> = {}
+  const exNome: Record<string, string> = {}
+  const sessionLines: string[] = []
 
   for (const row of sorted) {
     const exercicios = row.data?.exercicios ?? []
-    if (!exercicios.length) continue
-
+    const wIdx = weekIndex(row.date, todayISO)
     const exLines: string[] = []
+
     for (const ex of exercicios) {
-      // FIX 1: reps é string — usar parseFloat; "falha" válido; warmup não conta
+      // reps é string — "falha" válido; warmup não conta
       const setsValidos = (ex.series ?? []).filter(s => {
         if (s.warmup) return false
-        const r = s.reps?.toString().trim() ?? ''
+        const r = (s.reps ?? '').toString().trim()
         return r === 'falha' || parseFloat(r) > 0
       })
       if (!setsValidos.length) continue
 
-      // FIX 2: resolver nome/grupo via mapa (built-in + custom do usuário)
       const exInfo = exMap[ex.exercicioId]
       const nome = exInfo?.nome ?? 'Exercício personalizado'
       const grupo = exInfo?.grupo ?? 'Outros'
+      exNome[ex.exercicioId] = nome
 
       const resumo = setsValidos.map(s => {
-        const r = s.reps?.toString().trim() ?? '?'
-        const c = s.carga?.toString().trim() ?? '?'
-        return `${r}×${c}kg`
+        const r = (s.reps ?? '?').toString().trim()
+        const c = (s.carga ?? '?').toString().trim()
+        return isFinite(parseFloat(c)) ? `${r}×${c}kg` : `${r}×${c}`
       }).join(', ')
       exLines.push(`  ${nome} (${grupo}): ${setsValidos.length}s — ${resumo}`)
 
-      // Acumular volume só dos últimos 7 dias
-      if (row.date >= cutoffISO) {
-        volumeByGroup[grupo] = (volumeByGroup[grupo] ?? 0) + setsValidos.length
+      if (wIdx >= 0 && wIdx <= 3) {
+        if (!volume[grupo]) volume[grupo] = [0, 0, 0, 0]
+        volume[grupo][wIdx] += setsValidos.length
+      }
+
+      const best = bestSetOfSession(ex)
+      if (best) {
+        if (!prog[ex.exercicioId]) prog[ex.exercicioId] = []
+        prog[ex.exercicioId].push({ date: row.date, carga: best.carga, reps: best.reps, score: best.carga * 1000 + best.reps })
       }
     }
 
-    if (exLines.length) {
-      lines.push(`${row.date}:`)
-      lines.push(...exLines)
+    const cardios = (row.data?.cardio ?? []).filter(c => c.minutos)
+    const nota = row.data?.nota?.trim()
+    if (exLines.length || cardios.length || nota) {
+      sessionLines.push(`${row.date} (${ddmm(row.date)}):`)
+      sessionLines.push(...exLines)
+      for (const c of cardios) sessionLines.push(`  cardio: ${c.tipo ?? 'cardio'} ${c.minutos}min`)
+      if (nota) sessionLines.push(`  nota: "${nota}"`)
     }
   }
 
-  // Resumo de volume semanal — todos os grupos com MEV/MAV definidos
-  if (Object.keys(volumeByGroup).length) {
-    const MEV: Record<string, number> = {
-      Peito: 10, Costas: 10, Quad: 8, 'Posterior de coxa': 6,
-      'Posterior de Coxa': 6, Glúteos: 15, Ombros: 6,
-      Bíceps: 6, Tríceps: 6, Core: 4, Abdômen: 4,
+  const out: string[] = ['### TREINO — sessões (últimos 30 dias)']
+  out.push(...sessionLines)
+
+  // Volume semanal por grupo (4 semanas, antiga→atual)
+  const grupos = Object.keys(volume)
+  if (grupos.length) {
+    out.push('', '### Volume semanal por grupo (4 semanas, antiga→atual; USE ESTES NÚMEROS — não recalcule)')
+    for (const g of grupos.sort()) {
+      const w = volume[g]                       // [w0=atual .. w3=antiga]
+      const atual = w[0]
+      const antigoParaNovo = `${w[3]}→${w[2]}→${w[1]}→${w[0]}`
+      const mev = MEV[g], mav = MAV[g], mrv = MRV[g]
+      let status = '✅ ok'
+      if (mev && atual < mev) status = '⚠️ abaixo do MEV'
+      else if (mrv && atual > mrv) status = '⚠️ acima do MRV'
+      else if (mav && atual >= mav) status = '✅ zona alta (MAV+)'
+      const landmarks = mev ? `MEV${mev} MAV${mav} MRV${mrv}` : 'sem landmark'
+      out.push(`  ${g}: ${antigoParaNovo} (${landmarks}) ${status}`)
     }
-    const MAV: Record<string, number> = {
-      Peito: 15, Costas: 15, Quad: 14, 'Posterior de coxa': 12,
-      'Posterior de Coxa': 12, Glúteos: 20, Ombros: 12,
-      Bíceps: 12, Tríceps: 12, Core: 10, Abdômen: 10,
-    }
-    // Consolidar grupos (evitar duplicatas por capitalização)
-    const consolidated: Record<string, number> = {}
-    for (const [g, s] of Object.entries(volumeByGroup)) {
-      const key = g
-      consolidated[key] = (consolidated[key] ?? 0) + s
-    }
-    const volLines = Object.entries(consolidated)
-      .sort((a, b) => b[1] - a[1])
-      .map(([g, s]) => {
-        const mev = MEV[g]
-        const mav = MAV[g]
-        const mevStr = mev ?? '?'
-        const mavStr = mav ?? '?'
-        const status = mev && s < mev ? '⚠️ abaixo MEV' : mav && s >= mav ? '✓ MAV+' : '✓ ok'
-        return `  ${g}: ${s}s (MEV=${mevStr}, MAV=${mavStr}) ${status}`
-      })
-    lines.push(`\nVolume últimos 7 dias (USE APENAS ESTE RESUMO — não recalcule):`)
-    lines.push(...volLines)
   }
 
-  return lines.join('\n')
+  // Progressão por exercício (pré-computado)
+  const progExs = Object.keys(prog).filter(id => prog[id].length >= 2)
+  if (progExs.length) {
+    out.push('', '### Progressão por exercício (pré-computado — use estes números, não recalcule)')
+    for (const id of progExs) {
+      const sess = prog[id].sort((a, b) => a.date.localeCompare(b.date))
+      const first = sess[0]
+      const last = sess[sess.length - 1]
+      const delta = Math.round((last.carga - first.carga) * 10) / 10
+      let maxScore = -1, lastImp = 0
+      sess.forEach((s, i) => { if (s.score > maxScore) { maxScore = s.score; lastImp = i } })
+      const stalled = (sess.length - 1) - lastImp
+      let suffix: string
+      if (stalled >= 3) suffix = `⚠️ platô (${stalled} sessões sem progresso)`
+      else if (delta > 0) suffix = `+${delta}kg ✅`
+      else if (delta < 0) suffix = `${delta}kg`
+      else suffix = 'sem mudança de carga'
+      out.push(`  ${exNome[id]}: ${sess.length} sessões | ${first.carga}kg×${first.reps} (${ddmm(first.date)}) → ${last.carga}kg×${last.reps} (${ddmm(last.date)}) | ${suffix}`)
+    }
+  }
+
+  return out.join('\n')
 }
 
 // ─── PASSO 3c: Formatar medidas e checkins ────────────────────────────────────
 
-function formatBody(bodyRows: BodyRow[], checkinRows: CheckinRow[]): string {
+function formatBody(bodyRows: BodyRow[], checkinRows: CheckinRow[], settings: SettingsData | null = null): string {
   if (!bodyRows.length && !checkinRows.length) return 'Corpo: sem medidas ou check-ins registrados.'
 
-  const lines: string[] = ['### Medidas e check-ins']
+  const lines: string[] = ['### CORPO — medidas e check-ins']
 
   for (const row of bodyRows) {
     const d = row.data ?? {}
@@ -722,7 +836,7 @@ function formatBody(bodyRows: BodyRow[], checkinRows: CheckinRow[]): string {
     if (d.quadril) parts.push(`quadril=${d.quadril}cm`)
     if (d.braco) parts.push(`braço=${d.braco}cm`)
     if (d.perna) parts.push(`perna=${d.perna}cm`)
-    if (parts.length) lines.push(`  ${row.date}: ${parts.join(' | ')}`)
+    if (parts.length) lines.push(`  ${row.date} (${ddmm(row.date)}): ${parts.join(' | ')}`)
   }
 
   for (const row of checkinRows) {
@@ -730,10 +844,10 @@ function formatBody(bodyRows: BodyRow[], checkinRows: CheckinRow[]): string {
     const parts: string[] = []
     if (d.peso) parts.push(`peso=${d.peso}kg`)
     if (d.bf) parts.push(`BF=${d.bf}%`)
-    if (parts.length) lines.push(`  check-in ${row.date}: ${parts.join(' | ')}`)
+    if (parts.length) lines.push(`  check-in ${row.date} (${ddmm(row.date)}): ${parts.join(' | ')}`)
   }
 
-  // Tendência de peso
+  // Tendência de peso + leitura contra o objetivo
   const allWeights: { date: string; peso: number }[] = [
     ...bodyRows.filter(r => r.data?.peso).map(r => ({ date: r.date, peso: r.data.peso! })),
     ...checkinRows.filter(r => r.data?.peso).map(r => ({ date: r.date, peso: r.data.peso! })),
@@ -742,10 +856,28 @@ function formatBody(bodyRows: BodyRow[], checkinRows: CheckinRow[]): string {
   if (allWeights.length >= 2) {
     const first = allWeights[0]
     const last = allWeights[allWeights.length - 1]
-    const diffDias = Math.max(1, (new Date(last.date).getTime() - new Date(first.date).getTime()) / 86400000)
+    const diffDias = Math.max(1, (new Date(last.date + 'T12:00:00Z').getTime() - new Date(first.date + 'T12:00:00Z').getTime()) / 86400000)
     const diffKg = last.peso - first.peso
-    const kgSem = (diffKg / diffDias * 7).toFixed(2)
-    lines.push(`  Tendência: ${diffKg >= 0 ? '+' : ''}${diffKg.toFixed(1)}kg em ${Math.round(diffDias)} dias (${kgSem >= '0' ? '+' : ''}${kgSem}kg/sem)`)
+    const kgSemNum = diffKg / diffDias * 7
+    lines.push(`  Tendência: ${diffKg >= 0 ? '+' : ''}${diffKg.toFixed(1)}kg em ${Math.round(diffDias)} dias (${kgSemNum >= 0 ? '+' : ''}${kgSemNum.toFixed(2)}kg/sem)`)
+
+    const pctSem = last.peso > 0 ? (kgSemNum / last.peso) * 100 : 0
+    const goal = (settings?.goal ?? '').toLowerCase()
+    let verdict = ''
+    if (goal === 'cut') {
+      if (pctSem <= -1.2) verdict = '⚠️ perda rápida demais (risco de perder massa) — considere afrouxar o déficit'
+      else if (pctSem <= -0.3) verdict = '✅ dentro do alvo de cut (0,5–1%/sem)'
+      else verdict = '⚠️ estagnado para um cut — revise a aderência calórica'
+    } else if (goal === 'bulk') {
+      if (pctSem >= 0.7) verdict = '⚠️ ganho rápido (mais gordura) — considere reduzir o surplus'
+      else if (pctSem >= 0.1) verdict = '✅ ganho controlado para bulk'
+      else verdict = '⚠️ sem ganho — o surplus pode estar baixo'
+    } else if (goal === 'recomp' || goal === 'maintain' || goal === 'manutenção') {
+      verdict = Math.abs(pctSem) <= 0.3
+        ? '✅ peso estável (esperado em recomp/manutenção)'
+        : `${pctSem > 0 ? '↗' : '↘'} variação de ${pctSem >= 0 ? '+' : ''}${pctSem.toFixed(1)}%/sem`
+    }
+    if (verdict) lines.push(`  → ${verdict}`)
   }
 
   return lines.join('\n')
@@ -798,7 +930,7 @@ Deno.serve(async (req) => {
       }
     } catch { /* falha silenciosa — continua com EX_MAP estático */ }
 
-    const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string; image?: string; mimeType?: string }
+    const body = await req.json() as { action?: string; messages?: Message[]; text?: string; foodIndex?: string; image?: string; mimeType?: string; clientDate?: string }
 
     // ── BLOCO parse-food — isolado, sem tocar no fluxo de chat abaixo ──────────
     if (body.action === 'parse-food') {
@@ -820,134 +952,80 @@ Deno.serve(async (req) => {
       )
     }
 
-    // ── PASSO 1: Detectar intenção (acumula toda a conversa — FIX 4) ────────
-    const intent = detectIntent(messages)
+    // ── PASSO 1: Resolver "hoje" (perspectiva do usuário) + pedido de diagnóstico ──
+    // clientDate (app) tem prioridade; senão fuso America/Sao_Paulo. Corrige o bug
+    // do servidor UTC virar o dia à meia-noite BRT.
+    const todayISO = resolveToday(body.clientDate)
+    const fullDiag = isFullDiag(messages)
 
-    // ── PASSO 2: Busca cirúrgica — só o necessário ─────────────────────────
-    // FIX 3: 8 dias em vez de 7 para garantir que "hoje" sempre esteja incluído
-    const since8 = new Date()
-    since8.setDate(since8.getDate() - 8)
+    // ── PASSO 2: Carregar SEMPRE diário + treino + corpo ───────────────────
+    // v2: sem gating por regex (causava respostas rasas ao classificar o domínio
+    // errado). Janelas ancoradas em todayISO, não no relógio UTC do servidor.
+    const since8 = new Date(todayISO + 'T12:00:00Z')
+    since8.setUTCDate(since8.getUTCDate() - 8)
     const since8ISO = since8.toISOString().split('T')[0]
 
-    const since30 = new Date()
-    since30.setDate(since30.getDate() - 30)
+    const since30 = new Date(todayISO + 'T12:00:00Z')
+    since30.setUTCDate(since30.getUTCDate() - 30)
     const since30ISO = since30.toISOString().split('T')[0]
 
-    const queries: Promise<unknown>[] = [
-      // settings sempre (pequeno, contém metas)
+    const [settingsRes, diaryRes, workoutRes, bodyRes, checkinRes] = await Promise.all([
       supabase.from('user_settings').select('data').eq('user_id', user.id).single(),
+      supabase.from('diary_entries').select('date, data').eq('user_id', user.id).gte('date', since8ISO).order('date', { ascending: true }),
+      supabase.from('workouts').select('date, data').eq('user_id', user.id).gte('date', since30ISO).order('date', { ascending: true }),
+      supabase.from('body_measurements').select('date, data').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
+      supabase.from('checkins').select('date, data').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
+    ]) as [
+      { data: { data: SettingsData } | null },
+      { data: DiaryRow[] | null },
+      { data: WorkoutRow[] | null },
+      { data: BodyRow[] | null },
+      { data: CheckinRow[] | null },
     ]
 
-    if (intent.needsDiary) {
-      queries.push(
-        supabase.from('diary_entries')
-          .select('date, data')
-          .eq('user_id', user.id)
-          .gte('date', since8ISO)
-          .order('date', { ascending: true })
-      )
-    }
-
-    if (intent.needsWorkout) {
-      queries.push(
-        supabase.from('workouts')
-          .select('date, data')
-          .eq('user_id', user.id)
-          .gte('date', since30ISO)
-          .order('date', { ascending: true })
-      )
-    }
-
-    if (intent.needsBody) {
-      queries.push(
-        supabase.from('body_measurements')
-          .select('date, data')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .limit(5)
-      )
-      queries.push(
-        supabase.from('checkins')
-          .select('date, data')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .limit(5)
-      )
-    }
-
-    const results = await Promise.all(queries)
-
-    // Extrair resultados na ordem em que foram adicionados
-    let idx = 0
-    const settingsRes = results[idx++] as { data: { data: SettingsData } | null }
     const settings: SettingsData | null = settingsRes.data?.data ?? null
-
-    let diaryRows: DiaryRow[] = []
-    let workoutRows: WorkoutRow[] = []
-    let bodyRows: BodyRow[] = []
-    let checkinRows: CheckinRow[] = []
-
-    if (intent.needsDiary) {
-      const r = results[idx++] as { data: DiaryRow[] | null }
-      diaryRows = r.data ?? []
-    }
-    if (intent.needsWorkout) {
-      const r = results[idx++] as { data: WorkoutRow[] | null }
-      workoutRows = r.data ?? []
-    }
-    if (intent.needsBody) {
-      const r = results[idx++] as { data: BodyRow[] | null }
-      bodyRows = r.data ?? []
-      const r2 = results[idx++] as { data: CheckinRow[] | null }
-      checkinRows = r2.data ?? []
-    }
+    const diaryRows: DiaryRow[] = diaryRes.data ?? []
+    const workoutRows: WorkoutRow[] = workoutRes.data ?? []
+    const bodyRows: BodyRow[] = bodyRes.data ?? []
+    const checkinRows: CheckinRow[] = checkinRes.data ?? []
 
     // ── PASSO 3: Pré-processar → texto compacto ────────────────────────────
-
-    // FIX 3: data de hoje no topo do contexto — resolve referências temporais
-    const todayISO = new Date().toISOString().split('T')[0]
     const diasPtBr = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado']
-    const todayDow = diasPtBr[new Date().getDay()]
+    const todayDow = diasPtBr[new Date(todayISO + 'T12:00:00Z').getUTCDay()]
 
-    const contextParts: string[] = [
-      `Hoje: ${todayISO} (${todayDow})`,
-    ]
+    const contextParts: string[] = [`Hoje: ${todayISO} (${todayDow})`]
 
     if (settings) {
       const s = settings
       const parts: string[] = []
       if (s.goal) parts.push(`objetivo=${s.goal}`)
-      if (s.peso) parts.push(`peso=${s.peso}kg`)
-      if (s.altura) parts.push(`altura=${s.altura}cm`)
-      if (s.tdee) parts.push(`TDEE=${s.tdee}kcal`)
+      if (s.peso) parts.push(`${s.peso}kg`)
+      if (s.altura) parts.push(`${s.altura}cm`)
+      if (s.tdee) parts.push(`TDEE ${s.tdee}kcal`)
+      const metaParts: string[] = []
+      if (s.metaKcal) metaParts.push(`${s.metaKcal}kcal`)
+      if (s.metaP) {
+        const gkg = s.peso && s.peso > 0 ? ` (${(s.metaP / s.peso).toFixed(1)}g/kg)` : ''
+        metaParts.push(`P${s.metaP}g${gkg}`)
+      }
+      if (s.metaC) metaParts.push(`C${s.metaC}g`)
+      if (s.metaG) metaParts.push(`G${s.metaG}g`)
+      if (s.waterGoalMl) metaParts.push(`água ${s.waterGoalMl}ml`)
+      if (metaParts.length) parts.push(`Metas/dia: ${metaParts.join(' ')}`)
       if (parts.length) contextParts.push(`Perfil: ${parts.join(' | ')}`)
     }
 
-    if (intent.needsDiary) contextParts.push(formatDiary(diaryRows, settings))
-    if (intent.needsWorkout) contextParts.push(formatWorkouts(workoutRows, localExMap))
-    if (intent.needsBody) contextParts.push(formatBody(bodyRows, checkinRows))
-
-    // Indicar ao modelo quais dados NÃO foram buscados (evita alucinação)
-    const missing: string[] = []
-    if (!intent.needsDiary) missing.push('diário alimentar')
-    if (!intent.needsWorkout) missing.push('treinos')
-    if (!intent.needsBody) missing.push('medidas corporais')
-    if (missing.length) {
-      contextParts.push(`(Dados não carregados para esta pergunta: ${missing.join(', ')} — peça uma análise completa se quiser tudo)`)
-    }
+    contextParts.push(formatDiary(diaryRows, settings, todayISO))
+    contextParts.push(formatWorkouts(workoutRows, localExMap, todayISO))
+    contextParts.push(formatBody(bodyRows, checkinRows, settings))
 
     const contextBlock = `\n\n## DADOS DO USUÁRIO\n${contextParts.join('\n\n')}`
 
-    // ── Montar system prompt adaptativo por intenção ────────────────────────
-    let systemPrompt = SYSTEM_PROMPT_BASE
-    if (intent.needsWorkout || intent.isFullDiag) systemPrompt += KNOWLEDGE_WORKOUT
-    if (intent.needsDiary || intent.isFullDiag) systemPrompt += KNOWLEDGE_NUTRITION
+    // ── System prompt: base + conhecimento (sempre incluídos) ───────────────
+    const systemPrompt = SYSTEM_PROMPT_BASE + KNOWLEDGE_WORKOUT + KNOWLEDGE_NUTRITION
 
-    // ── FIX 5: max_tokens ampliado — 450 cortava respostas no meio ──────────
-    const maxTokens = intent.isFullDiag ? 1000
-      : (intent.needsWorkout && intent.needsDiary) ? 800
-      : intent.needsWorkout ? 700
-      : 600
+    // gpt-5 usa max_completion_tokens (rejeita max_tokens). Teto maior no diagnóstico.
+    const maxCompletionTokens = fullDiag ? 2000 : 1400
 
     // ── Chamar OpenAI ───────────────────────────────────────────────────────
     const openaiKey = Deno.env.get('OPENAI_API_KEY')
@@ -965,11 +1043,12 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: maxTokens,
+        model: CHAT_MODEL,
+        max_completion_tokens: maxCompletionTokens,
+        reasoning_effort: 'low',   // gpt-5: menor latência p/ chat. Se o modelo rejeitar, remover esta linha.
         messages: [
           { role: 'system', content: systemPrompt + contextBlock },
-          ...messages,
+          ...messages.slice(-16),  // cap defensivo de contexto (Fase A também limita no cliente)
         ],
       }),
     })

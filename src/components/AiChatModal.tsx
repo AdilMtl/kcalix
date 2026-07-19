@@ -8,6 +8,7 @@ import { useCustomFoods } from '../hooks/useCustomFoods'
 import { resizeImageToBase64 } from '../lib/imageUtils'
 import { KcalixIcon, type KcalixIconName } from './icons/KcalixIcon'
 import { SystemIcon, type SystemIconName } from './icons/SystemIcon'
+import { ChatMarkdown } from './ChatMarkdown'
 
 // Pool de sugestões — 3 são sorteadas a cada abertura do chat
 // chips com action:'log' preenchem o input em vez de enviar diretamente
@@ -97,14 +98,26 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
     }
   }, [open, initialShowPhoto])
 
+  // Fechar NÃO reseta a conversa — a memória de sessão persiste enquanto o app
+  // estiver aberto (reabrir o chat mantém o histórico). Só limpa estado efêmero
+  // de foto/input. Para zerar, o usuário usa o botão "Nova conversa" no header.
   function handleClose() {
-    reset()
     setInput('')
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
     setPhotoResult(null)
     setPhotoPreviewUrl(null)
     setShowPhotoOptions(false)
     onClose()
+  }
+
+  // Zera a conversa manualmente
+  function handleNewChat() {
+    reset()
+    setInput('')
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    setPhotoResult(null)
+    setPhotoPreviewUrl(null)
+    setShowPhotoOptions(false)
   }
 
   async function handlePhotoFile(file: File | null | undefined) {
@@ -233,13 +246,24 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
               </div>
             </div>
           </div>
-          <button
-            onClick={handleClose}
-            className="ai-chat-close"
-            aria-label="Fechar"
-          >
-            <SystemIcon name="close" size={18} />
-          </button>
+          <div className="ai-chat-header-actions">
+            {messages.length > 0 && (
+              <button
+                onClick={handleNewChat}
+                className="ai-chat-new"
+                aria-label="Nova conversa"
+              >
+                Nova conversa
+              </button>
+            )}
+            <button
+              onClick={handleClose}
+              className="ai-chat-close"
+              aria-label="Fechar"
+            >
+              <SystemIcon name="close" size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Área de mensagens */}
@@ -311,17 +335,17 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
             </div>
           )}
 
-          {/* Mensagens */}
+          {/* Mensagens — assistente via ChatMarkdown (negrito/listas); usuário em texto cru */}
           {messages.map((msg, i) => (
             <div
               key={i}
               className="ai-chat-row"
               data-role={msg.role}
             >
-              <div
-                className="ai-chat-bubble"
-              >
-                {msg.content}
+              <div className="ai-chat-bubble">
+                {msg.role === 'assistant'
+                  ? <ChatMarkdown content={msg.content} />
+                  : msg.content}
               </div>
             </div>
           ))}
