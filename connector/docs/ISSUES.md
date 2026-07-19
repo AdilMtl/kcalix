@@ -4,356 +4,173 @@
 
 **Merge:** somente após release candidate em aparelho real e gate final aprovado
 
-**Regra:** cada issue termina com testes, documentação do resultado e commit próprio
+**Regra:** uma issue só pode começar quando possuir contexto, escopo, não escopo, contratos,
+testes, evidências e handoff suficientes para ser executada em uma conversa nova.
 
-## 1. Estratégia de branch e integração
+## 1. Estratégia contra perda de contexto
 
-- Todo o conector é desenvolvido na branch longa `feature/kcalix-connector`.
-- O código Android fica isolado em `connector/android/`.
-- Migrations e Edge Functions entram nos diretórios Supabase existentes, identificadas pelo
-  prefixo/nome Health Connect.
-- A PWA não muda até KC-11.
-- Mudanças de `main` podem ser incorporadas à feature apenas em checkpoint limpo e testado.
-- Nenhuma migration de produção é aplicada só por existir na branch; cada execução externa exige
-  revisão e aprovação.
-- Commits usam o ID: `KC-03: inventory Health Connect records on device`.
-- O merge final exige G5; a promoção ampla depende do resultado G6.
+O backlog deste arquivo é o índice. As issues que estão próximas da execução recebem um pacote
+autocontido em `connector/issues/`. O pacote é a fonte primária da sessão e deve conter:
 
-## 2. Mapa de sessões
+1. resultado observável esperado;
+2. por que a issue existe e qual risco ela isola;
+3. estado inicial e dependências verificáveis;
+4. escopo e não escopo;
+5. decisões técnicas e contratos exatos;
+6. arquivos esperados, sem obrigar implementação cega;
+7. testes automáticos e roteiro manual;
+8. evidências que precisam ser registradas;
+9. Definition of Done objetiva;
+10. handoff para a próxima conversa.
 
-| Sessão | Issues | Resultado |
-|---|---|---|
-| 0 — planejamento | documentos atuais | spec, PRD, setup e backlog aprovados |
-| 1 — ambiente | KC-00, KC-01 | decisões registradas e toolchain funcional |
-| 2 — scaffold | KC-02 | app mínimo compila, testa e gera APK debug |
-| 3 — spike real | KC-03 | matriz Samsung/Health Connect e gate de viabilidade |
-| 4 — fundação segura | KC-04, KC-05 | privacidade, schema e RLS revisados |
-| 5 — ingestão | KC-06 | contrato v1 idempotente validado |
-| 6 — identidade Android | KC-07 | login e cofre seguro funcionando |
-| 7 — vertical slice local | KC-08 | leitura, normalização e preview P0 |
-| 8 — sync ponta a ponta | KC-09, KC-10 | fila, upload e UX completas |
-| 9 — valor no Kcalix | KC-11 | reconciliação/cardio/kcal na PWA |
-| 10 — controle | KC-12 | revoke/delete/export testados |
-| 11 — corpo opcional | KC-13 | peso/BF se o spike aprovar |
-| 12 — release | KC-14 | APK release assinado e QA real |
-| 13 — piloto | KC-15 | scorecard de 14 dias e decisão go/no-go |
-| pós-GO | KC-16 | sono/passos/Coach/background avaliados separadamente |
+As issues `KC-00` a `KC-06` já têm pacotes completos em
+[`connector/issues/phase-0/`](../issues/phase-0/README.md). Nenhuma sessão futura deve executar
+apenas um bullet deste índice.
 
-Uma sessão pode terminar antes de completar seu bloco; nunca reduzir testes para “fechar a
-sessão”. Dependências são gates, não estimativas de calendário.
+## 2. Estratégia de branch
 
-## 3. Issues executáveis
+- Todo o trabalho acontece na branch longa `feature/kcalix-connector`.
+- Android fica em `connector/android/`; comandos Gradle não rodam na raiz npm.
+- Migrations e Edge Functions usam os diretórios Supabase existentes.
+- A PWA só recebe a tela isolada de teste em KC-04; integração real começa em KC-12.
+- Mudanças de `main` entram na feature apenas em checkpoint limpo e testado.
+- Migration/deploy externo exige revisão e aprovação; criar arquivo não autoriza aplicar.
+- Cada issue termina com commit próprio: `KC-04: prove manual connector round trip`.
+- O merge final exige o release gate; evolução pública depende do piloto.
 
-### KC-00 — Fechar decisões e baseline do aparelho
+## 3. Fases e sessões
 
-**Objetivo:** substituir premissas por decisões registradas.
+| Fase | Sessão | Issue | Resultado |
+|---|---:|---|---|
+| Planejamento | atual | documentação | spec, PRD, stack e packets |
+| Fase Zero | 1 | KC-00 | decisões e baseline registrados |
+| Fase Zero | 2 | KC-01 | toolchain gratuita funcional |
+| Fase Zero | 3 | KC-02 | app compila, instala, atualiza e roda em emulador/aparelho |
+| Fase Zero | 4 | KC-03 | login Kcalix e diagnóstico de conectividade |
+| Fase Zero | 5 | KC-04 | input manual Android aparece na PWA e pode ser apagado |
+| Fase Zero | 6 | KC-05 | disponibilidade e autorização Health Connect comprovadas |
+| Fase 1 | 7 | KC-06 | leitura local real e matriz Samsung/Health Connect |
+| Fundação | 8 | KC-07 | consentimento, retenção e threat model |
+| Fundação | 9 | KC-08 | schema definitivo e RLS |
+| Fundação | 10 | KC-09 | ingestão Health Connect v1 idempotente |
+| MVP | 11 | KC-10 | leitores e normalizadores P0 |
+| MVP | 12 | KC-11 | fila cifrada, upload e UX de sync |
+| Kcalix | 13 | KC-12 | reconciliação treino/cardio/kcal na PWA |
+| Controle | 14 | KC-13 | desconectar, apagar e exportar |
+| Opcional | 15 | KC-14 | peso/BF se aprovados no spike |
+| Release | 16 | KC-15 | APK assinado e QA real |
+| Piloto | 17 | KC-16 | scorecard de 14 dias e go/no-go |
+| Pós-GO | futura | KC-17 | sono, passos, Coach, background ou unificação |
 
-**Escopo:**
+Uma sessão pode parar antes do DoD. Nunca reduzir testes para encaixar uma issue no tempo de uma
+conversa.
 
-- modelo do telefone, Android/One UI, Samsung Health e Watch firmware;
-- dados hoje visíveis no Health Connect e origem exibida;
-- M1 exercício/cardio versus inclusão de corpo;
-- janela 7/30 dias, login email/senha, app aberto durante sync;
-- um aparelho versus até 20;
-- política de desconectar/manter e local de backup da keystore;
-- `applicationId` definitivo.
+## 4. Backlog resumido
 
-**Definition of Done:** tabela de decisões adicionada ao PRD; nenhum item que altere schema,
-permissões ou distribuição permanece implícito.
+### KC-00 — Decisões e baseline
 
-**Dependências:** nenhuma.
+Registrar aparelho, Android/One UI, dados conhecidos, `applicationId`, login, janela, escopo e
+distribuição. Pacote: [`KC-00.md`](../issues/phase-0/KC-00.md).
 
-### KC-01 — Preparar toolchain Android gratuita no Windows
+### KC-01 — Toolchain Android no Windows
 
-**Objetivo:** permitir que usuário e Claude Code construam/testem pelo terminal.
+Instalar e comprovar Studio/SDK/JBR/ADB/emulador sem custo obrigatório. Pacote:
+[`KC-01.md`](../issues/phase-0/KC-01.md).
 
-**Escopo:** seguir `ANDROID_SETUP.md`; instalar Studio/SDK/JBR/ADB/emulador; validar aparelho.
+### KC-02 — Scaffold, instalação, atualização e emulador
 
-**Definition of Done:**
+Criar o projeto, gerar APK, instalar, atualizar por cima e executar no emulador e aparelho.
+Pacote: [`KC-02.md`](../issues/phase-0/KC-02.md).
 
-- SDK 36, Build Tools 36.0.0 e Platform Tools listados;
-- JDK 17 detectado;
-- `adb devices` vê emulador e/ou aparelho autorizado;
-- custo obrigatório documentado como R$ 0;
-- nenhum segredo exposto.
+### KC-03 — Login Kcalix e diagnóstico
 
-**Dependências:** KC-00 para `applicationId` antes do scaffold distribuível.
+Autenticar, proteger sessão, mostrar conta/conectividade e garantir logout local. Pacote:
+[`KC-03.md`](../issues/phase-0/KC-03.md).
 
-### KC-02 — Criar scaffold Kotlin/Compose e CI
+### KC-04 — Vertical slice manual Android → PWA
 
-**Objetivo:** criar o projeto autônomo em `connector/android/`.
+Enviar um registro manual claramente marcado como teste, mostrar na PWA, provar idempotência e
+apagá-lo sem tocar dados canônicos. Pacote: [`KC-04.md`](../issues/phase-0/KC-04.md).
 
-**Escopo:** Gradle Kotlin DSL, AGP/Kotlin embutido, Compose, min/target/compile SDK, arquitetura
-simples por features, `.gitignore`, teste smoke e workflow CI por path.
+### KC-05 — Health Connect: disponibilidade e permissão
 
-**Definition of Done:**
+Testar status e grant/deny/revoke de `READ_EXERCISE`, sem ler ou enviar saúde. Pacote:
+[`KC-05.md`](../issues/phase-0/KC-05.md).
 
-- `gradlew.bat clean lint testDebugUnitTest assembleDebug` passa;
-- APK debug instala e abre uma tela “Kcalix Connector”;
-- CI roda sem secret e sem publicar release;
-- PWA `npm run build` continua passando;
-- versões e comandos registrados no README do módulo.
+### KC-06 — Spike de leitura local no aparelho real
 
-**Dependências:** KC-01.
+Inventariar origem, IDs, latência e qualidade de exercício/FC/energia/distância; nada sai do
+aparelho. Pacote: [`KC-06.md`](../issues/phase-0/KC-06.md).
 
-### KC-03 — Spike Health Connect no aparelho real
+### KC-07 — Privacy foundation e threat model
 
-**Objetivo:** comprovar viabilidade antes de criar backend de saúde.
+Fechar aviso, consentimentos local/cloud/Coach, allow-list real, retenção, backups, incidentes e
+redaction. Depende de KC-06.
 
-**Escopo:** availability/rationale/permissões temporárias; reader local; preview técnico; sessão de
-força e caminhada/corrida; FC, energia, distância, peso/BIA quando disponíveis; latência Samsung.
+### KC-08 — Schema definitivo, grants e RLS
 
-**Definition of Done:**
+Inspecionar schema remoto; criar connections, records, sync requests e links. Proibir acesso
+cross-tenant e preservar `workouts`, `diary_entries`, `body_measurements` e `checkins`.
 
-- matriz por record type com permissão, quantidade, `dataOrigin`, ID e qualidade;
-- nenhum dado sai do aparelho;
-- paginação, vazio, negar/revogar e timezone testados;
-- comportamento Android 14+ ou <=13 registrado para o telefone real;
-- decisão GO/CUT/NO-GO por tipo; P0 final atualizado na spec.
+### KC-09 — RPC e Edge Function de ingestão v1
 
-**Dependências:** KC-02. **Gate G1.**
+Implementar contrato autenticado sem `userId`, sem `service_role`, atômico e idempotente. Testar
+JWT, conexão revogada, request conflitante, limites e duas contas.
 
-### KC-04 — Privacy foundation e threat model
+### KC-10 — Leitores, normalizadores e preview P0
 
-**Objetivo:** definir finalidade, consentimento, retenção e controles antes do upload.
+Ler sessões/FC/energia/distância, paginar, associar por intervalo/origem, resumir localmente e
+nunca enviar amostras brutas.
 
-**Escopo:** mapa de dados/fluxos, aviso curto, política do piloto, versões de consentimento,
-retenção, subprocessadores/regiões, export/delete, log redaction, incident checklist e ameaças.
+### KC-11 — Fila cifrada, retry, upload e UX
 
-**Definition of Done:**
+Persistir o mesmo request até ACK, usar WorkManager somente para upload e mostrar estados de
+sync, erros recuperáveis e última execução.
 
-- consentimentos local/cloud/Coach separados e default-off;
-- categorias e campos allow-listed equivalem ao resultado de KC-03;
-- nenhum raw HR/sono, GPS ou identificador em log;
-- retenção e comportamento de backup/deleção documentados;
-- revisão jurídica marcada como gate antes de distribuição além do proprietário.
+### KC-12 — Reconciliação na PWA e calorias
 
-**Dependências:** KC-03.
+Sugerir vínculo/adicionar cardio, preservar treino manual e manter kcal Kcalix/relógio separadas.
+Nenhuma soma, meta ou Coach muda automaticamente.
 
-### KC-05 — Criar schema isolado, grants e RLS
+### KC-13 — Desconectar, apagar e exportar
 
-**Objetivo:** criar a fundação de dados sem tocar registros canônicos atuais.
+Bloquear novas ingestões, revogar Health Connect, apagar somente importados e incluir
+proveniência na exportação.
 
-**Escopo:** primeiro introspectar schema remoto; migration para connections, records, sync requests
-e links; constraints nomeadas, índices, RLS, grants e testes com duas contas.
+### KC-14 — Peso e BF/BIA condicionais
 
-**Definition of Done:**
+Executar somente se KC-06 comprovar dados consistentes. Manual vence conflitos; BIA não substitui
+dobras; nenhuma meta é recalculada.
 
-- migration idempotente e revisável;
-- `anon` sem acesso; authenticated limitado por `auth.uid()`;
-- escrita direta fora da RPC bloqueada quando apropriado;
-- FKs impedem link cross-tenant;
-- nenhuma mudança em `workouts`, `diary_entries`, `body_measurements` ou `checkins`;
-- rollback/limpeza do piloto documentado.
+### KC-15 — QA, assinatura e APK privado
 
-**Dependências:** KC-04.
+Executar suites, fluxo real Watch → PWA, release não-debuggable, checksum, upgrade/reinstall e
+backup da keystore.
 
-### KC-06 — Implementar RPC e Edge Function de ingestão v1
+### KC-16 — Piloto de 14 dias
 
-**Objetivo:** receber batches autenticados, validados, atômicos e idempotentes.
+Medir hard gates e metas do PRD; registrar GO, CONDITIONAL ou NO-GO antes do merge/evolução.
 
-**Escopo:** RPC `ingest_health_connect_v1`, Edge `ingest-health-connect`, auth user, contrato v1,
-limites, hashes, status/errors e testes.
+### KC-17 — Pós-GO
 
-**Definition of Done:**
+Cada capacidade — sono, passos, Coach, changes/background, histórico ou Capacitor — exige spec e
+consentimento próprios antes de código.
 
-- `verify_jwt=true`; sem `service_role` na ingestão e sem `userId` no request;
-- mesmo request retorna mesma resposta; requestId com outro hash retorna 409;
-- identidade externa não duplica e dado antigo não sobrescreve novo;
-- batch inválido grava zero linhas;
-- 401/403/409/413/422/429/5xx testados;
-- testes A/B confirmam isolamento;
-- logs contêm apenas requestId, contadores, status e duração.
+## 5. Protocolo de abertura e fechamento
 
-**Dependências:** KC-05. **Gate G2.**
+### Abrir uma conversa
 
-### KC-07 — Implementar Auth Android e cofre local
+1. Ler `connector/README.md`, a issue completa e somente as referências que ela indicar.
+2. Confirmar `git branch --show-current` = `feature/kcalix-connector`.
+3. Verificar working tree e preservar alterações preexistentes.
+4. Confirmar dependências e baseline; não presumir estado externo.
+5. Declarar o resultado observável da sessão antes de editar.
 
-**Objetivo:** usar a mesma conta Kcalix sem expor ou restaurar indevidamente sessão.
+### Fechar uma conversa
 
-**Escopo:** login email/senha, refresh, logout local, armazenamento AES-GCM/Keystore, regras de
-backup, redaction e comportamento offline.
-
-**Definition of Done:**
-
-- APK contém apenas URL e chave pública;
-- access/refresh token cifrados e excluídos de backup/device transfer;
-- refresh funciona; falha exige login sem loop;
-- logout local limpa sessão/fila e não desloga a PWA;
-- release não-debuggable e cleartext desabilitado;
-- busca no APK/log confirma ausência de segredos/tokens.
-
-**Dependências:** KC-02 e contrato de KC-06.
-
-### KC-08 — Leitores, normalizadores e preview P0
-
-**Objetivo:** transformar records aprovados no spike em resumos previsíveis.
-
-**Escopo:** readers paginados de sessão/FC/energia/distância, associação por intervalo/origem,
-unidades, timezone, preview e testes fake/Toolbox.
-
-**Definition of Done:**
-
-- permissões just-in-time e revogação parcial tratadas;
-- página >1.000, sessão cruzando meia-noite e origem múltipla testadas;
-- payload contém somente campos allow-listed;
-- FC envia média, máxima e count, nunca amostras;
-- preview informa origem e janela antes do upload;
-- sair do foreground cancela/retoma sem perda.
-
-**Dependências:** KC-03, KC-04 e KC-07.
-
-### KC-09 — Fila cifrada, retry e upload
-
-**Objetivo:** concluir sync manual de forma resiliente e idempotente.
-
-**Escopo:** Room com ciphertext, request canônico, batches <=100/256 KiB, WorkManager one-shot,
-backoff, dead-letter e limites locais.
-
-**Definition of Done:**
-
-- mesmo requestId/payload persiste até ACK 200;
-- offline -> online, kill/reboot e ACK perdido não duplicam;
-- retry apenas em rede/timeout/429/5xx; 401 refresh uma vez;
-- erros permanentes são visíveis e não entram em loop;
-- fila limitada a 500 records/30 dias e apagada no fluxo adequado;
-- nenhum payload aparece em log ou backup.
-
-**Dependências:** KC-06, KC-07 e KC-08.
-
-### KC-10 — Finalizar UX de conexão e sincronização
-
-**Objetivo:** oferecer uma jornada compreensível para uso sem conhecimento Android.
-
-**Escopo:** pré-requisitos, login, consentimento, cards de permissão, janela, preview, botão sync,
-resultado, última sincronização e recuperação de erros.
-
-**Definition of Done:**
-
-- happy path completo no aparelho;
-- estados sem HC, sem permissão, Samsung atrasado, offline e sessão expirada explicados;
-- resultado mostra encontrados/inseridos/atualizados/duplicados/erros;
-- usuário nunca vê sucesso falso;
-- acessibilidade básica e rotação/process recreation testadas.
-
-**Dependências:** KC-09. **Gate G3.**
-
-### KC-11 — Reconciliação na PWA e política de calorias
-
-**Objetivo:** transformar dados importados em valor sem corromper registros atuais.
-
-**Escopo:** hooks/serviços da PWA, sugestões de vínculo, adicionar/merge cardio, proveniência,
-duas fontes de kcal, manual lock e desfazer/rejeitar.
-
-**Definition of Done:**
-
-- nenhum Supabase direto novo em componente;
-- treino mantém séries/reps/carga;
-- ambiguidades exigem seleção;
-- kcal Kcalix e relógio ficam separadas e nunca são somadas;
-- diário/meta não mudam sem confirmação explícita;
-- PWA build/test passa e QA móvel confirma a UX;
-- Coach não recebe importados.
-
-**Dependências:** KC-10. **Gate G4.**
-
-### KC-12 — Desconectar, apagar e exportar
-
-**Objetivo:** entregar controle completo e verificável sobre os importados.
-
-**Escopo:** RPC transacional de revoke/delete, revogação Health Connect, limpeza local, estados
-pendentes offline, exportação e recibos.
-
-**Definition of Done:**
-
-- disconnect bloqueia nova ingestão imediatamente;
-- apagar remove links -> records -> requests e preserva manuais;
-- repetição da exclusão é idempotente;
-- export contém dados importados e proveniência;
-- remover app é documentado como diferente de apagar servidor;
-- testes confirmam zero importados consultáveis após exclusão.
-
-**Dependências:** KC-11.
-
-### KC-13 — Adicionar peso e BF/BIA, se aprovados
-
-**Objetivo:** reduzir digitação corporal sem misturar métodos.
-
-**Escopo:** permissões opcionais, reader/ingestão, sugestões, conflito diário e proveniência.
-
-**Definition of Done:**
-
-- somente tipos aprovados por KC-03 entram;
-- manual vence conflito e nenhum valor é aceito silenciosamente;
-- múltiplas medições mostram contagem e sugerem a mais recente;
-- BIA e dobras permanecem séries/métodos distintos;
-- nenhuma meta é recalculada automaticamente;
-- remover permissão de corpo não quebra sync de treino.
-
-**Dependências:** KC-12 e GO do tipo em KC-03. Pode ser cortada do primeiro release.
-
-### KC-14 — QA, assinatura e entrega do APK privado
-
-**Objetivo:** produzir uma release atualizável e um runbook reproduzível.
-
-**Escopo:** suite final, teste real, keystore, release build, checksum, upgrade, reinstall, ADB e
-sideload; revisar regra Android vigente no dia.
-
-**Definition of Done:**
-
-- lint/unit/instrumented/PWA tests passam;
-- APK release assinado, não-debuggable e com checksum;
-- mesma chave/applicationId/versionCode maior atualiza por cima;
-- dois backups cifrados da chave confirmados sem expor senha;
-- fluxo Files/browser e ADB testados;
-- Watch -> Samsung -> HC -> Supabase -> PWA validado;
-- segurança e privacidade checklist sem bloqueador.
-
-**Dependências:** KC-12; KC-13 se incluída. **Gate G5.**
-
-### KC-15 — Executar piloto de 14 dias e decisão go/no-go
-
-**Objetivo:** medir valor e confiabilidade antes do merge/evolução.
-
-**Escopo:** >=14 dias e >=8 sessões ou 15 syncs; registrar scorecard, incidentes e feedback.
-
-**Definition of Done:**
-
-- hard gates e métricas do PRD preenchidos com evidência;
-- decisão GO/CONDITIONAL/NO-GO registrada;
-- bugs classificados e correções críticas concluídas;
-- se G5 e decisão permitirem, branch pronta para revisão/merge;
-- roadmap atualizado com próximo passo explícito.
-
-**Dependências:** KC-14. **Gate G6.**
-
-### KC-16 — Backlog pós-GO: sono, passos, Coach e background
-
-**Objetivo:** impedir que extensões aumentem o escopo do MVP silenciosamente.
-
-**Escopo futuro separado:** sono resumido por dia do despertar; passos agregados; consentimento
-Coach por categoria; changes/tombstones; leitura background; histórico >30 dias; possível
-Capacitor/unificação/publicação.
-
-**Definition of Done:** cada capacidade recebe nova spec, permissões mínimas, métricas próprias e
-decisão de produto antes de código.
-
-**Dependências:** GO em KC-15.
-
-## 4. Checklist de abertura/fechamento de cada sessão
-
-### Abrir
-
-1. Confirmar `git branch --show-current` = `feature/kcalix-connector`.
-2. Verificar `git status` e preservar alterações preexistentes.
-3. Ler a issue, dependências, spec e decisões mais recentes.
-4. Rodar baseline aplicável (`npm` e/ou `gradlew`).
-5. Não executar migration/deploy externo sem aprovação explícita.
-
-### Fechar
-
-1. Rodar critérios de teste da issue.
-2. Registrar evidências e decisões no documento relevante.
-3. Atualizar status e desbloquear somente dependências realmente satisfeitas.
-4. Revisar diff para segredos, payloads de saúde e alterações fora do escopo.
-5. Criar commit com o ID da issue; não fazer merge na `main` antes do gate final.
+1. Rodar todos os testes e passos manuais possíveis.
+2. Atualizar no packet: status, evidências, decisões, desvios e pendências.
+3. Registrar comandos exatos e saídas relevantes, sem segredos/dados de saúde.
+4. Marcar DoD somente se cada item tiver evidência.
+5. Atualizar o campo “Próxima conversa” com arquivo inicial e primeiro comando.
+6. Revisar diff e criar commit com o ID; não fazer merge na `main`.

@@ -1,6 +1,6 @@
 # PRD — Piloto privado do Kcalix Connector
 
-**Versão:** 1.0
+**Versão:** 1.1
 
 **Data:** 2026-07-19
 
@@ -15,8 +15,12 @@ atividade registrados pelo Galaxy Watch 5 e disponibilizados pelo Samsung Health
 Connect. O produto reduz digitação duplicada e adiciona contexto fisiológico sem transformar o
 Kcalix em aplicação médica e sem substituir registros manuais.
 
-O primeiro sucesso não é “importar muitos dados”; é conseguir sincronizar e reconciliar
-exercício/cardio de maneira confiável, compreensível, reversível e sem dupla contagem.
+O primeiro sucesso é anterior ao relógio: instalar/atualizar o APK, entrar na mesma conta Kcalix,
+enviar uma atividade digitada manualmente e vê-la na PWA como teste isolado. Depois disso, o
+produto substitui gradualmente o formulário manual pela leitura Health Connect.
+
+O sucesso do MVP de saúde continua sendo sincronizar e reconciliar exercício/cardio de maneira
+confiável, compreensível, reversível e sem dupla contagem.
 
 ## 2. Persona e problema
 
@@ -47,10 +51,12 @@ Atleta-proprietário avançado que:
 4. Comparar esforço/duração/kcal com proveniência clara.
 5. Desconectar ou apagar os importados sem afetar dados manuais.
 6. Conseguir construir, testar e atualizar o APK usando ferramentas gratuitas e Claude Code.
+7. Provar o caminho Android -> Kcalix com input controlado antes de depender do relógio.
 
 ## 4. Objetivos
 
 - Validar que o fluxo Samsung -> Health Connect fornece dados úteis e consistentes no aparelho.
+- Validar instalação, atualização, login, RLS, Edge Function e visualização PWA separadamente.
 - Reduzir reentrada de cardio/duração.
 - Garantir zero duplicatas e zero overwrite manual.
 - Tornar origem, consentimento e uso de cada categoria compreensíveis.
@@ -67,17 +73,27 @@ Atleta-proprietário avançado que:
 
 ## 6. Jornada-alvo
 
-1. Usuário instala APK assinado e abre o conector.
-2. Checklist confirma Samsung Health e Health Connect ativos.
-3. Usuário entra com a conta Kcalix.
-4. App explica finalidade, categorias, nuvem e exclusão.
-5. Usuário escolhe “Treino e cardio” e concede permissões necessárias.
-6. App lê 7 dias e mostra preview local por origem.
-7. Usuário confirma o upload.
-8. Resultado informa inseridos, atualizados, duplicados e erros.
-9. Na PWA, usuário confirma/rejeita vínculos e inclusões.
-10. Fontes de kcal aparecem separadas; nada altera a meta automaticamente.
-11. Usuário pode pausar, desconectar, exportar ou apagar importados.
+### Fase Zero
+
+1. Usuário acompanha o build no emulador e instala o APK no telefone.
+2. Uma nova versão atualiza por cima e preserva o estado esperado.
+3. Usuário entra com a conta Kcalix e vê diagnóstico de conexão.
+4. Digita atividade de teste: data/hora, tipo, duração e métricas opcionais.
+5. Envia; a PWA mostra “Dado de teste enviado manualmente pelo Kcalix Connector”.
+6. Reenvio não duplica e exclusão preserva todos os dados normais.
+7. Usuário testa grant/deny/revoke de exercício; nenhum record é lido.
+
+### MVP de saúde
+
+1. Checklist confirma Samsung Health e Health Connect ativos.
+2. App explica finalidade, categorias, nuvem e exclusão.
+3. Usuário concede permissões necessárias.
+4. Spike lê 7 dias somente localmente e fecha os tipos realmente disponíveis.
+5. MVP mostra preview e usuário confirma upload.
+6. Resultado informa inseridos, atualizados, duplicados e erros.
+7. Na PWA, usuário confirma/rejeita vínculos e inclusões.
+8. Fontes de kcal aparecem separadas; nada altera a meta automaticamente.
+9. Usuário pode pausar, desconectar, exportar ou apagar importados.
 
 ## 7. Requisitos funcionais
 
@@ -87,6 +103,16 @@ Atleta-proprietário avançado que:
 - **FR-002:** Autenticar com email/senha da conta Kcalix e restaurar/renovar sessão com segurança.
 - **FR-003:** Explicar que a permissão Android cobre leitura local, não nuvem nem IA.
 - **FR-004:** Solicitar permissões por capacidade, sem toggle pré-marcado.
+
+### Fase Zero manual
+
+- **FR-005:** Compilar, instalar e atualizar APK no emulador e aparelho, preservando estado no
+  update e limpando na reinstalação.
+- **FR-006:** Permitir input manual de atividade com validação e proveniência `manual_setup`.
+- **FR-007:** Enviar o teste com JWT sem aceitar `userId` do cliente.
+- **FR-008:** Mostrar o registro somente ao próprio usuário em uma tela isolada da PWA.
+- **FR-009:** Reenvio não duplica; usuário consegue apagar; tabelas canônicas não mudam.
+- **FR-009A:** Mostrar disponibilidade e grant/deny/revoke de `READ_EXERCISE` sem ler records.
 
 ### Leitura e preview
 
@@ -189,7 +215,7 @@ Avaliar após pelo menos 14 dias e 8 sessões elegíveis ou 15 sincronizações.
 
 | Risco | Mitigação/gate |
 |---|---|
-| Samsung não fornece um tipo esperado | KC-03 inventaria dados reais antes do backend |
+| Samsung não fornece um tipo esperado | KC-06 inventaria dados reais antes do backend definitivo |
 | Sync Watch -> telefone atrasado | UI explica latência e oferece checklist Samsung Sync |
 | Dupla contagem de kcal | fontes separadas e confirmação explícita |
 | Sessões ambíguas no mesmo dia | sugestão nunca vira vínculo automático no piloto |
@@ -203,9 +229,12 @@ Avaliar após pelo menos 14 dias e 8 sessões elegíveis ou 15 sincronizações.
 ## 12. Gates de release
 
 - **G0 — ambiente:** build/test/APK reproduzíveis via terminal.
-- **G1 — viabilidade:** dados reais úteis aparecem no Health Connect.
-- **G2 — segurança backend:** RLS/idempotência/isolamento passam com duas contas.
-- **G3 — vertical slice:** preview -> ingestão -> consulta, sem tocar dados manuais.
+- **G0.1 — runtime:** emulador/aparelho instalam e atualizam preservando estado esperado.
+- **G0.2 — vertical slice manual:** Android -> JWT -> Supabase -> PWA -> delete, sem dados canônicos.
+- **G0.3 — permissão:** Health Connect e grant/deny/revoke comprovados sem leitura.
+- **G1 — viabilidade:** dados reais úteis aparecem localmente no Health Connect.
+- **G2 — segurança backend definitivo:** RLS/idempotência/isolamento passam com duas contas.
+- **G3 — sync de saúde:** preview -> ingestão -> consulta, sem tocar dados manuais.
 - **G4 — reconciliação:** vínculo/cardio/kcal reversíveis e sem dupla contagem.
 - **G5 — release:** APK assinado, upgrade testado, exclusão/revogação e QA real aprovados.
 - **G6 — merge:** piloto medido e decisão GO/CONDITIONAL registrada.
@@ -214,8 +243,8 @@ Avaliar após pelo menos 14 dias e 8 sessões elegíveis ou 15 sincronizações.
 
 - Branch única `feature/kcalix-connector`, com commits por issue e merge somente após G5/G6.
 - O projeto Android nasce em `connector/android/`.
-- O primeiro aparelho e os dados disponíveis serão registrados em KC-00/KC-03.
+- O primeiro aparelho é registrado em KC-00; dados disponíveis são medidos em KC-06.
 - Login inicial é email/senha.
 - Janela padrão é 7 dias; 30 dias é opção.
-- M1 cobre exercício/cardio; corpo é extensão e sono fica pós-MVP.
+- M0 prova input manual; M1 mede localmente; M2 cobre exercício/cardio.
 - Desconectar e apagar são ações diferentes.

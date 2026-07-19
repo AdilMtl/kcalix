@@ -12,7 +12,7 @@
 Construir um aplicativo Android nativo pequeno, privado e instalável por APK. Ele será uma
 camada adicional ao Kcalix atual e não converterá a PWA em aplicativo nativo.
 
-Fluxo:
+Fluxo final:
 
 ```text
 Galaxy Watch 5
@@ -27,6 +27,18 @@ Galaxy Watch 5
 O relógio complementa os registros estruturados do Kcalix. Nenhuma importação pode apagar ou
 reescrever silenciosamente séries, repetições, cargas, refeições, check-ins ou medições
 manuais.
+
+Antes desse fluxo, a Fase Zero comprova instalação, atualização, autenticação e integração com
+um registro manual marcado como teste:
+
+```text
+Formulário manual no APK
+  -> sessão Kcalix
+  -> endpoint de setup autenticado
+  -> tabela isolada de testes com RLS
+  -> tela de teste na PWA
+  -> exclusão pelo próprio usuário
+```
 
 ## 2. Escolha de tecnologia
 
@@ -64,17 +76,30 @@ crash analytics no bootstrap.
 
 ## 3. Escopo por capacidade
 
-### M0 — spike local, sem nuvem
+### M0 — setup e vertical slice manual
 
-- Detectar versão e disponibilidade do Health Connect.
-- Inventariar o telefone, Android/One UI, Samsung Health e dados realmente compartilhados.
-- Ler localmente uma janela de 7 dias e mostrar uma tela técnica de preview.
+- Preparar a toolchain gratuita e um emulador Android no computador.
+- Compilar, instalar e atualizar o APK via Gradle/ADB preservando estado local.
+- Instalar no telefone real e validar abertura/diagnóstico.
+- Login com email/senha da mesma conta Kcalix e sessão cifrada.
+- Formulário manual de atividade com data/hora, tipo, duração e métricas opcionais.
+- Envio autenticado para uma tabela isolada, com `source_kind=manual_setup` e `is_test=true`.
+- Tela isolada na PWA com badge `TESTE`, idempotência e exclusão.
+- Detectar Health Connect e testar grant/deny/revoke de `READ_EXERCISE`, sem ler records.
+
+M0 não grava em `workouts`, `diary_entries`, `body_measurements` ou `checkins` e não envia nenhum
+dado obtido do Health Connect.
+
+### M1 — spike de leitura local, sem upload de saúde
+
+- Inventariar telefone, Android/One UI, Samsung Health e dados realmente compartilhados.
+- Ler localmente uma janela de 7 dias e mostrar preview técnico.
 - Confirmar `dataOrigin`, IDs, timestamps, latência e consistência no aparelho real.
-- Não autenticar, armazenar ou enviar dados.
+- Classificar cada record type como `INCLUDE`, `DEFER` ou `DROP`.
+- Não armazenar na nuvem nem enviar dados de saúde.
 
-### M1 — MVP privado de exercício/cardio
+### M2 — MVP privado de exercício/cardio
 
-- Login com email/senha da mesma conta Kcalix.
 - Consentimento destacado para armazenamento em nuvem.
 - Permissões incrementais de leitura.
 - Sincronização manual com app visível; 7 dias por padrão, até 30 dias por escolha.
@@ -85,7 +110,7 @@ crash analytics no bootstrap.
 - Fontes de kcal lado a lado, sem ajuste automático do diário ou meta alimentar.
 - Desconexão, exclusão dos importados e exportação com proveniência.
 
-### M1.1 — corpo, condicionado ao spike
+### M2.1 — corpo, condicionado ao spike
 
 - Peso como observação importada e sugestão de preenchimento.
 - Gordura corporal/BIA somente se origem e consistência forem comprovadas no aparelho.
@@ -111,12 +136,12 @@ capacidade correspondente.
 
 | Capacidade | Record | Permissão de leitura | Fase |
 |---|---|---|---|
-| Sessão | `ExerciseSessionRecord` | `READ_EXERCISE` | M0/M1 |
-| FC no intervalo | `HeartRateRecord` | `READ_HEART_RATE` | M0/M1 |
-| Energia | `TotalCaloriesBurnedRecord` | `READ_TOTAL_CALORIES_BURNED` | M0/M1 |
-| Distância | `DistanceRecord` | `READ_DISTANCE` | M0/M1 |
-| Peso | `WeightRecord` | `READ_WEIGHT` | M1.1 |
-| Gordura | `BodyFatRecord` | `READ_BODY_FAT` | M1.1 |
+| Sessão | `ExerciseSessionRecord` | `READ_EXERCISE` | M0 autorização; M1/M2 leitura |
+| FC no intervalo | `HeartRateRecord` | `READ_HEART_RATE` | M1/M2 |
+| Energia | `TotalCaloriesBurnedRecord` | `READ_TOTAL_CALORIES_BURNED` | M1/M2 |
+| Distância | `DistanceRecord` | `READ_DISTANCE` | M1/M2 |
+| Peso | `WeightRecord` | `READ_WEIGHT` | M1 inventário; M2.1 opcional |
+| Gordura | `BodyFatRecord` | `READ_BODY_FAT` | M1 inventário; M2.1 opcional |
 | Sono | `SleepSessionRecord` | `READ_SLEEP` | pós-MVP |
 | Passos | `StepsRecord` | `READ_STEPS` | pós-MVP |
 
@@ -129,18 +154,34 @@ necessário e implementa os entry points oficiais de rationale/permissões para 
 
 ## 5. Jornada do usuário
 
+### Jornada de setup M0
+
+1. Claude Code compila; APK roda no emulador.
+2. Usuário instala no telefone e valida atualização por cima.
+3. Usuário entra com a conta Kcalix e vê diagnóstico de sessão/rede.
+4. Preenche uma atividade manual e envia.
+5. PWA mostra o registro com badge `TESTE` e origem manual.
+6. Reenvio com o mesmo ID não duplica; exclusão remove apenas o teste.
+7. App verifica Health Connect e testa autorização de exercício sem ler dados.
+
+### Jornada de saúde M1/M2
+
 1. Tela de pré-requisitos explica Watch -> Samsung Health -> Health Connect.
-2. App verifica disponibilidade e oferece caminho correto para ativação.
-3. Usuário entra com a conta Kcalix.
-4. Aviso curto explica dados, finalidade, nuvem, retenção e que a PWA manual continua funcionando
-   caso o usuário recuse.
-5. Usuário escolhe a categoria e concede permissões just-in-time.
-6. App lê 7 dias localmente e exibe contagens, origens e preview por categoria.
-7. Usuário confirma `Sincronizar agora`.
-8. App normaliza, cifra a fila e envia batches autenticados.
-9. Resultado mostra encontrados, inseridos, atualizados, duplicados e erros.
-10. PWA apresenta sugestões de vínculo/adição; o usuário confirma ou rejeita.
-11. Configurações distinguem logout, desconexão e desconexão com exclusão.
+2. Usuário escolhe a categoria e concede permissões just-in-time.
+3. No spike M1, app lê 7 dias somente localmente e produz a matriz do aparelho.
+4. No MVP M2, aviso explica finalidade, nuvem e retenção antes de qualquer upload.
+5. Usuário confirma `Sincronizar agora` após o preview.
+6. App normaliza, cifra a fila e envia batches autenticados.
+7. Resultado mostra encontrados, inseridos, atualizados, duplicados e erros.
+8. PWA apresenta sugestões; usuário confirma ou rejeita.
+9. Configurações distinguem logout, desconexão e exclusão.
+
+### Contrato da vertical slice manual
+
+KC-04 define o contrato completo. O endpoint `connector-setup-submit` recebe JWT e campos
+allow-listed, nunca `userId`; o servidor força proveniência de teste. A tabela
+`connector_setup_submissions` é isolada e descartável. Ela não deve ser reutilizada
+silenciosamente como schema final do Health Connect.
 
 ## 6. Leitura, normalização e sync
 
@@ -344,10 +385,10 @@ declarar a janela real de backups e os subprocessadores/regiões antes do piloto
 
 ## 13. Decisões de gating ainda abertas
 
-KC-00 registra respostas sem bloquear o planejamento atual:
+KC-00 registra respostas antes do scaffold:
 
 1. Modelo do telefone, Android/One UI e tipos visíveis no Health Connect.
-2. Confirmar M1 só exercício/cardio; peso/BF permanecem M1.1 e sono pós-MVP.
+2. Confirmar M2 só exercício/cardio; peso/BF permanecem M2.1 e sono pós-MVP.
 3. Confirmar janela padrão de 7 dias, com opção de até 30.
 4. Confirmar email/senha como login do piloto.
 5. Confirmar que o app pode permanecer aberto durante leitura inicial.

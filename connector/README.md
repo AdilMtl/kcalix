@@ -15,6 +15,7 @@ será integrada à `main` após os gates de segurança, aparelho real e piloto.
 - [PRD do piloto privado](docs/PRD.md)
 - [Stack e setup Android para iniciante](docs/ANDROID_SETUP.md)
 - [Backlog de issues e sessões](docs/ISSUES.md)
+- [Pacotes autocontidos das issues](issues/README.md)
 
 O handoff que originou estes documentos permanece em
 [`memory/handoff-kcalix-connector-android.md`](../memory/handoff-kcalix-connector-android.md).
@@ -25,12 +26,13 @@ O handoff que originou estes documentos permanece em
 connector/
   README.md
   docs/                 # decisões, PRD, setup e backlog
+  issues/               # packets autocontidos para cada conversa de execução
   android/              # projeto Kotlin/Compose, criado em KC-02
 supabase/
   functions/
     ingest-health-connect/   # criada em KC-06
   migrations/                # schema do conector, criado em KC-05
-src/                     # PWA atual; só muda na fase de reconciliação KC-11
+src/                     # PWA atual; recebe tela isolada de teste em KC-04
 ```
 
 O projeto Android será autônomo. Comandos npm continuam na raiz; comandos Gradle serão
