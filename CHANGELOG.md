@@ -2,6 +2,38 @@
 
 ---
 
+## [1.0.0] — 2026-07-19
+
+### Adicionado
+- [feat] Revamp completo do Kcal Coach (Fase 7D — IA Integrada): persona única integrada (nutricionista esportivo + treinador de força RP/Lucas Campos + coach comportamental) com roteamento por assunto, princípios de resposta, formato fechado com o app e exemplos-âncora (`supabase/functions/ai-chat/index.ts`).
+- [feat] `ChatMarkdown` — renderizador seguro (negrito/listas/parágrafos) para as respostas do Coach, JSX puro sem `dangerouslySetInnerHTML` (`src/components/ChatMarkdown.tsx`).
+- [feat] Memória de sessão no chat — fechar o modal não zera mais a conversa; botão "Nova conversa" no header para reset manual (`src/components/AiChatModal.tsx`).
+- [feat] Dados sempre carregados no contexto do Coach (diário + treino + corpo em toda mensagem), com formatters pré-computados: desvio de hoje vs meta, médias de 7 dias, refeição mais fraca em proteína, volume por grupo em 4 semanas com MEV/MAV/MRV, progressão e platô por exercício, tendência corporal interpretada contra o objetivo. Cardio e nota de treino passam a entrar no contexto (antes ignorados).
+- [feat] Correção de fuso horário: `clientDate`/`clientTime` enviados pelo app definem "hoje" e a hora para o Coach — corrige o servidor (UTC) "virar o dia" às 21h no horário de Brasília.
+- [feat] Modelo do chat migrado para `gpt-5-mini` (parse de alimentos e leitura de foto seguem em `gpt-4o-mini`, intocados).
+
+### Corrigido
+- [fix] **Bug crítico pré-existente desde v0.40:** a Edge Function do Coach lia campos que nunca existiram no `user_settings.data` (`peso`/`metaP`/`metaC`/`metaG`/`metaKcal`) em vez das chaves reais (`weightKg`/`pTarget`/`cTarget`/`gTarget`/`kcalTarget`). O Coach nunca teve acesso ao peso nem às metas de macro do usuário desde a introdução da IA.
+- [fix] Perda de registro no diário ao criar um alimento novo via chat em dia sem nenhum registro anterior: a constraint `unique(user_id, nome)` em `custom_foods` fazia um `insert()` duplicado lançar erro dentro de um `Promise.all`, abortando a gravação no diário antes dela rodar. `saveCustomFood` agora é idempotente (reusa em vez de quebrar) e o fluxo de confirmação de log roda sequencial com `try/catch`.
+- [fix] Alimentos personalizados duplicados por variação de nome (ex.: "Esfirra de carne e queijo" vs "...com queijo") — nova normalização (`normalizeFoodName`) usada na busca por duplicata.
+
+### Melhorado
+- [improve] Concisão do Coach: respostas passaram de relatórios prolixos (múltiplas seções repetindo o mesmo conselho) para o padrão de um coach de verdade — 3–6 linhas normalmente, até ~8 numa avaliação, até ~12 num plano (esqueleto + oferta de detalhar, nunca o programa inteiro de uma vez).
+- [improve] Planos de treino passam a priorizar os exercícios que o usuário já registra, sugerindo exercício novo só para cobrir grupo muscular sem estímulo.
+- [improve] Radar proativo: quando os dados mostram um desvio importante não perguntado (ex.: gordura acima da meta), o Coach sinaliza numa linha — sem esperar ser questionado.
+- [improve] Regra de relógio e orçamento: com o dia calórico praticamente fechado, o Coach direciona ajustes para amanhã em vez de sugerir comer mais agora.
+- [improve] Pedidos de avaliação/auditoria ("errei em algo hoje?") agora cobrem todos os desvios relevantes do período, não só 2–3 números soltos.
+- [improve] Fim das autocorreções visíveis no texto ("ops, recalculando...") — os números de desvio chegam prontos da Edge Function; o modelo não faz mais aritmética de macros.
+
+### Notas
+- Documentação completa da sessão: `memory/spec-coach-revamp-ia.md` (spec das Fases A/B) e `memory/design-coach-prompt-v2.md` (prompt final, contrato de dados, histórico de revisões pós-QA v1/v2/v3).
+- Renumeração de roadmap: a fase deste trabalho é `7D`, dentro da Fase 7 "IA Integrada" já existente (que tinha `7A`/`7B-1..4`/`7C` de março de 2026) — evita colisão com o `7B` histórico do fluxo de registro por chat.
+- Nenhuma migration SQL. MODO LOG, `parseFoodHandler` e `analyzePhotoHandler` foram preservados intocados por decisão explícita de escopo.
+- **Pendência para próxima sessão:** QA manual do usuário no celular — registro via chat em dia vazio, deduplicação de variantes de alimento, e o comportamento v3 do prompt (auditoria completa, radar proativo, ausência de pergunta-reflexo, respeito ao horário/orçamento do dia).
+- Commits: `b46cee3`, `d5c2367`, `c2f223e`, `3f6d983`, `b5a7026`.
+
+---
+
 ## [0.58.1] — 2026-07-14
 
 ### Adicionado

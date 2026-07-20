@@ -221,7 +221,7 @@ supabase/migrations/
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
 | 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (recorte treino templates + analytics concluído na v0.58.1 — 2026-07-14) |
-| 7B | Revamp IA do Coach (prompt v2, dados pré-computados, gpt-5-mini) | CONCLUÍDA (v0.59.0 — 2026-07-19) — QA final dos bugs de log pendente |
+| 7D | Revamp IA do Coach (prompt v2, dados pré-computados, gpt-5-mini) | CONCLUÍDA (v1.0.0 — 2026-07-19) — QA final do usuário pendente para próxima sessão |
 | 6B-H | Home Revamp v2 — dashboard contextual | CONCLUIDA (v0.58.0 — 2026-07-11) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
@@ -231,9 +231,9 @@ supabase/migrations/
 
 ---
 
-## FASE 7B — Revamp IA do Coach — CONCLUÍDA (v0.59.0 — 2026-07-19)
+## FASE 7D — Revamp IA do Coach — CONCLUÍDA (v1.0.0 — 2026-07-19)
 
-> Sessão de redesign com Fable 5 (design) + Opus 4.8 (execução). Docs: `memory/spec-coach-revamp-ia.md` (spec A/B) e `memory/design-coach-prompt-v2.md` (prompt final + contrato de dados + revisões pós-QA v1/v2/v3).
+> Continuação da Fase 7 (IA Integrada — ver 7A/7B/7C abaixo, março de 2026). Sessão de redesign com Fable 5 (design) + Opus 4.8 (execução). Docs: `memory/spec-coach-revamp-ia.md` (spec A/B) e `memory/design-coach-prompt-v2.md` (prompt final + contrato de dados + revisões pós-QA v1/v2/v3).
 
 - [x] Fase A: ChatMarkdown (renderer seguro), memória de sessão + "Nova conversa", clientDate/clientTime, cap 16 msgs
 - [x] Fase B: prompt v2 (persona técnica integrada, roteamento por assunto, concisão de coach, radar proativo, relógio/orçamento), dados sempre carregados (fim do detectIntent), timezone local, formatters pré-computados (HOJE vs meta, médias 7d, volume 4 semanas c/ MRV, progressão por exercício, corpo interpretado, cardio+nota), gpt-5-mini (max_completion_tokens, reasoning minimal/low, verbosity low/medium, retry sem extras em 400)
@@ -1172,6 +1172,7 @@ body_measurements (
 | 7B-3 | Integração — substituir mock por chamada real à Edge Function | ✅ Concluída (2026-03-23) |
 | 7B-4 | IA decide intenção — unifica chat + log, remove regex do frontend | ✅ Concluída (2026-03-23) |
 | 7C | Foto para macros — GPT-4o Vision | ✅ Concluída (2026-03-24) |
+| 7D | Revamp completo do Coach — prompt v2, dados pré-computados, gpt-5-mini (ver seção própria "FASE 7D" acima) | ✅ Concluída (v1.0.0 — 2026-07-19) |
 
 > ~~⚠️ TODO FUTURO — Notificação de nova versão/funcionalidades para usuários~~
 > **Resolvido:** sistema de Broadcasts planejado — ver abaixo.
