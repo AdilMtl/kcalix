@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kcalix Connector - Iniciar"
+  short_description: "Preparar sessao segura do Connector"
+  default_prompt: "Use $start-connector para preparar a proxima sessao da branch do Kcalix Connector."
+policy:
+  allow_implicit_invocation: true

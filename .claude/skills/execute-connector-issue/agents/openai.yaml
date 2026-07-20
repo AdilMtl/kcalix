@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kcalix Connector - Executar issue"
+  short_description: "Executar uma issue KC-XX com validacao"
+  default_prompt: "Use $execute-connector-issue para executar a issue KC-00 seguindo seu packet."
+policy:
+  allow_implicit_invocation: true

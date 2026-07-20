@@ -4,6 +4,11 @@
 
 **Data de referência:** 2026-07-19
 
+**Execução por agentes:** consultar [`AGENT_SKILLS.md`](AGENT_SKILLS.md) para abrir/fechar sessões
+e [`agent/ANDROID_ENGINEERING.md`](agent/ANDROID_ENGINEERING.md) para as práticas técnicas que
+devem orientar a implementação. Versões concretas continuam sendo verificadas e fixadas em
+KC-01/KC-02.
+
 ## 1. Situação desta máquina
 
 Na abertura desta spec, os seguintes comandos/ferramentas não estavam disponíveis no PATH:

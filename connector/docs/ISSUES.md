@@ -158,19 +158,26 @@ consentimento próprios antes de código.
 
 ## 5. Protocolo de abertura e fechamento
 
+As skills e suas regras estão documentadas em [`AGENT_SKILLS.md`](AGENT_SKILLS.md). Usar o
+fluxo específico do Connector; os comandos genéricos `/start` e `/end` continuam pertencendo à
+PWA.
+
 ### Abrir uma conversa
 
-1. Ler `connector/README.md`, a issue completa e somente as referências que ela indicar.
-2. Confirmar `git branch --show-current` = `feature/kcalix-connector`.
-3. Verificar working tree e preservar alterações preexistentes.
-4. Confirmar dependências e baseline; não presumir estado externo.
-5. Declarar o resultado observável da sessão antes de editar.
+1. Invocar `/start-connector KC-XX` no Claude Code ou `$start-connector KC-XX` no Codex.
+2. Ler `connector/README.md`, a issue completa e somente as referências que ela indicar.
+3. Confirmar `git branch --show-current` = `feature/kcalix-connector`.
+4. Verificar working tree e preservar alterações preexistentes.
+5. Confirmar dependências e baseline; não presumir estado externo.
+6. Declarar o resultado observável da sessão antes de editar.
+7. Executar com `/execute-connector-issue KC-XX` ou `$execute-connector-issue KC-XX`.
 
 ### Fechar uma conversa
 
-1. Rodar todos os testes e passos manuais possíveis.
-2. Atualizar no packet: status, evidências, decisões, desvios e pendências.
-3. Registrar comandos exatos e saídas relevantes, sem segredos/dados de saúde.
-4. Marcar DoD somente se cada item tiver evidência.
-5. Atualizar o campo “Próxima conversa” com arquivo inicial e primeiro comando.
-6. Revisar diff e criar commit com o ID; não fazer merge na `main`.
+1. Invocar `/end-connector KC-XX` no Claude Code ou `$end-connector KC-XX` no Codex.
+2. Rodar todos os testes e passos manuais possíveis.
+3. Atualizar no packet: status, evidências, decisões, desvios e pendências.
+4. Registrar comandos exatos e saídas relevantes, sem segredos/dados de saúde.
+5. Marcar DoD somente se cada item tiver evidência.
+6. Atualizar o campo “Próxima conversa” com arquivo inicial e primeiro comando.
+7. Revisar diff e criar commit com o ID; não fazer merge na `main`.

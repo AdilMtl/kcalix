@@ -16,9 +16,10 @@ será integrada à `main` após os gates de segurança, aparelho real e piloto.
 - [Stack e setup Android para iniciante](docs/ANDROID_SETUP.md)
 - [Backlog de issues e sessões](docs/ISSUES.md)
 - [Pacotes autocontidos das issues](issues/README.md)
+- [Skills para iniciar, executar e encerrar sessões](docs/AGENT_SKILLS.md)
 
-O handoff que originou estes documentos permanece em
-[`memory/handoff-kcalix-connector-android.md`](../memory/handoff-kcalix-connector-android.md).
+O handoff de exploração que originou esta frente foi consolidado na spec, no PRD e nos packets;
+esses documentos versionados são a fonte de verdade para novas sessões.
 
 ## Estrutura prevista
 
@@ -27,7 +28,10 @@ connector/
   README.md
   docs/                 # decisões, PRD, setup e backlog
   issues/               # packets autocontidos para cada conversa de execução
+  scripts/              # auditoria de sessão e validação das skills
   android/              # projeto Kotlin/Compose, criado em KC-02
+.agents/skills/         # skills descobertas pelo Codex
+.claude/skills/         # skills descobertas pelo Claude Code
 supabase/
   functions/
     ingest-health-connect/   # criada em KC-06

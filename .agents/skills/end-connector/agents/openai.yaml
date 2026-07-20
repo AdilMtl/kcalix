@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kcalix Connector - Encerrar"
+  short_description: "Validar e encerrar sessao do Connector"
+  default_prompt: "Use $end-connector para validar o trabalho, registrar evidencias e preparar o handoff."
+policy:
+  allow_implicit_invocation: true
