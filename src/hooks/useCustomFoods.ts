@@ -14,6 +14,19 @@ interface CustomFoodRow {
   kcal: number
 }
 
+// Normaliza nome de alimento para dedup: caixa, acentos, pontuação e
+// conectores ("com"/"e"/"+") — "Esfirra de Carne e Queijo" e
+// "esfirra de carne com queijo" viram a mesma chave.
+export function normalizeFoodName(nome: string): string {
+  return nome
+    .toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')  // remove acentos
+    .replace(/\s+(com|e)\s+|\s*\+\s*/g, ' ')            // conectores → espaço
+    .replace(/[^a-z0-9 ]/g, ' ')                        // pontuação → espaço
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function rowToFoodItem(row: CustomFoodRow): FoodItem {
   return {
     id:      'custom_' + row.id,
@@ -63,6 +76,7 @@ export function useCustomFoods(): UseCustomFoodsReturn {
 
   const saveCustomFood = useCallback(async (food: Omit<FoodItem, 'id'>): Promise<FoodItem> => {
     if (!user) throw new Error('Não autenticado')
+    const cols = 'id, nome, porcao, porcao_g, p, c, g, kcal'
     const { data, error } = await supabase
       .from('custom_foods')
       .insert({
@@ -75,18 +89,36 @@ export function useCustomFoods(): UseCustomFoodsReturn {
         g:        food.g,
         kcal:     food.kcal,
       })
-      .select('id, nome, porcao, porcao_g, p, c, g, kcal')
+      .select(cols)
       .single()
-    if (error) throw error
+    if (error) {
+      // 23505 = nome já existe para este usuário (constraint custom_foods_user_id_nome_unique).
+      // Reusa o existente em vez de quebrar — evita perder a gravação do diário no fluxo do chat.
+      if (error.code === '23505') {
+        const { data: existing } = await supabase
+          .from('custom_foods')
+          .select(cols)
+          .eq('user_id', user.id)
+          .eq('nome', food.nome)
+          .maybeSingle()
+        if (existing) {
+          const reused = rowToFoodItem(existing as CustomFoodRow)
+          setCustomFoods(prev => prev.some(f => f.id === reused.id) ? prev : [reused, ...prev])
+          return reused
+        }
+      }
+      throw error
+    }
     const saved = rowToFoodItem(data as CustomFoodRow)
-    setCustomFoods(prev => [saved, ...prev])
+    setCustomFoods(prev => prev.some(f => f.id === saved.id) ? prev : [saved, ...prev])
     return saved
   }, [user?.id])
 
-  // Busca por nome (case-insensitive) — usado para evitar duplicatas
+  // Busca por nome normalizado (caixa/acentos/pontuação/conectores) — evita duplicatas
+  // e reusa variantes ("carne e queijo" ≈ "carne com queijo").
   const findCustomFood = useCallback((nome: string): FoodItem | undefined => {
-    const n = nome.toLowerCase().trim()
-    return customFoods.find(f => f.nome.toLowerCase().trim() === n)
+    const n = normalizeFoodName(nome)
+    return customFoods.find(f => normalizeFoodName(f.nome) === n)
   }, [customFoods])
 
   const updateCustomFood = useCallback(async (id: string, food: Omit<FoodItem, 'id'>) => {

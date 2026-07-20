@@ -4,7 +4,7 @@ import type { PendingLogItem, PhotoFoodResult } from '../hooks/useAiChat'
 import { AiLogConfirmModal } from './AiLogConfirmModal'
 import { PhotoReviewSheet } from './PhotoReviewSheet'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
-import { useCustomFoods } from '../hooks/useCustomFoods'
+import { useCustomFoods, normalizeFoodName } from '../hooks/useCustomFoods'
 import { resizeImageToBase64 } from '../lib/imageUtils'
 import { KcalixIcon, type KcalixIconName } from './icons/KcalixIcon'
 import { SystemIcon, type SystemIconName } from './icons/SystemIcon'
@@ -48,7 +48,7 @@ const CAPABILITIES: Array<{ icon: SystemIconName; text: string }> = [
 interface Props {
   open: boolean
   onClose: () => void
-  onAddFoods?: (meal: MealKey, entries: FoodEntry[]) => void
+  onAddFoods?: (meal: MealKey, entries: FoodEntry[]) => void | Promise<void>
   initialShowPhoto?: boolean
   initialInput?: string
 }
@@ -162,46 +162,65 @@ export function AiChatModal({ open, onClose, onAddFoods, initialShowPhoto, initi
       lanche2: 'lanche 2', jantar: 'jantar', ceia: 'ceia',
     }
 
-    const entries: FoodEntry[] = await Promise.all(items.map(async item => {
-      const ratio = item.grams / 100
-      let foodId = item.foodId ?? ''
+    try {
+      // Sequencial (não Promise.all): permite reusar dentro do MESMO lote via
+      // batchCache — variantes na mesma leitura ("carne e queijo" / "com queijo")
+      // resolvem para o mesmo custom food, sem corrida de estado.
+      const batchCache = new Map<string, string>()   // nome normalizado → foodId
+      const entries: FoodEntry[] = []
 
-      // Alimento custom: reutiliza se já existe, cria se não
-      if (item.source === 'custom') {
-        const existing = findCustomFood(item.nome)
-        if (existing) {
-          foodId = existing.id
-        } else {
-          // Salva com macros por 100g (não pela porção) — padrão do banco
-          const saved = await saveCustomFood({
-            nome:    item.nome,
-            porcao:  '100g',
-            porcaoG: 100,
-            p:       Math.round(item.pPer100    * 10) / 10,
-            c:       Math.round(item.cPer100    * 10) / 10,
-            g:       Math.round(item.gPer100    * 10) / 10,
-            kcal:    Math.round(item.kcalPer100),
-          })
-          foodId = saved.id
+      for (const item of items) {
+        const ratio = item.grams / 100
+        let foodId = item.foodId ?? ''
+
+        if (item.source === 'custom') {
+          const key = normalizeFoodName(item.nome)
+          const cached = batchCache.get(key)
+          if (cached) {
+            foodId = cached
+          } else {
+            const existing = findCustomFood(item.nome)   // já existe no banco?
+            if (existing) {
+              foodId = existing.id
+            } else {
+              // Salva com macros por 100g (não pela porção) — padrão do banco.
+              // saveCustomFood é idempotente: se o nome já existir, reusa (não quebra).
+              const saved = await saveCustomFood({
+                nome:    item.nome,
+                porcao:  '100g',
+                porcaoG: 100,
+                p:       Math.round(item.pPer100    * 10) / 10,
+                c:       Math.round(item.cPer100    * 10) / 10,
+                g:       Math.round(item.gPer100    * 10) / 10,
+                kcal:    Math.round(item.kcalPer100),
+              })
+              foodId = saved.id
+            }
+            batchCache.set(key, foodId)
+          }
         }
+
+        entries.push({
+          foodId,
+          nome:    item.nome,
+          qty:     1,
+          porcaoG: item.grams,
+          p:       Math.round(item.pPer100    * ratio * 10) / 10,
+          c:       Math.round(item.cPer100    * ratio * 10) / 10,
+          g:       Math.round(item.gPer100    * ratio * 10) / 10,
+          kcal:    Math.round(item.kcalPer100 * ratio),
+          at:      new Date().toISOString(),
+        })
       }
 
-      return {
-        foodId,
-        nome:    item.nome,
-        qty:     1,
-        porcaoG: item.grams,
-        p:       Math.round(item.pPer100    * ratio * 10) / 10,
-        c:       Math.round(item.cPer100    * ratio * 10) / 10,
-        g:       Math.round(item.gPer100    * ratio * 10) / 10,
-        kcal:    Math.round(item.kcalPer100 * ratio),
-        at:      new Date().toISOString(),
-      }
-    }))
-
-    onAddFoods?.(meal, entries)
-    const nomes = items.map(i => `• ${i.nome} (${i.grams}g)`).join('\n')
-    addMessage({ role: 'assistant', content: `Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
+      // AWAIT: garante que a gravação no diário concluiu antes de confirmar.
+      await onAddFoods?.(meal, entries)
+      const nomes = items.map(i => `• ${i.nome} (${i.grams}g)`).join('\n')
+      addMessage({ role: 'assistant', content: `Adicionado ao ${MEAL_NAMES[meal] ?? meal}:\n${nomes}` })
+    } catch (err) {
+      console.error('[log] falha ao salvar no diário:', err)
+      addMessage({ role: 'assistant', content: 'Não consegui salvar no diário agora. Tenta confirmar de novo?' })
+    }
   }
 
   async function handleSend() {

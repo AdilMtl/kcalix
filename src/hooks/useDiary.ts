@@ -117,9 +117,10 @@ export async function addFoodsToDiary(
   }
   const next: DiaryData = { ...current, meals: nextMeals, totals: recalcTotals(nextMeals) }
 
-  await supabase
+  const { error } = await supabase
     .from('diary_entries')
     .upsert({ user_id: userId, date, data: next }, { onConflict: 'user_id,date' })
+  if (error) throw error   // não engolir a falha — o chamador precisa saber que não salvou
 }
 
 export function useDiary(date: string = todayISO()): UseDiaryReturn {
