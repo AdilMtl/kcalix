@@ -221,12 +221,29 @@ supabase/migrations/
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
 | 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (recorte treino templates + analytics concluído na v0.58.1 — 2026-07-14) |
+| 7B | Revamp IA do Coach (prompt v2, dados pré-computados, gpt-5-mini) | CONCLUÍDA (v0.59.0 — 2026-07-19) — QA final dos bugs de log pendente |
 | 6B-H | Home Revamp v2 — dashboard contextual | CONCLUIDA (v0.58.0 — 2026-07-11) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
 | 6D | Vitest — testes calculators + migrationTransform | Planejada |
 | 6E | CI/CD + Loading states + OG Tags | Planejada |
 | 7 | Freemium (Stripe) | Futuro |
 | 8 | IA integrada | Futuro |
+
+---
+
+## FASE 7B — Revamp IA do Coach — CONCLUÍDA (v0.59.0 — 2026-07-19)
+
+> Sessão de redesign com Fable 5 (design) + Opus 4.8 (execução). Docs: `memory/spec-coach-revamp-ia.md` (spec A/B) e `memory/design-coach-prompt-v2.md` (prompt final + contrato de dados + revisões pós-QA v1/v2/v3).
+
+- [x] Fase A: ChatMarkdown (renderer seguro), memória de sessão + "Nova conversa", clientDate/clientTime, cap 16 msgs
+- [x] Fase B: prompt v2 (persona técnica integrada, roteamento por assunto, concisão de coach, radar proativo, relógio/orçamento), dados sempre carregados (fim do detectIntent), timezone local, formatters pré-computados (HOJE vs meta, médias 7d, volume 4 semanas c/ MRV, progressão por exercício, corpo interpretado, cardio+nota), gpt-5-mini (max_completion_tokens, reasoning minimal/low, verbosity low/medium, retry sem extras em 400)
+- [x] BUG CRÍTICO corrigido (pré-existente desde v0.40): Edge Function lia campos inexistentes do user_settings (peso/metaP/metaKcal → weightKg/pTarget/kcalTarget) — Coach nunca tinha peso nem metas
+- [x] BUG corrigido: perda de registro no diário via chat (unique custom_foods + Promise.all abortava onAddFoods) — saveCustomFood idempotente + fluxo sequencial com try/catch
+- [x] BUG corrigido: custom foods duplicados por variante de nome — normalizeFoodName + batchCache
+- [x] MODO LOG, parse-food e analyze-photo intocados (gpt-4o-mini)
+- [ ] QA final do usuário: registro via chat em dia vazio + dedup de variantes + comportamento v3 (auditoria/radar/sem pergunta-reflexo)
+
+Commits: b46cee3, d5c2367, c2f223e, 3f6d983 + rodada v3. Deploys: Edge Function via `supabase functions deploy ai-chat --no-verify-jwt`.
 
 ---
 
@@ -1270,6 +1287,18 @@ Depois de fazer isso, abra uma nova sessão com `/start` e avise que os segredos
 
 - Stripe integrado → pagamento autoriza acesso automaticamente
 - Planejado após Fase 7 estável
+
+---
+
+## INICIATIVA FUTURA — Kcalix Connector Android + Health Connect
+
+**Status:** exploração concluída em 2026-07-19; PRD/spec pendentes; não iniciar implementação sem nova sessão de desenho.
+
+- Decisão: validar primeiro um aplicativo Android privado, instalado via APK no celular do proprietário, sem Play Store.
+- Fluxo: Galaxy Watch 5 → Samsung Health → Health Connect → Connector → Edge Function autenticada → Supabase/Kcalix.
+- MVP pretendido: leitura apenas, permissões mínimas, sincronização manual, resumos de exercício/duração/kcal/FC/cardio e idempotência.
+- PWA atual permanece intacta; publicação pública e empacotamento completo do Kcalix são decisões posteriores ao piloto.
+- Handoff completo, fontes e prompt da próxima sessão: `memory/handoff-kcalix-connector-android.md`.
 
 ---
 

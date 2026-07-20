@@ -78,9 +78,15 @@ export function useAiChat() {
 
     try {
       const res = await supabase.functions.invoke('ai-chat', {
-        // clientDate: data local do dispositivo (corrige "fala de outra data" à noite)
+        // clientDate/clientTime: data e hora locais do dispositivo (corrige "fala de
+        // outra data" à noite e permite distinguir dia em andamento de dia fechado)
         // slice(-16): estado local guarda tudo; ao servidor vão só as últimas 16 msgs
-        body: { messages: newMessages.slice(-16), foodIndex: getFoodIndex(), clientDate: todayISO() },
+        body: {
+          messages: newMessages.slice(-16),
+          foodIndex: getFoodIndex(),
+          clientDate: todayISO(),
+          clientTime: new Date().toTimeString().slice(0, 5),
+        },
       })
 
       if (res.error) throw new Error(res.error.message)

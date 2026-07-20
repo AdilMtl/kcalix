@@ -197,6 +197,30 @@ QA real do usuário revelou 4 problemas; correções aplicadas na função:
 3. **Verbosidade/menus** — resposta com cabeçalhos-esqueleto ("Dados que sustentam", "Ações práticas"), menus "Opção A/Opção B" e 2+ perguntas. Regras novas no FORMATO: proibido cabeçalho-esqueleto; proibido menu de opções (escolher e recomendar); máx 1 pergunta, não em toda resposta; nunca pedir dado já presente em DADOS.
 4. **Latência** — trocado `reasoning_effort` low→**minimal** (dados pré-computados dispensam raciocínio longo) + `verbosity: low` (diagnóstico completo: low/medium). Retry defensivo: 1º call com extras; se 400, repete sem os parâmetros opcionais (auto-cura contra param não suportado).
 
+## 5c · Revisões pós-QA v2 (2026-07-19) — concisão
+
+QA v2: respostas boas em conteúdo, mas PROLIXAS (múltiplas seções embrulhando o mesmo conselho, dados repetidos entre turnos, plano completo despejado). Reescrita do núcleo:
+- **Bloco "COMO UM COACH RESPONDE"** no topo (regra dominante): padrão 3–6 linhas; avaliação ~8; plano ~12 (esqueleto + oferecer detalhe, nunca o programa inteiro de uma vez). Uma ideia + UMA lista. Não repetir dados já ditos na conversa. Citar só 2–3 números.
+- Princípio 3 → "RESPOSTA PRIMEIRO" (veredito na 1ª frase).
+- Princípio 6 (novo, refinamento #1 do usuário): planos usam os exercícios que o usuário JÁ registra; novo só p/ grupo faltante, sinalizado.
+- FORMATO (refinamentos #3 e #4): proíbe rótulo de bloco genérico (título curto + dois-pontos); disciplina de orçamento kcal ao montar refeições; endurece "não terminar sempre com pergunta".
+- 3º exemplo-âncora: pedido de plano em ~10 linhas usando exercícios do usuário.
+- Params já ativos: `reasoning_effort` minimal (low no diag) + `verbosity` low/medium.
+- Refinamento #2 (parar de perguntar sempre) coberto pela regra de FORMATO; usuário não o marcou explicitamente mas foi incluído por ser o mesmo eixo.
+- Deploy: commits `d5c2367` (v1 fixes) e `c2f223e` (concisão).
+
+## 5d · Revisões pós-QA v3 (2026-07-19) — rigor técnico e proatividade
+
+QA v3 (log "errei em algo?"): modelo errou conta em voz alta ("ops, recalculando"), não viu gordura estourada até o usuário apontar, sugeriu comer com 40 kcal livres, 3/3 respostas fechando com "Quer que eu...?". Correções:
+- **Dados**: bloco HOJE agora traz desvio completo pré-computado ("Hoje vs meta: kcal X | P ±Xg | C ±Xg | G ±Xg") + flag "dia praticamente fechado" quando kcal livres ≤120. O modelo não faz mais aritmética de macros.
+- **clientTime**: frontend envia hora local (HH:mm); contexto mostra "agora são HH:mm" — coach distingue dia em andamento de dia fechado.
+- **Prompt**: persona reforçada como profissional técnico (frameworks: balanço energético, g/kg, MEV/MAV/MRV, RIR); EXCEÇÃO de auditoria (pedido de avaliação → cobrir TODOS os desvios, meia linha cada); princípio 7 RADAR (1 linha "Obs:" proativa quando dado importante não perguntado); princípio 8 RELÓGIO E ORÇAMENTO (dia fechado → ajuste para amanhã); proibido rascunho de conta/autocorreção no texto; PADRÃO terminar SEM pergunta (exceção única: oferecer detalhamento de plano).
+- **4º exemplo-âncora**: auditoria do dia em ~7 linhas, todos os desvios, sem pergunta.
+
+### Bugs de fluxo de log corrigidos na mesma sessão (frontend, commit 3f6d983)
+1. Perda de registro no diário via chat: unique(user_id,nome) em custom_foods + insert puro + Promise.all → onAddFoods nunca rodava. Fix: saveCustomFood idempotente (23505→reusa), handleConfirmLog sequencial+await+try/catch, addFoodsToDiary propaga erro.
+2. Variantes duplicadas ("carne e queijo"/"com queijo"): normalizeFoodName (caixa/acentos/pontuação/conectores) + batchCache por lote.
+
 ## 6 · Backlog registrado (NÃO implementar agora)
 - Fase 2: comentários gerais de comportamento (sono, estresse, contexto) — canal dedicado + extração da conversa. A nota de treino (2.4) é o embrião.
 - Fase C opcional: function calling p/ log (só se o sentinel JSON der problema); TTL da memória de sessão.
