@@ -1293,13 +1293,17 @@ Depois de fazer isso, abra uma nova sessão com `/start` e avise que os segredos
 
 ## INICIATIVA FUTURA — Kcalix Connector Android + Health Connect
 
-**Status:** exploração concluída em 2026-07-19; PRD/spec pendentes; não iniciar implementação sem nova sessão de desenho.
+**Status:** exploração concluída; pacote operacional criado em 2026-07-20; próxima Issue `KCX-CONN-001`.
 
 - Decisão: validar primeiro um aplicativo Android privado, instalado via APK no celular do proprietário, sem Play Store.
 - Fluxo: Galaxy Watch 5 → Samsung Health → Health Connect → Connector → Edge Function autenticada → Supabase/Kcalix.
 - MVP pretendido: leitura apenas, permissões mínimas, sincronização manual, resumos de exercício/duração/kcal/FC/cardio e idempotência.
 - PWA atual permanece intacta; publicação pública e empacotamento completo do Kcalix são decisões posteriores ao piloto.
-- Handoff completo, fontes e prompt da próxima sessão: `memory/handoff-kcalix-connector-android.md`.
+- Fonte canônica de execução: `memory/kcalix-connector/README.md`.
+- Roadmap com gates G0–G5: `memory/kcalix-connector/ROADMAP.md`.
+- Backlog executável com 20 Issues: `memory/kcalix-connector/ISSUES.md`.
+- Toda implementação exige uma spec específica criada pelo template em `memory/kcalix-connector/SPEC_TEMPLATE.md`.
+- Entradas equivalentes: Codex `$develop-kcalix-connector`; Claude Code `/connector KCX-CONN-NNN`.
 
 ---
 

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Kcalix Connector"
+  short_description: "Planeja e executa o conector Health Connect"
+  default_prompt: "Use $develop-kcalix-connector para selecionar uma Issue pronta e executá-la com os gates do projeto."
+

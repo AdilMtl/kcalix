@@ -2,6 +2,27 @@
 
 ---
 
+## [Unreleased]
+
+### Adicionado
+- [feat] Bootstrap Android privado do Kcalix Connector em `connector/android/`, com Kotlin,
+  Compose, Gradle Wrapper e tela técnica de versão/build.
+
+### Corrigido
+- [fix] Habilitada a geração de `BuildConfig`, necessária para mostrar versão e tipo do build na
+  tela de bootstrap.
+
+### Notas
+- `KCX-CONN-005` validada em telefone Android físico: build debug compila, instala e abre sem
+  Health Connect, permissões, rede, autenticação ou dados pessoais.
+- Um bloqueio de arquivos temporários em `app/build/.../zip-cache` ocorreu durante
+  `packageDebug`; a recuperação de build foi validada. O problema é de ambiente/arquivo, não de
+  código ou dados de saúde; não houve migração, deploy ou publicação de APK.
+- Próxima Issue: `KCX-CONN-001`, auditoria local e anonimizada da disponibilidade de dados do
+  Galaxy Watch 5 no Health Connect.
+
+---
+
 ## [1.0.0] — 2026-07-19
 
 ### Adicionado

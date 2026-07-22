@@ -8,7 +8,11 @@
 - **Referência do app original:** `memory/ref.aplicativo_antigo/referência.index.html` (~6200 linhas)
 - **Contexto técnico de port:** `memory/contexto-port.md`
 
-## Skills disponíveis (`.claude/commands/`)
+## Skills disponíveis
+- `$develop-kcalix-connector` (`.agents/skills/develop-kcalix-connector/`) — fluxo Codex por Issue, com gates obrigatórios para Health Connect/Android/Supabase
+- `/connector KCX-CONN-NNN` (`.claude/commands/connector.md`) — equivalente no Claude Code, usando a mesma documentação canônica
+
+### Comandos gerais (`.claude/commands/`)
 - `/start` — iniciar sessão, verificar estado git e build
 - `/spec` — escrever especificação antes de qualquer mudança
 - `/port` — portar elemento do app original (metodologia desta sessão)
@@ -24,6 +28,7 @@
 - `/migrate` — migrar dados do app antigo
 
 ## Specs pendentes para próximas sessões
+- [Kcalix Connector — índice operacional](kcalix-connector/README.md) — Fase 00 / `KCX-CONN-005` concluída e validada no aparelho em 2026-07-22: APK debug local abre a tela de bootstrap, sem permissões, rede ou dados de saúde. Próximo passo: `KCX-CONN-001`, auditoria local dos dados reais do Watch 5/Health Connect. O [handoff de pesquisa](handoff-kcalix-connector-android.md) permanece como contexto, não como artefato único de execução.
 - [Kcalix Hybrid Icon System sem emojis](spec-iconografia-profissional.md) — piloto aprovado pelo usuário em 2026-07-10 na branch `feature-icon-system`: Coach autoral Ember 3D, Icons8 Color local para Home/Diário/Corpo/Mais, halter Icons8 Color simplificado para Treino e SVGs locais para controles pequenos. Publicação no `main` autorizada.
 - [Migração Visual Ember Design System](spec-visual-ember-design-system.md) — CONCLUÍDA E APROVADA em 2026-07-09 na branch local `feature-ember-design-system`; QA visual manual feito pelo usuário durante a execução; build e testes finais passaram; liberada para commit, push e merge/publicação.
 - Pós-Ember — abrir nova branch depois de fechar/mergear `feature-ember-design-system` para substituir emojis por ícones bonitos/consistentes (ex.: biblioteca de ícones ou sistema próprio), sem misturar com a migração visual atual.

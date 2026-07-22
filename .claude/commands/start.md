@@ -49,10 +49,12 @@ Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nut
 │ /undo        │ Algo deu errado          │ Reverte de forma segura                     │
 │ /end         │ Encerrar sessão          │ Documenta, versiona, registra pendências    │
 │ /migrate     │ Trabalhar na migração    │ Exportador/importador de dados do app antigo│
+│ /connector   │ Conector Android         │ Executa uma KCX-CONN-NNN com gates e spec   │
 └──────────────┴──────────────────────────┴─────────────────────────────────────────────┘
 
 💡 Fluxo recomendado (port): /port → implementa → /check-port → /review → /end
 💡 Fluxo recomendado (feature): /spec → /feature ou /fix → /review → /end
+💡 Fluxo recomendado (conector): /connector KCX-CONN-NNN → spec aprovada → implementação → evidências
 ⚠️  Use /deploy apenas para publicações rápidas sem encerrar a sessão
 ```
 
