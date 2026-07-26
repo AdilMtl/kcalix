@@ -1,0 +1,23 @@
+# Normalização de fim de linha
+# Sem este arquivo, o comportamento depende do core.autocrlf de cada clone
+# (que vive em .git/config e NÃO é versionado). Aqui a regra viaja com o repo.
+
+# Padrão: guardar sempre LF no repositório; cada máquina faz checkout no seu formato
+* text=auto
+
+# Binários — nunca normalizar (normalizar corrompe)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.ico  binary
+*.jar  binary
+*.keystore binary
+*.woff  binary
+*.woff2 binary
+
+# Scripts que exigem um fim de linha específico para funcionar
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+gradlew text eol=lf
+*.sh    text eol=lf
