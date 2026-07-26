@@ -1,8 +1,22 @@
 # Kcalix Connector — índice operacional
 
-**Status:** Fase 00 de bootstrap Android validada no aparelho; nenhuma migration ou integração de saúde iniciada  
+**Status:** Fase 00 concluída; `KCX-CONN-001` em especificação do contrato de observação e
+da revisão técnica que antecedem a leitura real
+
 **Decisão vigente:** validar primeiro um APK privado, instalado localmente, que leia o Health Connect e sincronize manualmente com o Kcalix  
-**Próxima Issue:** `KCX-CONN-001` — confirmar os dados reais disponíveis no Galaxy Watch 5/Health Connect
+
+**Próxima Issue:** `KCX-CONN-001` — aprovar os princípios de reconciliação, revisar o projeto
+de referência por especialidade e fechar o contrato do export diagnóstico. A leitura real
+ocorrerá na `KCX-CONN-007`, depois de PRD, arquitetura, privacidade e permissões aprovados.
+`KCX-CONN-021` preserva o feedback de contraste para polish.
+
+**Como iniciar a próxima sessão:** abrir em modo `Especificar`, ler integralmente o
+[handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md), a
+[spec KCX-CONN-001](specs/KCX-CONN-001.md) e o
+[roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md).
+Quando o usuário disponibilizar o projeto de referência, executar a comparação documentada e
+apresentar as recomendações para aprovação. Não escrever integração, pedir permissões, ler
+dados reais ou enviar dados.
 
 Este diretório é a fonte canônica para todas as próximas sessões. O handoff de pesquisa
 continua em [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md),
@@ -11,10 +25,12 @@ mas não deve ser usado sozinho para iniciar implementação.
 ## Ordem obrigatória de leitura
 
 1. [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md) — pesquisa, decisão e limites do produto.
-2. [`ROADMAP.md`](ROADMAP.md) — fases, gates e sequência de entrega.
-3. [`ISSUES.md`](ISSUES.md) — backlog executável e dependências.
-4. [`SPEC_TEMPLATE.md`](SPEC_TEMPLATE.md) — contrato mínimo de cada spec técnica.
-5. A spec específica da Issue, quando existir em `specs/KCX-CONN-NNN.md`.
+2. [`HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md`](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md) —
+   entrevista, decisões, esquema preliminar e perguntas ainda abertas.
+3. [`ROADMAP.md`](ROADMAP.md) — fases, gates e sequência de entrega.
+4. [`ISSUES.md`](ISSUES.md) — backlog executável e dependências.
+5. [`SPEC_TEMPLATE.md`](SPEC_TEMPLATE.md) — contrato mínimo de cada spec técnica.
+6. A spec específica da Issue, quando existir em `specs/KCX-CONN-NNN.md`.
 
 ## Hierarquia de artefatos
 
@@ -34,6 +50,21 @@ Um artefato não substitui o próximo. Em particular:
 - Spec que diz apenas “integrar com Health Connect” não está pronta.
 - Código não deve começar antes de a Issue estar `READY` e sua spec estar aprovada.
 - Uma fase só termina quando sua evidência está registrada, não apenas quando o código compila.
+
+## Contrato obrigatório de Start Session
+
+Toda nova sessão deve começar mostrando, antes de qualquer alteração de código:
+
+1. Issue ativa, modo (`Explorar`, `Especificar`, `Implementar` ou `Revisar`), fase e gate.
+2. Resultado observável que estará pronto ao final da sessão.
+3. Escopo incluído e não incluído.
+4. Estado da Issue e da spec, incluindo se o código está ou não liberado.
+5. Divergências encontradas entre pedido do usuário, handoff, roadmap, backlog e repositório.
+
+Se houver divergência, a sessão fica em modo `Especificar`: primeiro os artefatos canônicos são
+corrigidos e apresentados para aprovação. Código só começa depois de Issue `READY` e spec
+`APPROVED`. A seleção automática da próxima Issue nunca prevalece sobre uma decisão de produto
+do usuário que ainda não tenha sido refletida no backlog.
 
 ## Estado permitido
 

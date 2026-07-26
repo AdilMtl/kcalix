@@ -33,6 +33,20 @@ como concluída.
 Se o usuário não fornecer um ID, identifique a próxima Issue `READY` e proponha o trabalho.
 Não pule para outra Issue apenas porque ela parece mais fácil.
 
+## Executar o contrato de Start Session
+
+Antes de alterar código, declare ao usuário e confira nos artefatos canônicos:
+
+- Issue ativa, modo, fase e gate;
+- resultado observável da sessão;
+- escopo incluído e explicitamente não incluído;
+- estado da Issue e da spec, com a aprovação exigida;
+- divergências entre a expectativa do usuário, o handoff, o roadmap e o backlog.
+
+Se houver divergência, pare a implementação e corrija primeiro Issue, spec, roadmap e índice.
+Não interprete o backlog mecanicamente quando ele contradizer uma decisão de produto registrada
+ou esclarecida pelo usuário. A resposta de Start Session deve terminar com a próxima ação exata.
+
 ## Executar o workflow
 
 1. Verifique branch, working tree e arquivos relevantes. Preserve mudanças alheias.
@@ -75,4 +89,3 @@ Separe sempre fato observado, decisão aprovada e hipótese ainda não validada.
 
 Relate Issue e estado final, gate avançado ou bloqueio, arquivos, testes/evidências,
 itens não testados, decisão tomada e próximo ID a executar.
-

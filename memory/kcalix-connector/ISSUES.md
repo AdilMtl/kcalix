@@ -24,28 +24,81 @@ Health Connect, autenticação, rede ou dados de saúde.
 **Aceite:** build documentado; SDK/JDK/Gradle fixados; secrets fora do Git; APK debug instala;
 README contém comandos e troubleshooting; nenhuma permissão de saúde é declarada ou solicitada.
 
-## Fase 0 — governança e descoberta
+### KCX-CONN-000 — Shell visual offline alinhada ao Kcalix
 
-### KCX-CONN-001 — Auditar dados reais do Watch 5 no Health Connect
+**Status:** DONE
 
-**Status:** READY  
-**Depende de:** nenhuma  
-**Entrega:** matriz de disponibilidade/qualidade dos sinais candidatos no aparelho real.
+**Depende de:** KCX-CONN-005
 
-**Escopo:** identificar modelo/Android/versões; confirmar Samsung Health → Health Connect;
-inspecionar ExerciseSession, ActiveCaloriesBurned, TotalCaloriesBurned, HeartRate, Steps,
-Distance e Weight em janelas controladas; registrar campos, unidades, origem, frequência,
-lacunas e duplicidades. Sono fica como candidato, não requisito.
+**Entrega:** o APK abre uma interface Ember do Kcalix Connector com estados de conexão,
+formulário manual dos destinos Cardio, Água e Corpo e uma simulação local de transferência,
+sem Health Connect, login, rede ou persistência.
 
 **Aceite:**
 
-- [ ] A matriz diferencia “disponível”, “indisponível” e “não testado”.
-- [ ] Cada registro tem permissão exata, fonte produtora e utilidade proposta.
-- [ ] Há pelo menos um teste antes/depois de uma atividade conhecida.
-- [ ] Nenhum valor pessoal bruto, screenshot sensível ou export é commitado.
-- [ ] O resultado recomenda quais sinais entram no piloto e quais são descartados.
+- [x] Spec `KCX-CONN-000` aprovada antes do código.
+- [x] Interface usa identidade Ember e funciona em 360, 390 e 430 px de largura.
+- [x] Conta Kcalix e Health Connect aparecem como não conectados, sem ação real.
+- [x] O usuário escolhe uma data e pode preencher Cardio, Água, Peso, Cintura e Body fat.
+- [x] Cardio usa exatamente o catálogo/IDs do Kcalix e exige tipo e minutos válidos.
+- [x] A simulação usa somente estado em memória, identifica-se como demonstração e não grava
+  nada no Kcalix.
+- [x] O launcher usa uma variação própria do ícone Kcalix para distinguir o Connector.
+- [x] Manifesto continua sem permissões Health Connect e Internet; nenhum valor digitado é
+  persistido ou registrado em log.
+- [x] Build debug passa e a tela é validada no aparelho físico.
 
-**Evidência:** documento de discovery anonimizado + passos reproduzíveis no aparelho.
+**Spec:** [KCX-CONN-000](specs/KCX-CONN-000.md). O build debug e os testes passaram; o usuário
+baixou, instalou e validou o fluxo no aparelho físico em 2026-07-22.
+**Evidência:** [validação automatizada e artefato](evidence/KCX-CONN-000-validation.md).
+
+### KCX-CONN-021 — Polish de contraste da shell offline
+
+**Status:** BACKLOG
+**Depende de:** KCX-CONN-000
+**Entrega:** corrigir o texto preto sobre fundo preto observado no aparelho e fazer uma passada
+visual curta nos componentes Cardio/card, campos e menus, sem alterar regras ou integrações.
+
+**Aceite:** cores de texto/label/menu são explícitas no tema escuro; nenhuma informação fica
+ilegível em repouso, foco, preenchido, erro, menu aberto ou desabilitado; build/testes passam;
+contraste é conferido novamente no aparelho. É polish não bloqueante para `KCX-CONN-001`.
+
+## Fase 0 — governança e descoberta
+
+### KCX-CONN-001 — Definir valor e contrato de observação do Watch 5
+
+**Status:** DRAFTING
+
+**Depende de:** KCX-CONN-000
+
+**Entrega:** decisões de produto e princípios de reconciliação aprovados, projeto de referência
+revisado por especialidade e contrato de export diagnóstico preparado para a leitura real.
+
+**Escopo:** validar jornada, fontes de verdade, princípios de match, conflitos, calorias,
+FC/zonas e body fat; revisar o projeto de referência contra a API oficial; definir schema,
+privacidade, testes e instruções dos especialistas para o export local. Não fechar pesos ou
+tolerâncias finais de match antes da evidência real da `KCX-CONN-007`.
+
+**Aceite:**
+
+- [ ] Jornada de musculação e cardio e fontes de verdade aprovadas pelo usuário.
+- [ ] Princípios e estados de reconciliação validados antes de código.
+- [ ] Política provisória impede soma Watch + Kcalix e separa kcal total/ativa/estimada.
+- [ ] FC/zonas e body fat têm uso, origem e limites definidos.
+- [ ] Projeto de referência tem licença, versão, fluxo e dependências registrados.
+- [ ] Revisores Android, dados, segurança, produto e QA entregam pareceres pelo roteiro canônico.
+- [ ] Export `kcx-health-observation/1` tem schema, perfis e política de compartilhamento aprovados.
+- [ ] Cada record type candidato tem permissão exata, campos, unidade, origem e utilidade proposta.
+- [ ] Fixtures sintéticas e roteiro antes/depois de atividade conhecida estão definidos.
+- [ ] Nenhum valor pessoal bruto, screenshot sensível ou export é commitado.
+- [ ] A implementação posterior está limitada aos sinais aprovados.
+
+**Spec:** [KCX-CONN-001](specs/KCX-CONN-001.md), em `DRAFT`.
+**Evidência:** [handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md) +
+[roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md) +
+[protocolo de discovery anonimizado](evidence/KCX-CONN-001-discovery.md) +
+[registro da sessão de transição](sessions/2026-07-23-KCX-CONN-001-observation-transition.md).
+A leitura real pertence à `KCX-CONN-007`.
 
 ### KCX-CONN-002 — Aprovar PRD do piloto privado
 
@@ -93,7 +146,7 @@ lacunas e duplicidades. Sono fica como candidato, não requisito.
 ### KCX-CONN-006 — Disponibilidade e permissões Health Connect
 
 **Status:** BACKLOG  
-**Depende de:** KCX-CONN-004, KCX-CONN-005  
+**Depende de:** KCX-CONN-003, KCX-CONN-004, KCX-CONN-005
 **Entrega:** UX de disponibilidade/permissões mínimas com estados explícitos.
 
 **Aceite:** detecta ausência/incompatibilidade; solicita somente registros aprovados;
@@ -103,10 +156,14 @@ explica negação; abre configurações para revogação; testes cobrem negado/p
 
 **Status:** BACKLOG  
 **Depende de:** KCX-CONN-006  
-**Entrega:** leitura paginada por janela e prévia local dos campos reais.
+**Entrega:** leitura paginada por janela, export diagnóstico local versionado e prévia dos
+campos reais, sem upload.
 
-**Aceite:** timezone/unidades explícitos; janela limitada; origem exibida; vazio/parcial não
-quebram; comparação com Samsung Health documentada; nenhum upload ocorre.
+**Aceite:** serializers explícitos por record type; JSON `kcx-health-observation/1`; perfis
+`STRUCTURAL` e `PRIVATE_FULL`; timezone/unidades/origem explícitos; janela limitada; vazio,
+parcial, cancelamento e arquivo incompleto são seguros; comparação com Samsung Health e
+projeto de referência documentada; nenhum upload ocorre; matriz diferencia `disponível`,
+`indisponível` e `não testado`.
 
 ### KCX-CONN-008 — Modelo canônico e deduplicação local
 
