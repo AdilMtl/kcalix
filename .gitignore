@@ -17,6 +17,17 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Dados pessoais de saúde/nutrição — NUNCA commitar
+# (exports reais do app antigo; ver regra em memory/kcalix-connector/ISSUES.md)
+memory/kcalix-export-*.json
+memory/Comparativos Exports/
+
+# Artefatos de build e ferramentas locais
+coverage
+supabase/.temp
+.claude/settings.local.json
+.codex-remote-attachments/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
