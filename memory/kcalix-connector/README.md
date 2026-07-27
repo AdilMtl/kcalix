@@ -1,22 +1,23 @@
 # Kcalix Connector — índice operacional
 
-**Status:** Fase 00 concluída; `KCX-CONN-001` em especificação do contrato de observação e
-da revisão técnica que antecedem a leitura real
+**Status:** Fase 00 concluída; decisões de produto e baseline técnico oficial da
+`KCX-CONN-001` registrados em 2026-07-27; contrato detalhado e parecer final ainda pendentes
 
 **Decisão vigente:** validar primeiro um APK privado, instalado localmente, que leia o Health Connect e sincronize manualmente com o Kcalix  
 
-**Próxima Issue:** `KCX-CONN-001` — aprovar os princípios de reconciliação, revisar o projeto
-de referência por especialidade e fechar o contrato do export diagnóstico. A leitura real
-ocorrerá na `KCX-CONN-007`, depois de PRD, arquitetura, privacidade e permissões aprovados.
+**Próxima Issue:** `KCX-CONN-001` — concluir a revisão por especialidade e fechar o contrato
+do export diagnóstico a partir do sample oficial já pinado. A leitura real ocorrerá na
+`KCX-CONN-007`, depois de PRD, arquitetura, privacidade e permissões aprovados.
 `KCX-CONN-021` preserva o feedback de contraste para polish.
 
 **Como iniciar a próxima sessão:** abrir em modo `Especificar`, ler integralmente o
 [handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md), a
 [spec KCX-CONN-001](specs/KCX-CONN-001.md) e o
 [roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md).
-Quando o usuário disponibilizar o projeto de referência, executar a comparação documentada e
-apresentar as recomendações para aprovação. Não escrever integração, pedir permissões, ler
-dados reais ou enviar dados.
+Não repetir a entrevista de produto: cardio sem redigitação, musculação enriquecida e body fat
+BIA são os três casos do piloto. Executar a comparação técnica documentada e apresentar as
+recomendações restantes para aprovação. Não escrever integração, pedir permissões, ler dados
+reais ou enviar dados.
 
 Este diretório é a fonte canônica para todas as próximas sessões. O handoff de pesquisa
 continua em [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md),

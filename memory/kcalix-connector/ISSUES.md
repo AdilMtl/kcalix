@@ -72,7 +72,8 @@ contraste é conferido novamente no aparelho. É polish não bloqueante para `KC
 **Depende de:** KCX-CONN-000
 
 **Entrega:** decisões de produto e princípios de reconciliação aprovados, projeto de referência
-revisado por especialidade e contrato de export diagnóstico preparado para a leitura real.
+ou baseline oficial revisado por especialidade e contrato de export diagnóstico preparado
+para a leitura real.
 
 **Escopo:** validar jornada, fontes de verdade, princípios de match, conflitos, calorias,
 FC/zonas e body fat; revisar o projeto de referência contra a API oficial; definir schema,
@@ -81,24 +82,34 @@ tolerâncias finais de match antes da evidência real da `KCX-CONN-007`.
 
 **Aceite:**
 
-- [ ] Jornada de musculação e cardio e fontes de verdade aprovadas pelo usuário.
-- [ ] Princípios e estados de reconciliação validados antes de código.
-- [ ] Política provisória impede soma Watch + Kcalix e separa kcal total/ativa/estimada.
-- [ ] FC/zonas e body fat têm uso, origem e limites definidos.
-- [ ] Projeto de referência tem licença, versão, fluxo e dependências registrados.
+- [x] Jornada de musculação e cardio e fontes de verdade aprovadas pelo usuário.
+- [x] Princípios e estados de reconciliação validados antes de código.
+- [x] Política provisória impede soma Watch + Kcalix e separa kcal total/ativa/estimada.
+- [x] FC e body fat têm uso, origem e limites de produto definidos; política exata das zonas
+  continua pendente.
+- [x] Referência técnica tem licença, versão, fluxo e dependências registrados.
 - [ ] Revisores Android, dados, segurança, produto e QA entregam pareceres pelo roteiro canônico.
 - [ ] Export `kcx-health-observation/1` tem schema, perfis e política de compartilhamento aprovados.
 - [ ] Cada record type candidato tem permissão exata, campos, unidade, origem e utilidade proposta.
 - [ ] Fixtures sintéticas e roteiro antes/depois de atividade conhecida estão definidos.
-- [ ] Nenhum valor pessoal bruto, screenshot sensível ou export é commitado.
-- [ ] A implementação posterior está limitada aos sinais aprovados.
+- [x] Nenhum valor pessoal bruto, screenshot sensível ou export foi commitado nesta fase.
+- [x] A implementação posterior está limitada aos sinais aprovados ou condicionais.
 
 **Spec:** [KCX-CONN-001](specs/KCX-CONN-001.md), em `DRAFT`.
 **Evidência:** [handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md) +
 [roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md) +
 [protocolo de discovery anonimizado](evidence/KCX-CONN-001-discovery.md) +
-[registro da sessão de transição](sessions/2026-07-23-KCX-CONN-001-observation-transition.md).
+[registro da sessão de transição](sessions/2026-07-23-KCX-CONN-001-observation-transition.md) +
+[consolidação de decisões](sessions/2026-07-27-KCX-CONN-001-decisions-consolidation.md).
 A leitura real pertence à `KCX-CONN-007`.
+
+**Retomada 2026-07-27:** produto consolidado em três casos de uso: cardio sem redigitação,
+musculação enriquecida e body fat BIA. Passos, sono e FC de repouso foram adiados. Nenhum
+projeto de referência separado foi encontrado no workspace; o sample oficial
+`android/health-samples/HealthConnectSample`, commit
+`47f0144f6e994f7831a41499843a0f6a9d87cb75`, Apache-2.0, foi registrado como baseline.
+A revisão inicial recomenda adaptar o fluxo, rejeitar o escopo didático excessivo e manter a
+Issue em `DRAFTING` até aprovar contrato detalhado, fixtures e parecer de segurança.
 
 ### KCX-CONN-002 — Aprovar PRD do piloto privado
 
@@ -114,18 +125,20 @@ A leitura real pertence à `KCX-CONN-007`.
 - [ ] Define não objetivos: diagnóstico, recomendação médica, Play Store e sync contínuo.
 - [ ] Contém critérios go/no-go e responsável pela decisão.
 
-### KCX-CONN-003 — ADR: Kotlin nativo versus Capacitor
+### KCX-CONN-003 — ADR: ratificar Kotlin nativo no piloto
 
 **Status:** BACKLOG  
 **Depende de:** KCX-CONN-001, KCX-CONN-002  
-**Entrega:** ADR com decisão e consequências para o piloto.
+**Entrega:** ADR que confirma ou rejeita, com evidência, a continuidade da base Kotlin/Compose
+já validada para o piloto e registra o caminho futuro de eventual unificação via Capacitor.
 
 **Aceite:**
 
-- [ ] Compara suporte Health Connect, esforço, debugging, auth, background e distribuição.
+- [ ] Avalia a base Kotlin existente contra suporte Health Connect, esforço, debugging, auth
+  e distribuição do piloto.
 - [ ] Inclui um spike apenas se evidência documental/código existente não bastar.
-- [ ] Decide estrutura do projeto, versões mínimas e ownership.
-- [ ] Registra o custo de migrar/unificar depois do piloto.
+- [ ] Confirma estrutura, versões mínimas e ownership ou justifica a troca antes do spike real.
+- [ ] Registra condições e custo para migrar/unificar via Capacitor depois do piloto.
 
 ### KCX-CONN-004 — Threat model, privacidade e ciclo de vida dos dados
 

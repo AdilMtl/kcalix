@@ -1,6 +1,6 @@
 # Roadmap executável — Kcalix Connector
 
-**Atualizado em:** 2026-07-22  
+**Atualizado em:** 2026-07-27
 **Horizonte:** piloto privado em um aparelho Android  
 **Resultado esperado:** decisão baseada em evidência sobre continuar, ajustar ou abandonar a integração
 
@@ -33,10 +33,11 @@ não possui login, rede, Health Connect, permissões de saúde ou dados reais.
 
 ## Fase 0 — Governança e definição de valor
 
-**Status:** `KCX-CONN-001` em especificação. A entrevista priorizou cardio sem redigitação,
-musculação enriquecida e body fat BIA. A decisão vigente é revisar primeiro o projeto de
-referência e a API oficial e aprovar um contrato de observação/export local; match detalhado
-só será definido depois da evidência real da `KCX-CONN-007`.
+**Status:** `KCX-CONN-001` em especificação. Cardio sem redigitação, musculação enriquecida e
+body fat BIA foram consolidados como os três casos do piloto. Passos, sono e FC de repouso
+foram adiados. A próxima decisão é registrar a referência técnica — projeto indicado ou
+baseline oficial — e aprovar o contrato de observação/export local; match detalhado só será
+definido depois da evidência real da `KCX-CONN-007`.
 
 **Objetivo:** definir valor, dados e controles antes de construir funcionalidades que leiam,
 processem ou enviem dados de saúde.
@@ -44,7 +45,8 @@ processem ou enviem dados de saúde.
 - `KCX-CONN-001`: validar valor, princípios de reconciliação, revisão especializada e contrato
   de observação dos dados do Watch 5 no Health Connect.
 - `KCX-CONN-002`: escrever e aprovar o PRD do piloto.
-- `KCX-CONN-003`: registrar a decisão arquitetural Kotlin nativo versus Capacitor.
+- `KCX-CONN-003`: ratificar a base Kotlin/Compose no piloto e registrar condições de eventual
+  unificação futura via Capacitor.
 - `KCX-CONN-004`: modelar ameaças, privacidade, retenção e exclusão.
 
 **Saída:** insumos de G1 prontos para o PRD e protocolo de G2 aprovado; G1 fecha na

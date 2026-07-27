@@ -7,6 +7,11 @@
 **Estado:** descoberta avançada; contrato de observação e revisão técnica em `DRAFT`  
 **Código liberado:** não  
 
+> **Retomada em 2026-07-27:** as decisões de produto das seções 5–11 foram consolidadas na
+> spec `KCX-CONN-001`. Não repetir a entrevista nem tratar todas as perguntas históricas da
+> seção 15 como abertas. Permanecem pendentes a referência técnica, a política exata das zonas
+> de FC, o conteúdo de `PRIVATE_FULL` e os fatos que só a `KCX-CONN-007` pode observar.
+
 ## 1. Como iniciar obrigatoriamente a próxima sessão
 
 Leia integralmente, nesta ordem:

@@ -1,27 +1,82 @@
 # KCX-CONN-001 — roteiro de revisão do projeto de referência
 
-Status: DRAFT — executar quando o projeto de referência estiver disponível
+Status: EM REVISÃO — baseline oficial registrado; validação no aparelho permanece pendente
 Issue: `KCX-CONN-001`
 Objetivo: determinar, por evidência, o que pode ser adotado, adaptado ou deve ser rejeitado
 antes de o Kcalix Connector ler dados reais do Health Connect.
 
+## Baseline técnico registrado em 2026-07-27
+
+Como nenhum projeto separado foi encontrado no workspace, a referência aprovada para esta
+revisão é o sample oficial `HealthConnectSample` do repositório
+[`android/health-samples`](https://github.com/android/health-samples/tree/main/health-connect/HealthConnectSample),
+complementado pela documentação oficial do Android Developers.
+
+| Propriedade | Valor registrado |
+|---|---|
+| Origem | Google/Android, repositório público oficial `android/health-samples` |
+| Caminho | `health-connect/HealthConnectSample` |
+| Versão fixada | commit `47f0144f6e994f7831a41499843a0f6a9d87cb75`, de 2025-02-27 |
+| Licença | Apache License 2.0 |
+| Cliente no sample | `androidx.health.connect:connect-client:1.1.0-alpha12` |
+| Baseline do piloto | API estável `androidx.health.connect:connect-client:1.1.0`, salvo necessidade posterior comprovada |
+| Ambiente do sample | `minSdk 26`, `compileSdk 35`, `targetSdk 34`, Java 17, Kotlin/Compose |
+| Ambiente Kcalix atual | `minSdk 26`, `compileSdk 36.1`, `targetSdk 36`, Java 17, Kotlin/Compose |
+| Data de consulta | 2026-07-27 |
+
+O commit pinado representa a última alteração específica encontrada no diretório do sample.
+Não haverá cópia de código nesta Issue. O sample fornece evidência de fluxo; a documentação
+oficial vigente define o contrato da API quando houver divergência.
+
+## Resultado da revisão inicial
+
+| Trilha | O que o baseline comprova | Decisão | O que ainda falta |
+|---|---|---|---|
+| Android/Health Connect | disponibilidade, solicitação e rechecagem de permissões, leitura por janela, agregação e Changes API | ADAPTAR | desenhar paginação explícita, permissões mínimas e estados Kcalix |
+| Dados/reconciliação | sessão e métricas são lidas separadamente; o sample correlaciona por intervalo e `dataOrigin` | ADAPTAR | serializador versionado e confirmação do formato Samsung no aparelho |
+| Segurança/privacidade | o sample é didático e inclui leitura, escrita, exclusão e escopo amplo | REJEITAR COMO POLÍTICA | manter somente leitura, sem Internet, logs de saúde, backup ou export automático |
+| Produto/fitness | exercício, FC, distância e energia sustentam cardio e musculação enriquecida | ADAPTAR | limitar aos sinais aprovados e manter calorias sem efeito automático no saldo |
+| QA | estados de disponibilidade/permissão e Health Connect Toolbox ajudam em testes sintéticos | ADOTAR PARCIALMENTE | validar Samsung Health, revogação, duplicidade, updates e BIA no aparelho |
+
+### Matriz de componentes
+
+| Componente/contrato | Evidência oficial/projeto | Decisão | Adaptação Kcalix | Risco |
+|---|---|---|---|---|
+| `HealthConnectClient` e disponibilidade | sample + documentação oficial | ADOTAR | encapsular fora da UI e expor estados recuperáveis | baixo |
+| Permissões em runtime | sample rechecando permissões antes do uso | ADOTAR | solicitar apenas leituras aprovadas e aceitar concessão parcial | médio |
+| Leitura por intervalo | `ReadRecordsRequest` no sample | ADAPTAR | janela curta, ordenação e paginação completa ou erro parcial visível | médio |
+| Associação sessão ↔ métricas | mesmo intervalo + `dataOrigin` no sample | ADAPTAR | registrar relação como `INFERRED`, nunca como vínculo garantido | alto |
+| Agregação de FC/distância/energia | sample e guia oficial de workouts | ADAPTAR | preservar origem e ausência; enviar somente resumo de FC à nuvem no futuro | médio |
+| Changes API | sample percorre mudanças e renova token expirado | ADAPTAR FUTURAMENTE | fora do primeiro export; necessário antes de sync incremental | médio |
+| Escrita, geração e exclusão de dados | recursos didáticos do sample | REJEITAR | Connector piloto permanece somente leitura | alto |
+| Sono, passos, rota e velocidade | recursos adicionais do sample | REJEITAR NO PILOTO | não declarar permissões nem incluir no contrato atual | baixo |
+| `BodyFatRecord` | documentação oficial; não coberto pelo fluxo principal observado no sample | NÃO COMPROVADO | incluir no contrato, validar publicação Samsung na `KCX-CONN-007` | alto |
+| `ActiveCaloriesBurnedRecord` | tipo oficial; publicação Samsung não comprovada | NÃO COMPROVADO | não pedir permissão por padrão | médio |
+| Export `kcx-health-observation/1` | requisito próprio do Kcalix; ausente no sample | CRIAR | JSON tipado, perfis `STRUCTURAL` e `PRIVATE_FULL`, sem `toString()` | alto |
+
+## Conclusão provisória
+
+O baseline é **apto como referência técnica**, mas **não é apto para cópia integral nem libera
+teste com dados reais**. A base Kotlin/Compose atual é compatível com o padrão oficial e não
+precisa ser substituída nesta Issue. Antes de `READY`, ainda precisam ser aprovados o schema
+detalhado do export, a tabela completa de campos/unidades/opcionalidade, as fixtures sintéticas
+e o parecer de segurança para execução da `KCX-CONN-007`.
+
 ## Responsabilidade do usuário
 
-O usuário não precisa interpretar código, schemas, record types, unidades ou riscos. Sua
-responsabilidade nesta revisão é:
+O usuário não precisa interpretar código, schemas, record types, unidades ou riscos. Como o
+baseline oficial já foi registrado, sua responsabilidade restante nesta revisão é:
 
-1. disponibilizar o projeto de referência e informar seu caminho;
-2. responder decisões de produto apresentadas em linguagem comum;
-3. executar no aparelho apenas os passos físicos orientados pelo QA;
-4. aprovar ou rejeitar a recomendação consolidada.
+1. responder decisões de produto apresentadas em linguagem comum;
+2. executar no aparelho apenas os passos físicos orientados pelo QA;
+3. aprovar ou rejeitar a recomendação consolidada.
 
 Toda análise técnica, comparação com a documentação oficial e tradução das consequências
 para o produto pertence aos revisores abaixo.
 
 ## Entradas obrigatórias
 
-- Projeto de referência completo, incluindo licença, README, lockfiles e histórico/versão
-  quando disponíveis.
+- Baseline oficial pinado acima, incluindo licença, README, build e histórico/versão.
 - Código atual em `connector/android/`.
 - `HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md`.
 - Spec `specs/KCX-CONN-001.md`.

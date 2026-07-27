@@ -3,9 +3,11 @@
 Vale para tudo dentro de `connector/`. **Tem precedência sobre o `AGENTS.md` da raiz**,
 que continua valendo para o resto.
 
-O Connector é um APK Android privado (Kotlin nativo) que lê o Health Connect
+O Connector é um APK Android privado cuja base atual é Kotlin/Compose. A `KCX-CONN-003`
+ratificará essa arquitetura para o piloto e registrará as condições de uma eventual
+unificação futura via Capacitor. O produto pretendido lê o Health Connect
 (Samsung Health → Galaxy Watch 5) e sincroniza manualmente com o Kcalix. Não vai
-para a Play Store e não é o app Kcalix.
+para a Play Store no piloto e não é o app Kcalix.
 
 ## Comandos
 
