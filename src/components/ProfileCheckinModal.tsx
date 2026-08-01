@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { UserSettingsData } from '../hooks/useSettings'
 import {
   useCheckins,
@@ -365,17 +366,15 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
   const overlayStyle: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,.68)', backdropFilter: 'blur(2px)', zIndex: 316,
   }
-  // A sheet para acima do Nav em vez de tentar cobri-lo. Modais renderizados
-  // dentro da HomePage ficam presos no stacking context de .home-page
-  // (position:relative + z-index:1), entao o Nav (fixed, z-50 na raiz) pinta por
-  // cima independentemente do z-index daqui. Mesma solucao geometrica ja usada
-  // por .food-sheet. Sem isso, o rodape com Fechar/Atualizar/Check-in ficava
-  // renderizado porem escondido atras da barra de navegacao.
+  // bottom:0 volta a funcionar agora que o modal e portalizado para o body:
+  // fora do stacking context de .home-page, o z-index 317 vence o Nav (z-50) e
+  // o FAB do Coach (z-40), em vez de ser coberto pelos dois.
   const sheetStyle: React.CSSProperties = {
-    position: 'fixed', bottom: 'calc(70px + env(safe-area-inset-bottom))', left: 0, right: 0,
-    maxHeight: '78dvh',
+    position: 'fixed', bottom: 0, left: 0, right: 0,
+    maxHeight: '90dvh',
     background: 'var(--gradient-panel)',
     border: '1px solid var(--line)',
+    borderBottom: 0,
     borderRadius: '18px 18px 0 0',
     boxShadow: '0 -22px 50px rgba(0,0,0,.45)',
     zIndex: 317,
@@ -383,7 +382,7 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
   }
 
   if (view === 'form') {
-    return (
+    return createPortal(
       <>
         <div style={overlayStyle} onClick={() => setView('profile')} />
         <div style={{ ...sheetStyle, zIndex: 323 }}>
@@ -400,12 +399,13 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
             onCancel={() => setView('profile')}
           />
         </div>
-      </>
+      </>,
+      document.body,
     )
   }
 
   if (view === 'history') {
-    return (
+    return createPortal(
       <>
         <div style={{ ...overlayStyle, zIndex: 318 }} onClick={() => setView('profile')} />
         <div style={{ ...sheetStyle, zIndex: 319 }}>
@@ -416,12 +416,13 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
           </div>
           <CheckinHistoryView checkins={checkins} />
         </div>
-      </>
+      </>,
+      document.body,
     )
   }
 
   // view === 'profile'
-  return (
+  return createPortal(
     <>
       <div style={overlayStyle} onClick={onClose} />
       <div style={sheetStyle}>
@@ -444,6 +445,7 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
           <button className="btn primary" type="button" onClick={() => setView('form')}>Check-in</button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }

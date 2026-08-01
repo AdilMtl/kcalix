@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { GOAL_PRESETS, WZ_ACTIVITY_LABELS, WZ_GOAL_LABELS } from '../data/goalPresets'
 import type { GoalType } from '../data/goalPresets'
 import { calcFromProfile } from '../lib/calculators'
@@ -501,7 +502,12 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
     )
   }
 
-  return (
+  // Portal para o body: as paginas que abrem o wizard (.home-page, .more-page)
+  // tem position:relative + z-index:1 e criam um stacking context. Dentro dele o
+  // z-index 315 daqui nao vence o Nav (fixed, z-50 na raiz), que cobria os
+  // ultimos ~67px — exatamente o .calc-wizard-footer com Revisar tudo e
+  // Recalcular assim. Fora do contexto preso, o z-index volta a valer.
+  return createPortal(
     <div className="calc-wizard open" style={{ zIndex: 315 }}>
       {/* Header */}
       <div className="calc-wizard-header">
@@ -536,6 +542,7 @@ export default function CalcWizardModal({ open, isNewUser, initialData, onSave, 
       {step === 3 && renderStep3()}
       {step === 4 && renderStep4()}
       {step === 'done' && renderDone()}
-    </div>
+    </div>,
+    document.body,
   )
 }

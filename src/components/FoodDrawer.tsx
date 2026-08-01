@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { FOOD_DB } from '../data/foodDb'
 import { useDiary } from '../hooks/useDiary'
 import { useCustomFoods } from '../hooks/useCustomFoods'
@@ -58,7 +59,10 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
     items = allDbItems
   }
 
-  return (
+  // Portal pelo mesmo motivo do wizard e do check-in: .diary-page cria stacking
+  // context (position:relative + z-index:1) e prendia a sheet abaixo do FAB do
+  // Coach, que cobria o botao "Criar alimento personalizado".
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -229,7 +233,8 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
           </div>
         </>
       )}
-    </>
+    </>,
+    document.body,
   )
 }
 
