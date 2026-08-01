@@ -650,6 +650,15 @@ export default function TreinoPage() {
                 onClick={createNewTemplate}
                 className="btn ghost sm"
               >+ Nova rotina</button>
+              {/* Caminho permanente para virar rotina: o convite pós-salvamento
+                  depende do instante do save e some ao recarregar a página. */}
+              {state.exercicios.length > 0 && (
+                <button
+                  type="button"
+                  onClick={createTemplateFromWorkout}
+                  className="btn ghost sm"
+                >+ Rotina deste treino</button>
+              )}
             </div>
           )}
 
