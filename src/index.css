@@ -945,11 +945,10 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   position: absolute;
   left: 24px;
   top: 50%;
+  display: flex;
+  align-items: center;
   transform: translateY(-50%);
   color: var(--text3);
-  font-family: var(--font-data);
-  font-size: 12px;
-  font-weight: 800;
   pointer-events: none;
 }
 
@@ -1040,13 +1039,18 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   cursor: pointer;
 }
 
+/* Nomes de alimento sao longos ("Pizza calabresa com queijo cheddar"):
+   duas linhas evitam o corte em reticencias sem quebrar o ritmo da lista. */
 .food-name {
+  display: -webkit-box;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: var(--text);
   font-size: 13px;
   font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .food-portion {
@@ -1068,12 +1072,18 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
 .food-custom-actions {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 3px;
 }
 
+/* Coluna estreita de acoes: devolve ~50px de largura ao nome do alimento. */
 .food-custom-action {
+  display: flex;
   flex: 1;
-  padding: 0 10px;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface2);
@@ -2282,11 +2292,13 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   box-shadow: 0 -18px 46px rgba(0,0,0,.42);
 }
 
+/* z-index abaixo do overlay das bottom sheets (59): com uma sheet aberta o FAB
+   fica coberto em vez de flutuar por cima dos botoes dela. */
 .coach-fab {
   position: fixed;
   right: 16px;
   bottom: 76px;
-  z-index: 200;
+  z-index: 40;
   width: 50px;
   height: 50px;
   display: grid;

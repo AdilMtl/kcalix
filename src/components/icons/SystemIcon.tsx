@@ -5,8 +5,10 @@ export type SystemIconName =
   | 'gallery'
   | 'lightbulb'
   | 'loader'
+  | 'pencil'
   | 'search'
   | 'send'
+  | 'trash'
   | 'trend'
   | 'warning'
 
@@ -31,8 +33,12 @@ function IconPaths({ name }: { name: SystemIconName }) {
       return <><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.2 14.5A7 7 0 1 1 15.8 14.5C14.7 15.4 14 16.4 14 18h-4c0-1.6-.7-2.6-1.8-3.5Z" /></>
     case 'loader':
       return <><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 4v6h-6" /></>
+    case 'pencil':
+      return <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></>
     case 'search':
       return <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>
+    case 'trash':
+      return <><path d="M3 6h18" /><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" /></>
     case 'send':
       return <><path d="M12 19V5" /><path d="m6 11 6-6 6 6" /></>
     case 'trend':

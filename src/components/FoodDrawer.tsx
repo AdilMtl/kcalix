@@ -4,6 +4,7 @@ import { useDiary } from '../hooks/useDiary'
 import { useCustomFoods } from '../hooks/useCustomFoods'
 import FoodPortionModal from './FoodPortionModal'
 import CustomFoodModal from './CustomFoodModal'
+import { SystemIcon } from './icons/SystemIcon'
 import type { FoodItem } from '../data/foodDb'
 import type { MealKey, FoodEntry } from '../hooks/useDiary'
 
@@ -84,7 +85,7 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
 
         {/* Busca */}
         <div className="food-search-wrap">
-          <span className="food-search-icon">BUSCA</span>
+          <span className="food-search-icon"><SystemIcon name="search" size={18} /></span>
           <input
             ref={searchRef}
             type="search"
@@ -141,13 +142,15 @@ export default function FoodDrawer({ onClose, onAddFood }: FoodDrawerProps) {
                         food: { nome: food.nome, porcao: food.porcao, porcaoG: food.porcaoG, p: food.p, c: food.c, g: food.g, kcal: food.kcal },
                       })}
                       className="food-custom-action edit"
-                      aria-label="Editar"
-                    >EDIT</button>
+                      aria-label={`Editar ${food.nome}`}
+                      title="Editar"
+                    ><SystemIcon name="pencil" size={16} /></button>
                     <button
                       onClick={() => setDeletingId(food.id)}
                       className="food-custom-action delete"
-                      aria-label="Excluir"
-                    >DEL</button>
+                      aria-label={`Excluir ${food.nome}`}
+                      title="Excluir"
+                    ><SystemIcon name="trash" size={16} /></button>
                   </div>
                 )}
               </div>
