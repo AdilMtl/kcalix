@@ -365,12 +365,17 @@ export default function ProfileCheckinModal({ open, settings, onClose, onOpenWiz
   const overlayStyle: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,.68)', backdropFilter: 'blur(2px)', zIndex: 316,
   }
+  // A sheet para acima do Nav em vez de tentar cobri-lo. Modais renderizados
+  // dentro da HomePage ficam presos no stacking context de .home-page
+  // (position:relative + z-index:1), entao o Nav (fixed, z-50 na raiz) pinta por
+  // cima independentemente do z-index daqui. Mesma solucao geometrica ja usada
+  // por .food-sheet. Sem isso, o rodape com Fechar/Atualizar/Check-in ficava
+  // renderizado porem escondido atras da barra de navegacao.
   const sheetStyle: React.CSSProperties = {
-    position: 'fixed', bottom: 0, left: 0, right: 0,
-    maxHeight: '90dvh',
+    position: 'fixed', bottom: 'calc(70px + env(safe-area-inset-bottom))', left: 0, right: 0,
+    maxHeight: '78dvh',
     background: 'var(--gradient-panel)',
     border: '1px solid var(--line)',
-    borderBottom: 0,
     borderRadius: '18px 18px 0 0',
     boxShadow: '0 -22px 50px rgba(0,0,0,.45)',
     zIndex: 317,
