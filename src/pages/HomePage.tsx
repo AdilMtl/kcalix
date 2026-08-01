@@ -12,6 +12,7 @@ import { HabitTracker } from '../components/HabitTracker'
 import { HabitHistoryModal } from '../components/HabitHistoryModal'
 import { WeeklyKcalModal } from '../components/WeeklyKcalModal'
 import { DiaryHistoryModal } from '../components/DiaryHistoryModal'
+import ProfileCheckinModal from '../components/ProfileCheckinModal'
 import CalcWizardModal from '../components/CalcWizardModal'
 import Skeleton from '../components/Skeleton'
 import { useInstallStore } from '../store/installStore'
@@ -448,6 +449,8 @@ export default function HomePage() {
   const [habitHistOpen, setHabitHistOpen] = useState(false)
   const [diaryHistOpen, setDiaryHistOpen] = useState(false)
   const [weeklyModalOpen, setWeeklyModalOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [autoWizardOpen, setAutoWizardOpen] = useState(false)
   const [onboardingDismissed, setOnboardingDismissed] = useState(() => localStorage.getItem('kcalix_onboarding_dismissed') === '1')
   const { triggerInstallPrompt } = useInstallStore()
@@ -589,10 +592,42 @@ export default function HomePage() {
         kcalTarget={kcalTarget}
       />
 
+      {/* Entrada do check-in corporal. Os numeros do EnergySnapshot vem do perfil,
+          e o check-in e o fluxo que os atualiza — por isso fica logo abaixo dele. */}
+      <button
+        type="button"
+        className="home-profile-entry"
+        onClick={() => setProfileOpen(true)}
+      >
+        <span>
+          <strong>Perfil e check-in</strong>
+          <small>Peso, cintura, dobras e recalculo das metas</small>
+        </span>
+        <b aria-hidden="true">›</b>
+      </button>
+
       <HabitHistoryModal
         open={habitHistOpen}
         onClose={() => setHabitHistOpen(false)}
         getAllHabits={getAllHabits}
+      />
+
+      {settings && (
+        <ProfileCheckinModal
+          open={profileOpen}
+          settings={settings}
+          onClose={() => setProfileOpen(false)}
+          onOpenWizard={() => { setProfileOpen(false); setWizardOpen(true) }}
+        />
+      )}
+
+      {/* Wizard de revisao (perfil ja existente) — ao salvar, volta para o check-in */}
+      <CalcWizardModal
+        open={wizardOpen}
+        isNewUser={false}
+        initialData={settings}
+        onSave={async (result) => { await saveSettings(result); setWizardOpen(false); setProfileOpen(true) }}
+        onClose={() => setWizardOpen(false)}
       />
 
       <CalcWizardModal

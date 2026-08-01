@@ -3198,6 +3198,50 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   cursor: pointer;
 }
 
+.home-profile-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #10121a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-profile-entry span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.home-profile-entry strong {
+  color: var(--text);
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.home-profile-entry small {
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.home-profile-entry b {
+  flex-shrink: 0;
+  color: var(--text3);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.home-profile-entry:active { opacity: .85; }
+
 .home-muscle-ranking { display: flex; flex-direction: column; gap: 3px; }
 .home-muscle-row {
   display: grid;
