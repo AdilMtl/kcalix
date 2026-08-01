@@ -2,6 +2,33 @@
 
 ---
 
+## [1.1.0] — 2026-08-01
+
+### Adicionado
+- [feat] Transformar o treino atual em rotina: copia os exercícios usados (sem duplicatas) e o cardio do dia, e abre o `TemplateEditorModal` para confirmar nome, cor e cardio. Dois caminhos — "+ Rotina deste treino" na seção Rotinas (permanente) e um convite logo após salvar uma sessão montada do zero. Coube no schema atual (`WorkoutTemplate.exercicios` é `string[]`), sem migration (`src/pages/TreinoPage.tsx`).
+- [feat] "+ Série" herda reps e carga da última série realizada do próprio exercício, ignorando as marcadas como aquecimento. Sem referência, entra em branco como antes (`src/pages/TreinoPage.tsx`).
+- [feat] Ícones `pencil`, `trash` e `swap` adicionados ao `SystemIcon` (`src/components/icons/SystemIcon.tsx`).
+
+### Corrigido
+- [fix] **Bug arquitetural de stacking context (causa raiz de 4 sintomas).** `.home-page`, `.diary-page`, `.more-page` e `.body-page` têm `position: relative` + `z-index: 1`, criando um stacking context que confina todo modal renderizado dentro delas. Os z-index altos declarados nos modais (315, 317, 60) não competiam com o `Nav` (`fixed`, z-50) nem com o `.coach-fab` (z-40), que vivem no contexto raiz. Resultado: o `.calc-wizard-footer` (Revisar tudo / Recalcular assim / Próximo) ficava atrás do Nav — a tela de resumo do wizard aparecia **sem nenhum botão**, deixando o fluxo sem saída; e o FAB do Coach cobria os botões "Check-in", "Salvar check-in" e "Criar alimento personalizado". Corrigido com `createPortal(…, document.body)` em `CalcWizardModal`, `ProfileCheckinModal` e `FoodDrawer`.
+- [fix] Entrada do check-in corporal restaurada na Home. O commit `30adb9a` (Home Revamp v2) removeu o `ActionGrid` e, com ele, o botão "Perfil" — único caminho para o `ProfileCheckinModal`. O modal seguiu completo no repositório, mas órfão: nenhum componente o importava desde então. Como consequência colateral, o cálculo automático de BF% pelas dobras (JP7, em `useCheckins.saveCheckin` via `calcProfileMetrics`) existia mas era inalcançável, porque só dispara ao salvar um check-in (`src/pages/HomePage.tsx`).
+- [fix] Rodapé do `ProfileCheckinModal` (Fechar / Atualizar → / Check-in) ficava renderizado porém escondido atrás do Nav — o modal virava uma tela só de leitura.
+- [fix] Tela do Treino "pulava" ao digitar. Duas causas independentes: os inputs de reps e carga chamavam `scrollIntoView` centralizado a cada toque, mesmo com o campo já visível; e o badge "últ: XXkg" chega assíncrono via `loadPrev`, mudando a altura do card depois de aberto. Agora o reposicionamento só ocorre quando o campo está de fato encoberto (medido pelo `visualViewport`, que encolhe com o teclado), e a linha de metadados reserva a altura (`src/pages/TreinoPage.tsx`).
+- [fix] String literal `"BUSCA"` era usada como ícone no campo de busca do seletor de alimentos, sobrepondo-se ao placeholder. Substituída pelo `SystemIcon name="search"`, que já existia e estava sem uso (`src/components/FoodDrawer.tsx`).
+
+### Melhorado
+- [improve] Cabeçalho do exercício reorganizado em grid de duas linhas. Eram sete elementos num único eixo (progressão, nome, chips, "últ:", volume, contagem, trocar, remover), todos com `flex-shrink: 0` menos o nome — em 375px o nome era o único que cedia e vivia truncado. Linha 1: progressão, nome e ações; linha 2: chips de grupo, "últ:", volume e contagem. Nenhuma informação removida (`src/index.css`, `src/pages/TreinoPage.tsx`).
+- [improve] Botões de texto "EDIT" e "DEL" na aba "Meus" do seletor de alimentos viraram ícones lápis e lixeira numa coluna de 36px, devolvendo ~50px de largura ao nome do alimento, que passa a ocupar até 2 linhas em vez de cortar em reticências.
+- [improve] `env(safe-area-inset-bottom)` nos rodapés que encostam no fim do viewport (`.calc-wizard-footer`, `.profile-checkin-footer`, `.checkin-form-footer`), para os botões não colarem na barra de gestos do Android.
+
+### Notas
+- Nenhuma migration SQL. Nenhuma mudança em cálculo (BMR, TDEE, JP7, volume muscular) ou em schema.
+- O bug de stacking context está documentado em `memory/` como padrão recorrente: **modal coberto pelo Nav ou pelo FAB não se resolve com z-index** — a tentativa de baixar o FAB de z-200 para z-40 (commit `efc78bd`) foi inócua justamente por isso. A solução é `createPortal`.
+- Modais ainda **não** portalizados: `HabitHistoryModal`, `WeeklyKcalModal` e `DiaryHistoryModal`. Nenhum tem botão no rodapé — o Nav corta apenas texto informativo (a linha de aderência no histórico de hábitos).
+- Varredura de ícones incompleta: seguem como emoji o 📊 e o 📖 do cabeçalho do Treino, o botão "HIST" (texto) na Home e no check-in, as categorias do seletor de alimentos e a CorpoPage inteira.
+
+---
+
 ## [1.0.0] — 2026-07-19
 
 ### Adicionado

@@ -220,7 +220,7 @@ supabase/migrations/
 | 4 | Corpo, Habitos, Mais | CONCLUIDA (4A–4E — 2026-03-09) |
 | 5 | Ferramenta de migracao | CONCLUIDA (2026-03-14) — import/export completo validado com dados reais |
 | 6A | PWA base + Fix 404 SPA | CONCLUIDA (2026-03-15) |
-| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (recorte treino templates + analytics concluído na v0.58.1 — 2026-07-14) |
+| 6B | Qualidade e Robustez (Error Boundary, Onboarding, Testes) | Em andamento (recorte treino templates + analytics na v0.58.1 — 2026-07-14; recorte UI/UX + fix de stacking context na v1.1.0 — 2026-08-01) |
 | 7D | Revamp IA do Coach (prompt v2, dados pré-computados, gpt-5-mini) | CONCLUÍDA (v1.0.0 — 2026-07-19) — QA final do usuário pendente para próxima sessão |
 | 6B-H | Home Revamp v2 — dashboard contextual | CONCLUIDA (v0.58.0 — 2026-07-11) |
 | 6C | SW Update Toast + Code Splitting | Planejada |
@@ -244,6 +244,27 @@ supabase/migrations/
 - [ ] QA final do usuário: registro via chat em dia vazio + dedup de variantes + comportamento v3 (auditoria/radar/sem pergunta-reflexo)
 
 Commits: b46cee3, d5c2367, c2f223e, 3f6d983 + rodada v3. Deploys: Edge Function via `supabase functions deploy ai-chat --no-verify-jwt`.
+
+---
+
+## FASE 6B — UI/UX e stacking context — RECORTE CONCLUÍDO (v1.1.0 — 2026-08-01)
+
+> Sessão de feedback do usuário em produção. Ver `CHANGELOG.md` v1.1.0 para o detalhe.
+
+- [x] Entrada do check-in corporal restaurada na Home (órfã desde `30adb9a`, Home Revamp v2). Devolve o BF% automático por JP7, que existia em `useCheckins` mas era inalcançável.
+- [x] **Stacking context corrigido** — `.home-page`/`.diary-page`/`.more-page`/`.body-page` têm `z-index: 1` e confinavam os modais, deixando Nav (z-50) e coach-fab (z-40) por cima. O rodapé do `CalcWizardModal` ficava invisível: **o wizard não tinha botão de avançar**. Corrigido com `createPortal` em `CalcWizardModal`, `ProfileCheckinModal` e `FoodDrawer`.
+- [x] Treino vira rotina, copiando os exercícios usados — sem migration.
+- [x] "+ Série" herda a última série realizada (ignora aquecimento).
+- [x] Cabeçalho do exercício em duas linhas: nome deixa de truncar, chips e volume preservados.
+- [x] Fim do salto de tela ao digitar reps/carga (`scrollIntoView` condicional via `visualViewport` + altura reservada para o badge assíncrono).
+- [x] EDIT/DEL viram ícones no seletor de alimentos; string `"BUSCA"` removida do campo de busca.
+- [x] Build, 61/61 testes e lint escopado aprovados. QA manual do usuário em produção.
+
+**Pendências deixadas explicitamente:**
+- [ ] Portalizar `HabitHistoryModal`, `WeeklyKcalModal` e `DiaryHistoryModal` (mesmo bug; cortam só texto, não botão).
+- [ ] Varredura de ícones: 📊/📖 no cabeçalho do Treino, botão "HIST" (texto) na Home e no check-in, categorias do seletor de alimentos, CorpoPage inteira.
+- [ ] Rótulos do `ProfileCheckinModal`: "Atualizar →" abre o wizard completo (dobras + recálculo) e "Check-in" é o registro rápido — a distinção não está clara nos nomes. Aguarda decisão do usuário.
+- [ ] Avaliar se o convite pós-salvamento de rotina deve aparecer também quando a sessão veio de uma rotina aplicada (hoje é suprimido por `state.templateId != null`).
 
 ---
 
