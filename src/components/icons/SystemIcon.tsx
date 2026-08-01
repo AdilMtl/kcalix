@@ -8,6 +8,7 @@ export type SystemIconName =
   | 'pencil'
   | 'search'
   | 'send'
+  | 'swap'
   | 'trash'
   | 'trend'
   | 'warning'
@@ -37,6 +38,8 @@ function IconPaths({ name }: { name: SystemIconName }) {
       return <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></>
     case 'search':
       return <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>
+    case 'swap':
+      return <><path d="m8 3-4 4 4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></>
     case 'trash':
       return <><path d="M3 6h18" /><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M10 11v6" /><path d="M14 11v6" /></>
     case 'send':

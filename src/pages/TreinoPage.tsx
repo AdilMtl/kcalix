@@ -19,6 +19,7 @@ import { TemplateEditorModal } from '../components/TemplateEditorModal'
 import { TemplateHistoryModal } from '../components/TemplateHistoryModal'
 import { ExerciseProgressionModal } from '../components/ExerciseProgressionModal'
 import { CoachGuideModal } from '../components/CoachGuideModal'
+import { SystemIcon } from '../components/icons/SystemIcon'
 import type { WorkoutSet, CustomExercise, WorkoutTemplate, WorkoutDayData } from '../types/workout'
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -159,6 +160,32 @@ export default function TreinoPage() {
     await saveTemplates(next)
     setTmplEditorOpen(false)
     setTmplEditing(null)
+  }
+
+  // Oferta de virar rotina, exibida após salvar uma sessão montada do zero
+  const [routineOfferOpen, setRoutineOfferOpen] = useState(false)
+
+  // Copia os exercícios da sessão para uma rotina nova e abre o editor existente,
+  // onde o usuário confirma nome, cor e cardio antes de salvar.
+  const createTemplateFromWorkout = () => {
+    const ids = [...new Set(state.exercicios.map(e => e.exercicioId))]
+    const grupos = [...new Set(
+      state.exercicios
+        .map(e => resolveExGrupo(e.exercicioId, customExercises))
+        .filter((g): g is string => !!g)
+    )].slice(0, 2)
+    const primeiroCardio = state.cardio[0]
+    const novo: WorkoutTemplate = {
+      id: 'treino_' + Date.now(),
+      nome: grupos.length > 0 ? grupos.join(' + ') : 'Nova rotina',
+      cor: '#a78bfa',
+      exercicios: ids,
+      cardio: primeiroCardio
+        ? { tipo: primeiroCardio.tipo, min: primeiroCardio.minutos }
+        : { tipo: 'bicicleta', min: 15 },
+    }
+    setRoutineOfferOpen(false)
+    openTmplEditor(novo, true)
   }
 
   // RecommendSheet state
@@ -330,10 +357,30 @@ export default function TreinoPage() {
     updateSeries(exIdx, sets)
   }
 
+  // Nova série herda a última série realizada do próprio exercício (reps preenchidas,
+  // fora de aquecimento). Série de trabalho costuma repetir a anterior; digitar do
+  // zero a cada série era retrabalho. Sem referência, entra em branco como antes.
   const addSet = (exIdx: number) => {
     markSessionStart()
-    const sets = [...state.exercicios[exIdx].series, { reps: '', carga: '' }]
-    updateSeries(exIdx, sets)
+    const atuais = state.exercicios[exIdx].series
+    const ultima = [...atuais].reverse().find(s => s.reps.trim() !== '' && !s.warmup)
+    const nova: WorkoutSet = ultima
+      ? { reps: ultima.reps, carga: ultima.carga }
+      : { reps: '', carga: '' }
+    updateSeries(exIdx, [...atuais, nova])
+  }
+
+  // Só reposiciona a página se o campo estiver realmente encoberto (teclado virtual
+  // reduz o visualViewport). Antes, todo toque disparava scrollIntoView centralizado,
+  // e a tela subia/descia mesmo com o campo já visível.
+  const keepInputVisible = (el: HTMLInputElement) => {
+    window.setTimeout(() => {
+      if (!el.isConnected) return
+      const rect = el.getBoundingClientRect()
+      const limite = window.visualViewport?.height ?? window.innerHeight
+      if (rect.top >= 8 && rect.bottom <= limite - 8) return
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 300)
   }
 
   const removeSet = (exIdx: number, setIdx: number) => {
@@ -357,6 +404,9 @@ export default function TreinoPage() {
       // auto-check hábitos ao salvar (original L6710–6711)
       if (state.exercicios.length > 0) autoCheckHabit('treino')
       if (state.cardio.length > 0) autoCheckHabit('cardio')
+      // Sessão montada do zero (sem rotina aplicada) é a que vale virar rotina.
+      // Se veio de um template, a rotina já existe e o convite seria ruído.
+      if (state.exercicios.length > 0 && state.templateId == null) setRoutineOfferOpen(true)
     } catch (e) { console.error(e) }
     setSaving(false)
   }
@@ -521,6 +571,26 @@ export default function TreinoPage() {
           </div>
         </div>
 
+        {/* Oferta pós-salvamento: transformar a sessão em rotina reaproveitável */}
+        {routineOfferOpen && (
+          <div className="training-routine-offer">
+            <div className="training-routine-offer-text">
+              <strong>Salvar como rotina?</strong>
+              <small>
+                Copia os {state.exercicios.length} exercício{state.exercicios.length === 1 ? '' : 's'} desta sessão para reaproveitar depois.
+              </small>
+            </div>
+            <div className="training-routine-offer-actions">
+              <button type="button" className="btn sm ghost" onClick={() => setRoutineOfferOpen(false)}>
+                Agora não
+              </button>
+              <button type="button" className="btn sm primary" onClick={createTemplateFromWorkout}>
+                Criar rotina
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── card-body ──────────────────────────────────────── */}
         <div className="training-body">
 
@@ -636,60 +706,30 @@ export default function TreinoPage() {
                     onClick={() => toggleEx(exIdx)}
                     className="training-ex-head"
                   >
-                    {/* 📊 btn */}
+                    {/* Linha 1: progressão + nome + ações. Sem badges, para que o
+                        nome fique com a largura util inteira do card. */}
                     <button
                       type="button"
                       title="Progressão"
+                      aria-label={`Progressão de ${nome}`}
                       onClick={e => { e.stopPropagation(); setExProgExId(ex.exercicioId) }}
-                      style={chartBtnStyle}
-                    >📊</button>
+                      className="training-ex-icon-btn chart"
+                    ><SystemIcon name="trend" size={15} /></button>
 
-                    {/* nome + grupos */}
-                    <div className="training-ex-main">
-                      <span className="training-ex-name">{nome}</span>
-                      {grupo && (
-                        <div className="training-chip-row">
-                          <span className="training-muscle-chip">{grupo}</span>
-                          {secs.map(s => (
-                            <span key={s} className="training-secondary-chip">{s}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <span className="training-ex-name">{nome}</span>
 
-                    {/* prev-ref inline */}
-                    {prev && lastMax > 0 && (
-                      <span className="training-ref-badge">
-                        últ: {lastMax}kg{' '}
-                        {arrow === '=' && <span style={{ color: 'var(--warn)', fontWeight: 800 }}>=</span>}
-                        {arrow && arrow.startsWith('▲') && <span style={{ color: 'var(--good)', fontWeight: 800 }}>{arrow}</span>}
-                        {arrow && arrow.startsWith('▼') && <span style={{ color: 'var(--bad)', fontWeight: 800 }}>{arrow}</span>}
-                      </span>
-                    )}
-
-                    {/* volume */}
-                    {exVol > 0 && (
-                      <span className="training-volume-badge">
-                        {exVol > 999 ? `${(exVol / 1000).toFixed(1)}k` : exVol}
-                        <span style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 600 }}> vol</span>
-                      </span>
-                    )}
-
-                    {/* badge */}
-                    <span className="training-count-badge">{badge}</span>
-
-                    {/* swap btn */}
                     <button
                       type="button"
                       title="Trocar exercício"
+                      aria-label={`Trocar ${nome}`}
                       onClick={e => { e.stopPropagation(); openSwap(exIdx) }}
-                      style={actionBtnStyle}
-                    >🔄</button>
+                      className="training-ex-icon-btn"
+                    ><SystemIcon name="swap" size={15} /></button>
 
-                    {/* delete btn */}
                     <button
                       type="button"
                       title="Remover exercício"
+                      aria-label={`Remover ${nome}`}
                       onClick={e => {
                         e.stopPropagation()
                         const hasFilled = ex.series.some(s => (Number(s.reps) || 0) > 0)
@@ -698,8 +738,36 @@ export default function TreinoPage() {
                         if (openExIdx === exIdx) setOpenExIdx(null)
                         else if (openExIdx !== null && openExIdx > exIdx) setOpenExIdx(openExIdx - 1)
                       }}
-                      style={{ ...actionBtnStyle, color: 'var(--bad)', borderColor: 'rgba(248,113,113,.2)' }}
-                    >✕</button>
+                      className="training-ex-icon-btn danger"
+                    ><SystemIcon name="close" size={15} /></button>
+
+                    {/* Linha 2: grupos, referência do último treino, volume e contagem.
+                        min-height reserva o espaço do badge "últ:", que chega async
+                        via loadPrev — sem isso o card cresce e empurra a lista. */}
+                    <div className="training-ex-meta">
+                      {grupo && <span className="training-muscle-chip">{grupo}</span>}
+                      {secs.map(s => (
+                        <span key={s} className="training-secondary-chip">{s}</span>
+                      ))}
+
+                      {prev && lastMax > 0 && (
+                        <span className="training-ref-badge">
+                          últ: {lastMax}kg{' '}
+                          {arrow === '=' && <span style={{ color: 'var(--warn)', fontWeight: 800 }}>=</span>}
+                          {arrow && arrow.startsWith('▲') && <span style={{ color: 'var(--good)', fontWeight: 800 }}>{arrow}</span>}
+                          {arrow && arrow.startsWith('▼') && <span style={{ color: 'var(--bad)', fontWeight: 800 }}>{arrow}</span>}
+                        </span>
+                      )}
+
+                      {exVol > 0 && (
+                        <span className="training-volume-badge">
+                          {exVol > 999 ? `${(exVol / 1000).toFixed(1)}k` : exVol}
+                          <span style={{ fontSize: 9, color: 'var(--text3)', fontWeight: 600 }}> vol</span>
+                        </span>
+                      )}
+
+                      <span className="training-count-badge">{badge}</span>
+                    </div>
                   </div>
 
                   {/* ex-item-body: set-table */}
@@ -727,7 +795,7 @@ export default function TreinoPage() {
                                   placeholder="12"
                                   value={s.reps}
                                   onChange={e => updateSet(exIdx, si, 'reps', e.target.value)}
-                                  onFocus={e => setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)}
+                                  onFocus={e => keepInputVisible(e.target)}
                                   className="set-input"
                                 />
                               </td>
@@ -737,7 +805,7 @@ export default function TreinoPage() {
                                   placeholder="0"
                                   value={s.carga}
                                   onChange={e => updateSet(exIdx, si, 'carga', e.target.value)}
-                                  onFocus={e => setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)}
+                                  onFocus={e => keepInputVisible(e.target)}
                                   className="set-input"
                                 />
                               </td>
@@ -1009,22 +1077,8 @@ const iconBtnStyle: React.CSSProperties = {
   fontFamily: 'var(--font)', WebkitTapHighlightColor: 'transparent',
 }
 
-const chartBtnStyle: React.CSSProperties = {
-  width: 28, height: 28, borderRadius: '50%',
-  border: '1px solid var(--line)', background: 'var(--surface2)',
-  color: 'var(--text3)', fontSize: 12, cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: 'var(--font)', flexShrink: 0, marginTop: 1,
-  WebkitTapHighlightColor: 'transparent',
-}
-
-const actionBtnStyle: React.CSSProperties = {
-  width: 28, height: 28, borderRadius: '50%',
-  border: '1px solid var(--line)', background: 'transparent',
-  color: 'var(--text3)', fontSize: 13, cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  flexShrink: 0, WebkitTapHighlightColor: 'transparent',
-}
+// chartBtnStyle e actionBtnStyle removidos: os botões do cabeçalho do exercício
+// usam a classe .training-ex-icon-btn (index.css) com ícones do SystemIcon.
 
 // setInputStyle removido — usar className="set-input" (index.css) para suporte a :focus
 

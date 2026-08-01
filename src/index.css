@@ -1780,6 +1780,46 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   background: color-mix(in srgb, var(--surface2) 72%, transparent);
 }
 
+.training-routine-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 12px 10px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--ember) 34%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ember) 8%, transparent);
+}
+
+.training-routine-offer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+  flex: 1;
+}
+
+.training-routine-offer-text strong {
+  color: var(--text);
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.training-routine-offer-text small {
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.training-routine-offer-actions {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
 .training-ex-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1792,38 +1832,56 @@ button:disabled { opacity: .4; cursor: default; pointer-events: none; }
   background: linear-gradient(145deg, color-mix(in srgb, var(--ember) 6%, var(--surface)), var(--surface));
 }
 
+/* Duas linhas: acoes e nome em cima, metadados embaixo. Antes eram sete
+   elementos num unico eixo e, em 375px, o nome era o unico que cedia. */
 .training-ex-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 7px;
+  gap: 4px 7px;
   padding: 10px 12px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.training-ex-main {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
 .training-ex-name {
+  display: -webkit-box;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: var(--text);
   font-size: 13px;
   font-weight: 800;
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
-.training-chip-row {
+.training-ex-meta {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  align-items: center;
+  gap: 4px;
+  min-height: 19px;
 }
+
+.training-ex-icon-btn {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.training-ex-icon-btn.chart { background: var(--surface2); }
+.training-ex-icon-btn.danger { color: var(--bad); border-color: rgba(248,113,113,.2); }
 
 .training-muscle-chip,
 .training-secondary-chip {
