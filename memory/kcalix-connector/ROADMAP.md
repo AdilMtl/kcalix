@@ -33,12 +33,12 @@ não possui login, rede, Health Connect, permissões de saúde ou dados reais.
 
 ## Fase 0 — Governança e definição de valor
 
-**Status:** `KCX-CONN-001` concluída e aprovada tecnicamente em 2026-08-08.
-Cardio sem redigitação, musculação enriquecida e body fat BIA são os três casos do piloto;
-passos, sono e FC de repouso foram adiados. O baseline oficial está pinado e a revisão de
-2026-08-08 fixou stable 1.1.0, seis permissões mínimas, schema e fixtures. A próxima Issue é a
-`KCX-CONN-002`, que transforma os três casos em PRD mensurável; match detalhado só será
-definido depois da evidência real da `KCX-CONN-007`.
+**Status:** `KCX-CONN-001` e `KCX-CONN-002` concluídas e aprovadas tecnicamente em
+2026-08-08. G1 — Valor está fechado pelo PRD `kcx-connector-prd/1`: cardio sem redigitação,
+musculação enriquecida e body fat BIA são os três casos do piloto, com baseline de 7 dias,
+piloto de 14–28 dias e critérios `GO | ADJUST | NO-GO`. Passos, sono e FC de repouso foram
+adiados. Match detalhado só será definido depois da evidência real da `KCX-CONN-007`. A
+próxima Issue `READY` é `KCX-CONN-003`, para ratificar Kotlin/Compose no piloto.
 
 **Objetivo:** definir valor, dados e controles antes de construir funcionalidades que leiam,
 processem ou enviem dados de saúde.
@@ -50,8 +50,8 @@ processem ou enviem dados de saúde.
   unificação futura via Capacitor.
 - `KCX-CONN-004`: modelar ameaças, privacidade, retenção e exclusão.
 
-**Saída:** insumos de G1 prontos para o PRD e protocolo de G2 aprovado; G1 fecha na
-`KCX-CONN-002` e G2 fecha somente com evidência da `KCX-CONN-007`.
+**Saída:** G1 fechado pelo PRD aprovado e protocolo de G2 preparado; G2 fecha somente com
+evidência da `KCX-CONN-007`.
 **Não fazer:** migration, Edge Function, autenticação Android ou sincronização definitiva.
 
 ## Fase 1 — Spike Android somente leitura

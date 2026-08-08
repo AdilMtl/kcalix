@@ -124,21 +124,28 @@ permissões e leitura controlada.
 
 ### KCX-CONN-002 — Aprovar PRD do piloto privado
 
-**Status:** READY
+**Status:** DONE
 **Depende de:** KCX-CONN-001  
 **Entrega:** PRD enxuto que liga cada dado a uma decisão do usuário e a uma métrica.
 
 **Aceite:**
 
-- [ ] Define usuário, problema, jornadas e resultado desejado.
-- [ ] Prioriza no máximo três casos de uso do MVP.
-- [ ] Define baseline manual e métricas do piloto de 2–4 semanas.
-- [ ] Define não objetivos: diagnóstico, recomendação médica, Play Store e sync contínuo.
-- [ ] Contém critérios go/no-go e responsável pela decisão.
+- [x] Define usuário, problema, jornadas e resultado desejado.
+- [x] Prioriza no máximo três casos de uso do MVP.
+- [x] Define baseline manual e métricas do piloto de 2–4 semanas.
+- [x] Define não objetivos: diagnóstico, recomendação médica, Play Store e sync contínuo.
+- [x] Contém critérios go/no-go e responsável pela decisão.
+
+**Spec:** [KCX-CONN-002](specs/KCX-CONN-002.md), `APPROVED`.
+**PRD:** [piloto privado do Kcalix Connector](PRD.md), `kcx-connector-prd/1`, `APPROVED`.
+**Evidência:** [sessão de 2026-08-08](sessions/2026-08-08-KCX-CONN-002-prd.md). O PRD
+mantém exatamente cardio sem redigitação, musculação enriquecida e body fat BIA; define
+baseline de 7 dias, piloto de 14–28 dias, métricas com denominador mínimo e decisão
+`GO | ADJUST | NO-GO`. G1 foi fechado sem liberar código ou dado real.
 
 ### KCX-CONN-003 — ADR: ratificar Kotlin nativo no piloto
 
-**Status:** BACKLOG  
+**Status:** READY  
 **Depende de:** KCX-CONN-001, KCX-CONN-002  
 **Entrega:** ADR que confirma ou rejeita, com evidência, a continuidade da base Kotlin/Compose
 já validada para o piloto e registra o caminho futuro de eventual unificação via Capacitor.

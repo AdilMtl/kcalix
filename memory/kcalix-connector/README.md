@@ -1,25 +1,21 @@
 # Kcalix Connector — índice operacional
 
-**Status:** Fase 00 e `KCX-CONN-001` concluídas; contrato técnico aprovado em 2026-08-08
+**Status:** Fase 00, `KCX-CONN-001` e `KCX-CONN-002` concluídas; G1 — Valor fechado em
+2026-08-08 pelo PRD `kcx-connector-prd/1`
 
 **Decisão vigente:** validar primeiro um APK privado, instalado localmente, que leia o Health Connect e sincronize manualmente com o Kcalix  
 
-**Próxima Issue:** `KCX-CONN-002` — produzir e aprovar tecnicamente o PRD do piloto a partir
-das decisões de produto já respondidas, sem repetir entrevista técnica com o usuário. Solicitar
-ao usuário apenas escolhas de produto realmente ausentes e, mais adiante, instruções para
-executar testes físicos. A leitura real ocorrerá na
-`KCX-CONN-007`, depois de PRD, arquitetura, privacidade e permissões aprovados.
+**Próxima Issue:** `KCX-CONN-003` — produzir a ADR que ratifica Kotlin/Compose para o piloto e
+registra condições e custo de uma eventual unificação futura via Capacitor. A leitura real
+continua na `KCX-CONN-007`, depois de arquitetura, privacidade e permissões aprovadas.
 `KCX-CONN-021` preserva o feedback de contraste para polish.
 
-**Como iniciar a próxima sessão:** abrir `KCX-CONN-002` em modo `Especificar`, ler integralmente o
-[handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md), a
-[spec KCX-CONN-001](specs/KCX-CONN-001.md) e o
-[roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md).
-Não repetir a entrevista de produto: cardio sem redigitação, musculação enriquecida e body fat
-BIA são os três casos do piloto. Ler a
-[revisão oficial](evidence/KCX-CONN-001-api-review-2026-08-08.md) e construir o PRD. Aprovação
-de engenharia pertence ao agente/revisor; o usuário apenas decide produto e executa testes
-orientados. Não escrever integração, pedir permissões, ler dados reais ou enviar dados.
+**Como iniciar a próxima sessão:** abrir `KCX-CONN-003` em modo `Especificar`, ler o
+[PRD aprovado](PRD.md), as specs [KCX-CONN-001](specs/KCX-CONN-001.md) e
+[KCX-CONN-002](specs/KCX-CONN-002.md), então inspecionar a base existente em
+`connector/android/` e criar a spec/ADR da 003. Ratificar ou rejeitar Kotlin/Compose por
+evidência da base atual, suporte Health Connect, debugging, autenticação e distribuição; não
+implementar integração, pedir permissões, ler dados reais ou enviar dados.
 
 Este diretório é a fonte canônica para todas as próximas sessões. O handoff de pesquisa
 continua em [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md),
@@ -30,10 +26,11 @@ mas não deve ser usado sozinho para iniciar implementação.
 1. [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md) — pesquisa, decisão e limites do produto.
 2. [`HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md`](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md) —
    entrevista, decisões, esquema preliminar e perguntas ainda abertas.
-3. [`ROADMAP.md`](ROADMAP.md) — fases, gates e sequência de entrega.
-4. [`ISSUES.md`](ISSUES.md) — backlog executável e dependências.
-5. [`SPEC_TEMPLATE.md`](SPEC_TEMPLATE.md) — contrato mínimo de cada spec técnica.
-6. A spec específica da Issue, quando existir em `specs/KCX-CONN-NNN.md`.
+3. [`PRD.md`](PRD.md) — valor, casos, métricas e critérios de continuidade do piloto.
+4. [`ROADMAP.md`](ROADMAP.md) — fases, gates e sequência de entrega.
+5. [`ISSUES.md`](ISSUES.md) — backlog executável e dependências.
+6. [`SPEC_TEMPLATE.md`](SPEC_TEMPLATE.md) — contrato mínimo de cada spec técnica.
+7. A spec específica da Issue, quando existir em `specs/KCX-CONN-NNN.md`.
 
 ## Hierarquia de artefatos
 
