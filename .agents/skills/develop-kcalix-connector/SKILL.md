@@ -26,7 +26,9 @@ como concluída.
 ## Selecionar o modo da sessão
 
 - **Explorar:** produza evidência para uma Issue de discovery; não crie arquitetura definitiva.
-- **Especificar:** crie ou complete a spec específica usando o template; pare para aprovação antes da primeira alteração de código.
+- **Especificar:** crie ou complete a spec específica usando o template; aprove tecnicamente
+  por evidências antes da primeira alteração de código. Pare para o usuário somente se existir
+  decisão de produto ainda não registrada que mude materialmente o comportamento.
 - **Implementar:** aceite somente Issue `READY`, dependências concluídas e spec `APPROVED`.
 - **Revisar:** confronte código e evidências com cada critério, incluindo falhas e segurança.
 
@@ -46,6 +48,19 @@ Antes de alterar código, declare ao usuário e confira nos artefatos canônicos
 Se houver divergência, pare a implementação e corrija primeiro Issue, spec, roadmap e índice.
 Não interprete o backlog mecanicamente quando ele contradizer uma decisão de produto registrada
 ou esclarecida pelo usuário. A resposta de Start Session deve terminar com a próxima ação exata.
+
+## Separar responsabilidade técnica e participação do usuário
+
+- O agente/revisor é responsável por pesquisar APIs, escolher versões compatíveis, revisar
+  schema, permissões, segurança, testes e decidir se critérios técnicos passaram.
+- Não peça ao usuário para “aprovar” código, schema, nomes de permissões, payloads ou outros
+  detalhes de engenharia que já possam ser decididos por evidência.
+- O usuário decide somente trade-offs reais de produto que não estejam registrados, autoriza
+  ações externas/destrutivas/publicação e executa passos físicos orientados no aparelho.
+- Para teste manual, entregue comandos ou passos exatos, resultado esperado e o que o usuário
+  deve devolver. Não transfira diagnóstico técnico para ele.
+- Se as decisões de produto já estiverem canônicas e o trabalho estiver autorizado, conclua a
+  revisão técnica e avance o estado sem criar um ritual de aprovação adicional.
 
 ## Executar o workflow
 
@@ -89,3 +104,8 @@ Separe sempre fato observado, decisão aprovada e hipótese ainda não validada.
 
 Relate Issue e estado final, gate avançado ou bloqueio, arquivos, testes/evidências,
 itens não testados, decisão tomada e próximo ID a executar.
+
+Antes de encerrar, atualize `README.md`, `ISSUES.md`, `ROADMAP.md`, `MEMORY.md` e o registro de
+sessão aplicável. Deixe explícitos branch, próxima Issue/modo, resultado esperado, escopo e a
+primeira ação da retomada. Não aplique automaticamente o versionamento/release genérico da PWA
+a uma sessão do Connector e não faça commit ou push sem solicitação explícita.

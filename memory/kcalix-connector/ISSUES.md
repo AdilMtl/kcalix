@@ -67,7 +67,7 @@ contraste é conferido novamente no aparelho. É polish não bloqueante para `KC
 
 ### KCX-CONN-001 — Definir valor e contrato de observação do Watch 5
 
-**Status:** DRAFTING
+**Status:** DONE
 
 **Depende de:** KCX-CONN-000
 
@@ -88,19 +88,26 @@ tolerâncias finais de match antes da evidência real da `KCX-CONN-007`.
 - [x] FC e body fat têm uso, origem e limites de produto definidos; política exata das zonas
   continua pendente.
 - [x] Referência técnica tem licença, versão, fluxo e dependências registrados.
-- [ ] Revisores Android, dados, segurança, produto e QA entregam pareceres pelo roteiro canônico.
-- [ ] Export `kcx-health-observation/1` tem schema, perfis e política de compartilhamento aprovados.
-- [ ] Cada record type candidato tem permissão exata, campos, unidade, origem e utilidade proposta.
-- [ ] Fixtures sintéticas e roteiro antes/depois de atividade conhecida estão definidos.
+- [x] Lentes Android, dados, segurança, produto e QA entregaram parecer consolidado pelo roteiro.
+- [x] Export `kcx-health-observation/1` tem schema, perfis e política de compartilhamento
+  aprovados por revisão técnica e testes positivo/negativo.
+- [x] Cada record type candidato tem permissão exata, campos, unidade, origem e utilidade proposta.
+- [x] Fixtures sintéticas e roteiro antes/depois de atividade conhecida estão definidos.
 - [x] Nenhum valor pessoal bruto, screenshot sensível ou export foi commitado nesta fase.
 - [x] A implementação posterior está limitada aos sinais aprovados ou condicionais.
 
-**Spec:** [KCX-CONN-001](specs/KCX-CONN-001.md), em `DRAFT`.
+**Spec:** [KCX-CONN-001](specs/KCX-CONN-001.md), `APPROVED`.
 **Evidência:** [handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md) +
 [roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md) +
 [protocolo de discovery anonimizado](evidence/KCX-CONN-001-discovery.md) +
 [registro da sessão de transição](sessions/2026-07-23-KCX-CONN-001-observation-transition.md) +
 [consolidação de decisões](sessions/2026-07-27-KCX-CONN-001-decisions-consolidation.md).
+A recomendação atual inclui a
+[revisão oficial de APIs/Samsung](evidence/KCX-CONN-001-api-review-2026-08-08.md), o
+[contrato versionado](contracts/kcx-health-observation-1.md), seu
+[schema executável](contracts/kcx-health-observation-1.schema.json) e fixtures sintéticas.
+A execução desta revisão está registrada em
+[sessão de 2026-08-08](sessions/2026-08-08-KCX-CONN-001-api-contract.md).
 A leitura real pertence à `KCX-CONN-007`.
 
 **Retomada 2026-07-27:** produto consolidado em três casos de uso: cardio sem redigitação,
@@ -108,12 +115,16 @@ musculação enriquecida e body fat BIA. Passos, sono e FC de repouso foram adia
 projeto de referência separado foi encontrado no workspace; o sample oficial
 `android/health-samples/HealthConnectSample`, commit
 `47f0144f6e994f7831a41499843a0f6a9d87cb75`, Apache-2.0, foi registrado como baseline.
-A revisão inicial recomenda adaptar o fluxo, rejeitar o escopo didático excessivo e manter a
-Issue em `DRAFTING` até aprovar contrato detalhado, fixtures e parecer de segurança.
+A revisão inicial recomendou adaptar o fluxo e rejeitar o escopo didático excessivo. Em
+2026-08-08, a revisão oficial fixou `connect-client:1.1.0`, seis permissões de leitura, janela
+de 7 dias, paginação completa e perfis/fixtures. O contrato passou em testes positivo,
+negativo, privacidade estrutural e permissões; a Issue foi encerrada tecnicamente sem repassar
+ao usuário revisão de engenharia. Dado real continua bloqueado até as Issues de privacidade,
+permissões e leitura controlada.
 
 ### KCX-CONN-002 — Aprovar PRD do piloto privado
 
-**Status:** BACKLOG  
+**Status:** READY
 **Depende de:** KCX-CONN-001  
 **Entrega:** PRD enxuto que liga cada dado a uma decisão do usuário e a uma métrica.
 

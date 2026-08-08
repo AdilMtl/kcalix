@@ -25,7 +25,8 @@ Leia integralmente e nesta ordem:
 2. Confirme status, dependências, fase e gate da Issue.
 3. Se a Issue não estiver `READY` ou uma dependência faltar, trabalhe somente para remover
    esse bloqueio e registre a descoberta.
-4. Antes de código, crie/complete a spec específica com contratos exatos e peça aprovação.
+4. Antes de código, crie/complete a spec específica com contratos exatos e aprove-a
+   tecnicamente por evidências. Consulte o usuário somente se faltar decisão real de produto.
 5. Implemente somente o escopo aprovado, mantendo decisões de domínio fora da camada de UI.
 6. Execute os testes definidos na spec e registre evidências; teste no aparelho quando exigido.
 7. Atualize status/evidências da Issue, roadmap e memória antes de encerrar.
@@ -38,8 +39,17 @@ Leia integralmente e nesta ordem:
 - Não somar calorias ou vincular treino sem regra de fonte e conflito aprovada.
 - Não considerar build verde como prova de utilidade ou segurança.
 - Não criar documentação paralela: Codex e Claude atualizam os mesmos arquivos canônicos.
+- Não transferir ao usuário revisão de API, schema, permissões, segurança ou testes. Para
+  validação física, fornecer comandos/passos exatos e resultado esperado.
 - Não commitar, fazer push, migration remota ou publicar APK sem solicitação explícita.
 
 Ao responder, informe: Issue ativa, gate atual, decisão/entrega da sessão, testes/evidências e próximo passo exato.
+
+## Encerramento da sessão
+
+Ao finalizar uma Issue do Connector, siga o contrato de End Session do
+`memory/kcalix-connector/README.md` e a skill `develop-kcalix-connector`. O fluxo genérico de
+release da PWA não obriga versão, CHANGELOG, commit ou deploy nesta trilha. Registre sempre a
+próxima Issue/modo, resultado esperado, escopo/não escopo e primeira ação exata.
 
 $ARGUMENTS

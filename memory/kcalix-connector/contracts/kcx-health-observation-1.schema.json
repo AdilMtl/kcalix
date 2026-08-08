@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kcalix.local/schemas/kcx-health-observation-1.schema.json",
+  "title": "Kcalix Health Connect observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "synthetic",
+    "exportId",
+    "generatedAt",
+    "environment",
+    "window",
+    "readPolicy",
+    "permissions",
+    "origins",
+    "queries",
+    "records",
+    "relationships",
+    "warnings",
+    "errors",
+    "completion"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "kcx-health-observation/1" },
+    "profile": { "enum": ["STRUCTURAL", "PRIVATE_FULL"] },
+    "synthetic": { "type": "boolean" },
+    "exportId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "window": { "$ref": "#/$defs/window" },
+    "readPolicy": { "$ref": "#/$defs/readPolicy" },
+    "permissions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "origins": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/origin" }
+    },
+    "queries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/query" }
+    },
+    "records": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/record" }
+    },
+    "relationships": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "completion": { "$ref": "#/$defs/completion" }
+  },
+  "$defs": {
+    "recordType": {
+      "enum": [
+        "ExerciseSessionRecord",
+        "HeartRateRecord",
+        "DistanceRecord",
+        "TotalCaloriesBurnedRecord",
+        "BodyFatRecord",
+        "WeightRecord"
+      ]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connectorVersion",
+        "healthConnectClientVersion",
+        "androidApiLevel",
+        "androidRelease",
+        "timezone",
+        "healthConnectMode"
+      ],
+      "properties": {
+        "connectorVersion": { "type": "string" },
+        "healthConnectClientVersion": { "const": "1.1.0" },
+        "androidApiLevel": { "type": "integer", "minimum": 28 },
+        "androidRelease": { "type": "string" },
+        "timezone": { "type": "string", "minLength": 1 },
+        "healthConnectMode": { "enum": ["SYSTEM_MODULE", "PLAY_STORE_APP", "UNKNOWN"] }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "semantics", "durationSeconds"],
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "semantics": { "const": "START_INCLUSIVE_END_EXCLUSIVE" },
+        "durationSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 }
+      }
+    },
+    "readPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageSize",
+        "ascendingOrder",
+        "maxWindowDays",
+        "historyPermissionRequested",
+        "backgroundPermissionRequested",
+        "dataOriginPrefiltered"
+      ],
+      "properties": {
+        "pageSize": { "const": 1000 },
+        "ascendingOrder": { "const": true },
+        "maxWindowDays": { "const": 7 },
+        "historyPermissionRequested": { "const": false },
+        "backgroundPermissionRequested": { "const": false },
+        "dataOriginPrefiltered": { "const": false }
+      }
+    },
+    "permission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^android\\.permission\\.health\\.READ_[A-Z_]+$" },
+        "status": { "enum": ["GRANTED", "DENIED", "NOT_REQUESTED", "REVOKED"] }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["originRef", "identityMode", "identity"],
+      "properties": {
+        "originRef": { "type": "string", "minLength": 1 },
+        "identityMode": { "enum": ["HASHED_PER_EXPORT", "RAW"] },
+        "identity": { "type": "string", "minLength": 1 }
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordType", "pagesRead", "recordCount", "complete", "errorCode"],
+      "properties": {
+        "recordType": { "$ref": "#/$defs/recordType" },
+        "pagesRead": { "type": "integer", "minimum": 0 },
+        "recordCount": { "type": "integer", "minimum": 0 },
+        "complete": { "type": "boolean" },
+        "errorCode": { "type": ["string", "null"] }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordRef",
+        "recordType",
+        "shape",
+        "time",
+        "metadata",
+        "presentFields",
+        "absentFields",
+        "payload"
+      ],
+      "properties": {
+        "recordRef": { "type": "string", "minLength": 1 },
+        "recordType": { "$ref": "#/$defs/recordType" },
+        "shape": { "enum": ["INTERVAL", "SERIES", "INSTANTANEOUS"] },
+        "time": { "$ref": "#/$defs/time" },
+        "metadata": { "$ref": "#/$defs/metadata" },
+        "presentFields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "absentFields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "payload": {
+          "oneOf": [
+            { "$ref": "#/$defs/exercisePayload" },
+            { "$ref": "#/$defs/heartRatePayload" },
+            { "$ref": "#/$defs/distancePayload" },
+            { "$ref": "#/$defs/energyPayload" },
+            { "$ref": "#/$defs/bodyFatPayload" },
+            { "$ref": "#/$defs/weightPayload" }
+          ]
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "instant": { "type": "string", "format": "date-time" },
+        "startZoneOffset": { "type": ["string", "null"] },
+        "endZoneOffset": { "type": ["string", "null"] },
+        "zoneOffset": { "type": ["string", "null"] }
+      },
+      "anyOf": [
+        { "required": ["start", "end", "startZoneOffset", "endZoneOffset"] },
+        { "required": ["instant", "zoneOffset"] }
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataOriginRef",
+        "lastModifiedTime",
+        "clientRecordVersion",
+        "clientRecordIdPresent",
+        "recordingMethod",
+        "devicePresent",
+        "sourceIdMode"
+      ],
+      "properties": {
+        "dataOriginRef": { "type": "string" },
+        "lastModifiedTime": { "type": "string", "format": "date-time" },
+        "clientRecordVersion": { "type": "integer", "minimum": 0 },
+        "clientRecordIdPresent": { "type": "boolean" },
+        "clientRecordId": { "type": ["string", "null"] },
+        "recordingMethod": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "name"],
+          "properties": {
+            "code": { "type": "integer", "minimum": 0 },
+            "name": { "type": "string" }
+          }
+        },
+        "devicePresent": { "type": "boolean" },
+        "device": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["manufacturer", "model", "typeCode", "typeName"],
+          "properties": {
+            "manufacturer": { "type": ["string", "null"] },
+            "model": { "type": ["string", "null"] },
+            "typeCode": { "type": "integer", "minimum": 0 },
+            "typeName": { "type": "string" }
+          }
+        },
+        "sourceIdMode": { "enum": ["HASHED_PER_EXPORT", "RAW", "OMITTED"] },
+        "sourceId": { "type": ["string", "null"] }
+      }
+    },
+    "exercisePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "exerciseType",
+        "durationSeconds",
+        "titlePresent",
+        "notesPresent",
+        "segmentsCount",
+        "lapsCount",
+        "routePolicy"
+      ],
+      "properties": {
+        "kind": { "const": "EXERCISE_SESSION" },
+        "exerciseType": { "$ref": "#/$defs/codeName" },
+        "durationSeconds": { "type": "integer", "minimum": 1 },
+        "titlePresent": { "type": "boolean" },
+        "notesPresent": { "type": "boolean" },
+        "segmentsCount": { "type": "integer", "minimum": 0 },
+        "lapsCount": { "type": "integer", "minimum": 0 },
+        "routePolicy": { "const": "EXCLUDED" }
+      }
+    },
+    "heartRatePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "valueMode", "sampleCount"],
+      "properties": {
+        "kind": { "const": "HEART_RATE" },
+        "valueMode": { "enum": ["REDACTED", "RAW"] },
+        "sampleCount": { "type": "integer", "minimum": 0 },
+        "samplingStructure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["firstOffsetSeconds", "lastOffsetSeconds", "maxGapSeconds"],
+          "properties": {
+            "firstOffsetSeconds": { "type": "number", "minimum": 0 },
+            "lastOffsetSeconds": { "type": "number", "minimum": 0 },
+            "maxGapSeconds": { "type": "number", "minimum": 0 }
+          }
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["time", "beatsPerMinute"],
+            "properties": {
+              "time": { "type": "string", "format": "date-time" },
+              "beatsPerMinute": { "type": "integer", "minimum": 1, "maximum": 300 }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimumBpm", "maximumBpm", "averageBpm", "derivation"],
+          "properties": {
+            "minimumBpm": { "type": "integer", "minimum": 1, "maximum": 300 },
+            "maximumBpm": { "type": "integer", "minimum": 1, "maximum": 300 },
+            "averageBpm": { "type": "number", "minimum": 1, "maximum": 300 },
+            "derivation": { "const": "DERIVED_LOCAL_FROM_EXPORTED_SAMPLES" }
+          }
+        }
+      }
+    },
+    "distancePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "valueMode", "unit"],
+      "properties": {
+        "kind": { "const": "DISTANCE" },
+        "valueMode": { "enum": ["REDACTED", "RAW"] },
+        "unit": { "const": "m" },
+        "distanceMeters": { "type": "number", "minimum": 0 }
+      }
+    },
+    "energyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "valueMode", "unit", "semantics"],
+      "properties": {
+        "kind": { "const": "TOTAL_ENERGY" },
+        "valueMode": { "enum": ["REDACTED", "RAW"] },
+        "unit": { "const": "kcal" },
+        "semantics": { "const": "INCLUDES_ACTIVE_AND_BASAL" },
+        "energyKilocalories": { "type": "number", "minimum": 0 }
+      }
+    },
+    "bodyFatPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "valueMode", "unit"],
+      "properties": {
+        "kind": { "const": "BODY_FAT" },
+        "valueMode": { "enum": ["REDACTED", "RAW"] },
+        "unit": { "const": "%" },
+        "percentage": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "weightPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "valueMode", "unit"],
+      "properties": {
+        "kind": { "const": "WEIGHT" },
+        "valueMode": { "enum": ["REDACTED", "RAW"] },
+        "unit": { "const": "kg" },
+        "weightKilograms": { "type": "number", "minimum": 0, "maximum": 1000 }
+      }
+    },
+    "codeName": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "name"],
+      "properties": {
+        "code": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string" }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationshipRef",
+        "leftRecordRef",
+        "rightRecordRef",
+        "classification",
+        "rule",
+        "confidence"
+      ],
+      "properties": {
+        "relationshipRef": { "type": "string" },
+        "leftRecordRef": { "type": "string" },
+        "rightRecordRef": { "type": "string" },
+        "classification": { "enum": ["EXPLICIT", "INFERRED"] },
+        "rule": { "type": "string" },
+        "confidence": { "const": "NOT_SCORED_BEFORE_KCX-CONN-007" }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "scope", "retryable"],
+      "properties": {
+        "code": { "type": "string" },
+        "scope": { "type": "string" },
+        "recordType": { "$ref": "#/$defs/recordType" },
+        "retryable": { "type": "boolean" }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "completedAt", "allPagesConsumed", "schemaValidated"],
+      "properties": {
+        "state": { "enum": ["COMPLETE", "PARTIAL"] },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "allPagesConsumed": { "type": "boolean" },
+        "schemaValidated": { "const": true }
+      }
+    }
+  }
+}

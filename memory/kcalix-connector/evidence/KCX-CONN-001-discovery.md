@@ -3,15 +3,16 @@
 Status: PROTOCOLO CONCEITUAL; EXECUÇÃO REAL TRANSFERIDA PARA `KCX-CONN-007`  
 Issue: KCX-CONN-001  
 Fase e gate: Fase 0 / G2 — dados reais  
-Última atualização: 2026-07-27
+Última atualização: 2026-08-08
 
 > **Não executar este protocolo como está.** A descoberta de produto posterior priorizou
 > cardio sem redigitação, musculação enriquecida e body fat BIA e identificou que a Samsung
-> documenta calorias de exercício em `TotalCaloriesBurnedRecord`, não garante
-> `ActiveCaloriesBurnedRecord`. A decisão seguinte adicionou revisão especializada do projeto
-> de referência e export local `kcx-health-observation/1`. Leia a
+> documenta calorias de exercício em `TotalCaloriesBurnedRecord` e o mapeamento oficial
+> consultado não inclui `ActiveCaloriesBurnedRecord`. A revisão oficial e o contrato local
+> `kcx-health-observation/1` estão prontos para aprovação. Leia a
 > [spec KCX-CONN-001](../specs/KCX-CONN-001.md) e o
-> [roteiro de revisão](../reviews/KCX-CONN-001-reference-project-review.md). A leitura via app,
+> [revisão oficial](KCX-CONN-001-api-review-2026-08-08.md) e o
+> [contrato](../contracts/kcx-health-observation-1.md). A leitura via app,
 > o export e a matriz real serão implementados/executados na `KCX-CONN-007`.
 
 ## Resultado observável desta sessão
@@ -52,8 +53,8 @@ conceitual da auditoria; não autoriza permissões ou leitura dentro da `KCX-CON
 
 ### Não incluído
 
-- Valores brutos de saúde, capturas de tela, exportações, rotas, IDs de registro ou nomes de
-  conta.
+- Valores brutos de saúde, capturas de tela, rotas, IDs de registro, nomes de conta ou qualquer
+  export real versionado/compartilhado automaticamente.
 - Health Connect SDK, permissões no APK, login, Supabase, migrações, sync ou armazenamento.
 - Histórico acima de 30 dias, leitura em background, rotas GPS, sono ou dados médicos.
 
@@ -78,11 +79,10 @@ piloto. Não implementar sincronização com o Kcalix nessa mesma sessão.
 |---|---|---|---|---|---|
 | `ExerciseSessionRecord` | `android.permission.health.READ_EXERCISE` | intervalo; início, fim, tipo; segmentos/laps opcionais | Samsung Health | sugerir vínculo temporal com treino | NÃO TESTADO |
 | `TotalCaloriesBurnedRecord` | `android.permission.health.READ_TOTAL_CALORIES_BURNED` | intervalo; energia total | Samsung Health | avaliar separadamente do gasto ativo | NÃO TESTADO |
-| `ActiveCaloriesBurnedRecord` | `android.permission.health.READ_ACTIVE_CALORIES_BURNED` | intervalo; energia | Samsung Health | condicional; observar apenas se disponibilidade for justificada | NÃO TESTADO |
 | `HeartRateRecord` | `android.permission.health.READ_HEART_RATE` | série; amostras BPM | Samsung Health | resumo de esforço, sem enviar série bruta | NÃO TESTADO |
 | `DistanceRecord` | `android.permission.health.READ_DISTANCE` | intervalo; distância | Samsung Health | preencher/sugerir cardio | NÃO TESTADO |
 | `BodyFatRecord` | `android.permission.health.READ_BODY_FAT` | instantâneo; percentual | Samsung Health | tendência `Galaxy Watch BIA` separada de JP7/manual | NÃO TESTADO |
-| `WeightRecord` | `android.permission.health.READ_WEIGHT` | instantâneo; massa | Samsung Health/balança conectada, se houver | pré-preencher check-in | NÃO TESTADO |
+| `WeightRecord` | `android.permission.health.READ_WEIGHT` | instantâneo; quilogramas | origem a observar, sem atribuir ao Watch | avaliar presença junto da BIA sem importar automaticamente | NÃO TESTADO |
 
 `StepsRecord`, `SleepSessionRecord` e `RestingHeartRateRecord` foram adiados e não autorizam
 permissões neste protocolo. Nutrição, hidratação, rotas, sinais médicos, histórico amplo e
@@ -104,9 +104,10 @@ background permanecem fora.
 5. Aguardar a sincronização normal Watch → Samsung Health → Health Connect. Registrar o
    atraso em faixas: `imediato (<15 min)`, `curto (15–60 min)`, `longo (>60 min)` ou
    `não apareceu`.
-6. Para cada linha da matriz, registrar `disponível`, `indisponível` ou `não testado`; quando
-   disponível, registrar apenas presença dos campos, `data_origin` por nome de pacote (sem
-   IDs), granularidade e se há duplicidade/intervalos sobrepostos.
+6. Pelo app da `KCX-CONN-007`, produzir primeiro `STRUCTURAL`; quando a comparação numérica
+   for indispensável, produzir `PRIVATE_FULL` e mantê-lo somente no destino privado escolhido.
+   Classificar cada linha como `disponível`, `indisponível` ou `não testado`, incluindo origem,
+   granularidade e duplicidade/overlap sem copiar valores pessoais para evidência versionada.
 7. Repetir depois de uma segunda atividade em outro horário. Comparar presença, origem e
    atraso; não registrar métricas numéricas pessoais.
 8. Atualizar a matriz com uma recomendação `entra no PRD`, `candidato` ou `descartar`, com a
@@ -126,7 +127,7 @@ musculação e cardio conhecidos comparados antes/depois e, quando disponível, 
 com recomendação registrada sem dados pessoais. Se o aparelho não comprovar um sinal,
 registrá-lo como `indisponível` ou `não testado`; não ampliar permissões para compensar.
 
-## Referências verificadas em 2026-07-22
+## Referências verificadas em 2026-08-08
 
 - Android Developers — Health Connect data types:
   <https://developer.android.com/health-and-fitness/health-connect/data-types>
@@ -134,3 +135,7 @@ registrá-lo como `indisponível` ou `não testado`; não ampliar permissões pa
   <https://developer.android.com/health-and-fitness/health-connect/read-data>
 - Android Developers — Develop workout experiences:
   <https://developer.android.com/health-and-fitness/health-connect/experiences/workouts>
+- Samsung Developers — Accessing Samsung Health data through Health Connect:
+  <https://developer.samsung.com/health/blog/en/accessing-samsung-health-data-through-health-connect>
+- Samsung Developers — Health Connect FAQ:
+  <https://developer.samsung.com/health/health-connect-faq.html>

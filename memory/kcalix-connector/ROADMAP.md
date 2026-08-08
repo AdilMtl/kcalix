@@ -1,6 +1,6 @@
 # Roadmap executável — Kcalix Connector
 
-**Atualizado em:** 2026-07-27
+**Atualizado em:** 2026-08-08
 **Horizonte:** piloto privado em um aparelho Android  
 **Resultado esperado:** decisão baseada em evidência sobre continuar, ajustar ou abandonar a integração
 
@@ -33,10 +33,11 @@ não possui login, rede, Health Connect, permissões de saúde ou dados reais.
 
 ## Fase 0 — Governança e definição de valor
 
-**Status:** `KCX-CONN-001` em especificação. Cardio sem redigitação, musculação enriquecida e
-body fat BIA foram consolidados como os três casos do piloto. Passos, sono e FC de repouso
-foram adiados. A próxima decisão é registrar a referência técnica — projeto indicado ou
-baseline oficial — e aprovar o contrato de observação/export local; match detalhado só será
+**Status:** `KCX-CONN-001` concluída e aprovada tecnicamente em 2026-08-08.
+Cardio sem redigitação, musculação enriquecida e body fat BIA são os três casos do piloto;
+passos, sono e FC de repouso foram adiados. O baseline oficial está pinado e a revisão de
+2026-08-08 fixou stable 1.1.0, seis permissões mínimas, schema e fixtures. A próxima Issue é a
+`KCX-CONN-002`, que transforma os três casos em PRD mensurável; match detalhado só será
 definido depois da evidência real da `KCX-CONN-007`.
 
 **Objetivo:** definir valor, dados e controles antes de construir funcionalidades que leiam,

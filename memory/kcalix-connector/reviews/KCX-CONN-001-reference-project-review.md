@@ -1,6 +1,6 @@
 # KCX-CONN-001 — roteiro de revisão do projeto de referência
 
-Status: EM REVISÃO — baseline oficial registrado; validação no aparelho permanece pendente
+Status: APROVADO TECNICAMENTE — validação no aparelho permanece pendente para `KCX-CONN-007`
 Issue: `KCX-CONN-001`
 Objetivo: determinar, por evidência, o que pode ser adotado, adaptado ou deve ser rejeitado
 antes de o Kcalix Connector ler dados reais do Health Connect.
@@ -22,7 +22,7 @@ complementado pela documentação oficial do Android Developers.
 | Baseline do piloto | API estável `androidx.health.connect:connect-client:1.1.0`, salvo necessidade posterior comprovada |
 | Ambiente do sample | `minSdk 26`, `compileSdk 35`, `targetSdk 34`, Java 17, Kotlin/Compose |
 | Ambiente Kcalix atual | `minSdk 26`, `compileSdk 36.1`, `targetSdk 36`, Java 17, Kotlin/Compose |
-| Data de consulta | 2026-07-27 |
+| Data de consulta | 2026-08-08 |
 
 O commit pinado representa a última alteração específica encontrada no diretório do sample.
 Não haverá cópia de código nesta Issue. O sample fornece evidência de fluxo; a documentação
@@ -50,17 +50,22 @@ oficial vigente define o contrato da API quando houver divergência.
 | Changes API | sample percorre mudanças e renova token expirado | ADAPTAR FUTURAMENTE | fora do primeiro export; necessário antes de sync incremental | médio |
 | Escrita, geração e exclusão de dados | recursos didáticos do sample | REJEITAR | Connector piloto permanece somente leitura | alto |
 | Sono, passos, rota e velocidade | recursos adicionais do sample | REJEITAR NO PILOTO | não declarar permissões nem incluir no contrato atual | baixo |
-| `BodyFatRecord` | documentação oficial; não coberto pelo fluxo principal observado no sample | NÃO COMPROVADO | incluir no contrato, validar publicação Samsung na `KCX-CONN-007` | alto |
-| `ActiveCaloriesBurnedRecord` | tipo oficial; publicação Samsung não comprovada | NÃO COMPROVADO | não pedir permissão por padrão | médio |
+| `BodyFatRecord` | API oficial + mapeamento oficial Samsung de body composition | ADAPTAR | incluir; validar publicação/proveniência no aparelho na `KCX-CONN-007` | alto |
+| `WeightRecord` | API oficial + mapeamento oficial Samsung de body composition | ADAPTAR | observar junto de BIA, sem atribuir ao Watch por coincidência | alto |
+| `ActiveCaloriesBurnedRecord` | tipo oficial; ausente no mapeamento Samsung consultado | REJEITAR NA V1 | não declarar permissão | baixo |
 | Export `kcx-health-observation/1` | requisito próprio do Kcalix; ausente no sample | CRIAR | JSON tipado, perfis `STRUCTURAL` e `PRIVATE_FULL`, sem `toString()` | alto |
 
-## Conclusão provisória
+## Conclusão técnica
 
 O baseline é **apto como referência técnica**, mas **não é apto para cópia integral nem libera
 teste com dados reais**. A base Kotlin/Compose atual é compatível com o padrão oficial e não
-precisa ser substituída nesta Issue. Antes de `READY`, ainda precisam ser aprovados o schema
-detalhado do export, a tabela completa de campos/unidades/opcionalidade, as fixtures sintéticas
-e o parecer de segurança para execução da `KCX-CONN-007`.
+precisa ser substituída nesta Issue. Schema, campos, unidades, perfis e fixtures sintéticas
+foram aprovados tecnicamente em 2026-08-08. A Issue está concluída, mas dado real continua
+bloqueado por `KCX-CONN-004`, `KCX-CONN-006` e pela implementação revisada da
+`KCX-CONN-007`.
+
+A matriz factual completa está em
+[`../evidence/KCX-CONN-001-api-review-2026-08-08.md`](../evidence/KCX-CONN-001-api-review-2026-08-08.md).
 
 ## Responsabilidade do usuário
 
@@ -224,15 +229,18 @@ Entregar:
 
 ## Contrato mínimo do export diagnóstico
 
-O formato canônico será JSON versionado. Um relatório HTML pode ser derivado do JSON, mas não
-o substitui.
+O formato normativo e seu schema executável estão em
+[`../contracts/kcx-health-observation-1.md`](../contracts/kcx-health-observation-1.md) e
+[`../contracts/kcx-health-observation-1.schema.json`](../contracts/kcx-health-observation-1.schema.json).
+Um relatório HTML pode ser derivado do JSON, mas não o substitui.
 
 Perfis:
 
-- `STRUCTURAL`: compartilhável para revisão; IDs com hash por export, timestamps deslocados de
-  forma consistente, valores sensíveis removidos ou agrupados, relações e durações preservadas.
+- `STRUCTURAL`: candidato compartilhável para revisão; IDs/origens com hash por export,
+  timestamps deslocados de forma consistente, valores de saúde removidos, relações e durações
+  preservadas.
 - `PRIVATE_FULL`: valores necessários para comparação privada no aparelho/computador; nunca
-  commitado, anexado automaticamente ou enviado pela rede.
+  commitado, anexado automaticamente ou enviado pela rede; título/notas continuam omitidos.
 
 Envelope mínimo:
 
@@ -258,9 +266,25 @@ Envelope mínimo:
 }
 ```
 
-Cada record deve declarar `recordType`, identidade anonimizada, metadata permitida, tempo,
-offset, unidade, campos presentes, campos ausentes e payload específico versionado.
-`relationships` deve separar `EXPLICIT` de `INFERRED`, incluindo regra e confiança.
+Cada record declara `recordType`, identidade por perfil, metadata permitida, tempo, offset,
+unidade, campos presentes, campos ausentes e payload específico versionado. `relationships`
+separa `EXPLICIT` de `INFERRED`; a confiança permanece `NOT_SCORED_BEFORE_KCX-CONN-007`.
+
+Fixtures aprováveis, integralmente sintéticas:
+
+- [`../fixtures/kcx-health-observation-1-structural.synthetic.json`](../fixtures/kcx-health-observation-1-structural.synthetic.json)
+- [`../fixtures/kcx-health-observation-1-private-full.synthetic.json`](../fixtures/kcx-health-observation-1-private-full.synthetic.json)
+
+## Parecer de segurança desta Issue
+
+**APTO CONDICIONAL PARA IMPLEMENTAR O SPIKE; NÃO APTO AINDA PARA DADO REAL.**
+
+O Storage Access Framework permite destino escolhido pelo usuário, mas providers variam em
+suporte a delete/rename e não oferecem atomicidade universal. A futura implementação deve
+gerar/validar em `noBackupFilesDir`, abrir `ACTION_CREATE_DOCUMENT` só depois, reler o destino
+e jamais aceitar arquivo truncado como `COMPLETE`. Resíduo que o provider não permita excluir
+deve ser mostrado ao usuário com instrução de remoção. Esse comportamento substitui o critério
+irreal de prometer que qualquer provider sempre apagará um parcial.
 
 ## Matriz de decisão final
 

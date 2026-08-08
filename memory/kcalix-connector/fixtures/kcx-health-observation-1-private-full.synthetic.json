@@ -1,0 +1,309 @@
+{
+  "schemaVersion": "kcx-health-observation/1",
+  "profile": "PRIVATE_FULL",
+  "synthetic": true,
+  "exportId": "export_synthetic_private_001",
+  "generatedAt": "2000-01-01T15:00:00Z",
+  "environment": {
+    "connectorVersion": "0.1.0-synthetic",
+    "healthConnectClientVersion": "1.1.0",
+    "androidApiLevel": 34,
+    "androidRelease": "14-synthetic",
+    "timezone": "Etc/UTC",
+    "healthConnectMode": "SYSTEM_MODULE"
+  },
+  "window": {
+    "start": "2000-01-01T10:00:00Z",
+    "end": "2000-01-01T14:00:00Z",
+    "semantics": "START_INCLUSIVE_END_EXCLUSIVE",
+    "durationSeconds": 14400
+  },
+  "readPolicy": {
+    "pageSize": 1000,
+    "ascendingOrder": true,
+    "maxWindowDays": 7,
+    "historyPermissionRequested": false,
+    "backgroundPermissionRequested": false,
+    "dataOriginPrefiltered": false
+  },
+  "permissions": [
+    { "name": "android.permission.health.READ_EXERCISE", "status": "GRANTED" },
+    { "name": "android.permission.health.READ_HEART_RATE", "status": "GRANTED" },
+    { "name": "android.permission.health.READ_DISTANCE", "status": "GRANTED" },
+    { "name": "android.permission.health.READ_TOTAL_CALORIES_BURNED", "status": "GRANTED" },
+    { "name": "android.permission.health.READ_BODY_FAT", "status": "GRANTED" },
+    { "name": "android.permission.health.READ_WEIGHT", "status": "GRANTED" }
+  ],
+  "origins": [
+    {
+      "originRef": "origin_01",
+      "identityMode": "RAW",
+      "identity": "com.example.synthetic.health"
+    }
+  ],
+  "queries": [
+    { "recordType": "ExerciseSessionRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null },
+    { "recordType": "HeartRateRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null },
+    { "recordType": "DistanceRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null },
+    { "recordType": "TotalCaloriesBurnedRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null },
+    { "recordType": "BodyFatRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null },
+    { "recordType": "WeightRecord", "pagesRead": 1, "recordCount": 1, "complete": true, "errorCode": null }
+  ],
+  "records": [
+    {
+      "recordRef": "record_01",
+      "recordType": "ExerciseSessionRecord",
+      "shape": "INTERVAL",
+      "time": {
+        "start": "2000-01-01T11:00:00Z",
+        "end": "2000-01-01T11:30:00Z",
+        "startZoneOffset": "+00:00",
+        "endZoneOffset": "+00:00"
+      },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T11:35:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-01"
+      },
+      "presentFields": ["startTime", "endTime", "exerciseType", "metadata"],
+      "absentFields": ["title", "notes"],
+      "payload": {
+        "kind": "EXERCISE_SESSION",
+        "exerciseType": { "code": 33, "name": "RUNNING" },
+        "durationSeconds": 1800,
+        "titlePresent": false,
+        "notesPresent": false,
+        "segmentsCount": 0,
+        "lapsCount": 0,
+        "routePolicy": "EXCLUDED"
+      }
+    },
+    {
+      "recordRef": "record_02",
+      "recordType": "HeartRateRecord",
+      "shape": "SERIES",
+      "time": {
+        "start": "2000-01-01T11:01:00Z",
+        "end": "2000-01-01T11:29:00Z",
+        "startZoneOffset": "+00:00",
+        "endZoneOffset": "+00:00"
+      },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T11:35:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-02"
+      },
+      "presentFields": ["startTime", "endTime", "samples", "metadata"],
+      "absentFields": [],
+      "payload": {
+        "kind": "HEART_RATE",
+        "valueMode": "RAW",
+        "sampleCount": 3,
+        "samples": [
+          { "time": "2000-01-01T11:01:00Z", "beatsPerMinute": 110 },
+          { "time": "2000-01-01T11:15:00Z", "beatsPerMinute": 140 },
+          { "time": "2000-01-01T11:29:00Z", "beatsPerMinute": 125 }
+        ],
+        "summary": {
+          "minimumBpm": 110,
+          "maximumBpm": 140,
+          "averageBpm": 125,
+          "derivation": "DERIVED_LOCAL_FROM_EXPORTED_SAMPLES"
+        }
+      }
+    },
+    {
+      "recordRef": "record_03",
+      "recordType": "DistanceRecord",
+      "shape": "INTERVAL",
+      "time": {
+        "start": "2000-01-01T11:00:00Z",
+        "end": "2000-01-01T11:30:00Z",
+        "startZoneOffset": "+00:00",
+        "endZoneOffset": "+00:00"
+      },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T11:35:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-03"
+      },
+      "presentFields": ["startTime", "endTime", "distance", "metadata"],
+      "absentFields": [],
+      "payload": {
+        "kind": "DISTANCE",
+        "valueMode": "RAW",
+        "unit": "m",
+        "distanceMeters": 3200
+      }
+    },
+    {
+      "recordRef": "record_04",
+      "recordType": "TotalCaloriesBurnedRecord",
+      "shape": "INTERVAL",
+      "time": {
+        "start": "2000-01-01T11:00:00Z",
+        "end": "2000-01-01T11:30:00Z",
+        "startZoneOffset": "+00:00",
+        "endZoneOffset": "+00:00"
+      },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T11:35:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-04"
+      },
+      "presentFields": ["startTime", "endTime", "energy", "metadata"],
+      "absentFields": [],
+      "payload": {
+        "kind": "TOTAL_ENERGY",
+        "valueMode": "RAW",
+        "unit": "kcal",
+        "semantics": "INCLUDES_ACTIVE_AND_BASAL",
+        "energyKilocalories": 210.5
+      }
+    },
+    {
+      "recordRef": "record_05",
+      "recordType": "BodyFatRecord",
+      "shape": "INSTANTANEOUS",
+      "time": { "instant": "2000-01-01T13:00:00Z", "zoneOffset": "+00:00" },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T13:01:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-05"
+      },
+      "presentFields": ["time", "percentage", "metadata"],
+      "absentFields": [],
+      "payload": { "kind": "BODY_FAT", "valueMode": "RAW", "unit": "%", "percentage": 20.5 }
+    },
+    {
+      "recordRef": "record_06",
+      "recordType": "WeightRecord",
+      "shape": "INSTANTANEOUS",
+      "time": { "instant": "2000-01-01T13:00:00Z", "zoneOffset": "+00:00" },
+      "metadata": {
+        "dataOriginRef": "origin_01",
+        "lastModifiedTime": "2000-01-01T13:01:00Z",
+        "clientRecordVersion": 0,
+        "clientRecordIdPresent": false,
+        "clientRecordId": null,
+        "recordingMethod": { "code": 1, "name": "ACTIVELY_RECORDED" },
+        "devicePresent": true,
+        "device": {
+          "manufacturer": "Example",
+          "model": "Synthetic Watch",
+          "typeCode": 3,
+          "typeName": "WATCH"
+        },
+        "sourceIdMode": "RAW",
+        "sourceId": "synthetic-health-connect-id-06"
+      },
+      "presentFields": ["time", "weight", "metadata"],
+      "absentFields": [],
+      "payload": { "kind": "WEIGHT", "valueMode": "RAW", "unit": "kg", "weightKilograms": 75.1 }
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipRef": "relationship_01",
+      "leftRecordRef": "record_01",
+      "rightRecordRef": "record_02",
+      "classification": "INFERRED",
+      "rule": "SAME_ORIGIN_AND_OVERLAPPING_INTERVAL",
+      "confidence": "NOT_SCORED_BEFORE_KCX-CONN-007"
+    },
+    {
+      "relationshipRef": "relationship_02",
+      "leftRecordRef": "record_01",
+      "rightRecordRef": "record_03",
+      "classification": "INFERRED",
+      "rule": "SAME_ORIGIN_AND_EQUAL_INTERVAL",
+      "confidence": "NOT_SCORED_BEFORE_KCX-CONN-007"
+    },
+    {
+      "relationshipRef": "relationship_03",
+      "leftRecordRef": "record_01",
+      "rightRecordRef": "record_04",
+      "classification": "INFERRED",
+      "rule": "SAME_ORIGIN_AND_EQUAL_INTERVAL",
+      "confidence": "NOT_SCORED_BEFORE_KCX-CONN-007"
+    },
+    {
+      "relationshipRef": "relationship_04",
+      "leftRecordRef": "record_05",
+      "rightRecordRef": "record_06",
+      "classification": "INFERRED",
+      "rule": "SAME_ORIGIN_AND_EQUAL_INSTANT",
+      "confidence": "NOT_SCORED_BEFORE_KCX-CONN-007"
+    }
+  ],
+  "warnings": [
+    { "code": "SYNTHETIC_FIXTURE", "scope": "EXPORT", "retryable": false }
+  ],
+  "errors": [],
+  "completion": {
+    "state": "COMPLETE",
+    "completedAt": "2000-01-01T15:00:00Z",
+    "allPagesConsumed": true,
+    "schemaValidated": true
+  }
+}

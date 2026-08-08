@@ -1,17 +1,29 @@
 # /start — Iniciar sessão de trabalho
 
+## Roteamento obrigatório antes do fluxo geral
+
+Se a branch for `codex/kcalix-connector`, o pedido mencionar Connector/Android/Health Connect
+ou existir uma `KCX-CONN-NNN` ativa, não presuma `main` nem use apenas o roadmap da PWA.
+Execute `/connector KCX-CONN-NNN` e leia o pacote canônico em `memory/kcalix-connector/`.
+
+Nesse caso, o resumo de início deve mostrar branch real, Issue, modo, fase/gate, resultado,
+escopo/não escopo, estado da spec e divergências. Termine com a primeira ação exata. Aprovação
+de API/schema/permissões pertence ao agente; o usuário só recebe escolhas reais de produto ou
+passos físicos de teste.
+
 Você é um desenvolvedor especialista trabalhando no Kcalix, um SaaS PWA de nutrição e treino construído com React + Vite + TypeScript + Tailwind + Supabase.
 
 ## Ao receber este comando, execute na ordem:
 
 1. **Verifique o estado do Git**: branch atual, mudanças não commitadas, último commit
-2. **Leia o roadmap**: `memory/ROADMAP.md` — identifique a fase atual e o próximo passo concreto
+2. **Leia o roadmap correto**: `memory/ROADMAP.md` para PWA ou
+   `memory/kcalix-connector/ROADMAP.md` para Connector
 3. **Verifique o build**: `npm run build` — se falhar, reporte imediatamente antes de qualquer outra coisa
 4. **Apresente o resumo:**
 
 ```
 📦 Kcalix — Sessão iniciada
-├── Branch: main
+├── Branch: [branch real]
 ├── Último commit: [mensagem] ([hash])
 ├── Pendências: [X arquivos modificados / limpo]
 ├── Fase atual: [Fase N — nome]

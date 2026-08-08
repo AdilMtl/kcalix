@@ -1,23 +1,25 @@
 # Kcalix Connector — índice operacional
 
-**Status:** Fase 00 concluída; decisões de produto e baseline técnico oficial da
-`KCX-CONN-001` registrados em 2026-07-27; contrato detalhado e parecer final ainda pendentes
+**Status:** Fase 00 e `KCX-CONN-001` concluídas; contrato técnico aprovado em 2026-08-08
 
 **Decisão vigente:** validar primeiro um APK privado, instalado localmente, que leia o Health Connect e sincronize manualmente com o Kcalix  
 
-**Próxima Issue:** `KCX-CONN-001` — concluir a revisão por especialidade e fechar o contrato
-do export diagnóstico a partir do sample oficial já pinado. A leitura real ocorrerá na
+**Próxima Issue:** `KCX-CONN-002` — produzir e aprovar tecnicamente o PRD do piloto a partir
+das decisões de produto já respondidas, sem repetir entrevista técnica com o usuário. Solicitar
+ao usuário apenas escolhas de produto realmente ausentes e, mais adiante, instruções para
+executar testes físicos. A leitura real ocorrerá na
 `KCX-CONN-007`, depois de PRD, arquitetura, privacidade e permissões aprovados.
 `KCX-CONN-021` preserva o feedback de contraste para polish.
 
-**Como iniciar a próxima sessão:** abrir em modo `Especificar`, ler integralmente o
+**Como iniciar a próxima sessão:** abrir `KCX-CONN-002` em modo `Especificar`, ler integralmente o
 [handoff de descoberta de produto](HANDOFF_DISCOVERY_PRODUTO_2026-07-23.md), a
 [spec KCX-CONN-001](specs/KCX-CONN-001.md) e o
 [roteiro de revisão especializada](reviews/KCX-CONN-001-reference-project-review.md).
 Não repetir a entrevista de produto: cardio sem redigitação, musculação enriquecida e body fat
-BIA são os três casos do piloto. Executar a comparação técnica documentada e apresentar as
-recomendações restantes para aprovação. Não escrever integração, pedir permissões, ler dados
-reais ou enviar dados.
+BIA são os três casos do piloto. Ler a
+[revisão oficial](evidence/KCX-CONN-001-api-review-2026-08-08.md) e construir o PRD. Aprovação
+de engenharia pertence ao agente/revisor; o usuário apenas decide produto e executa testes
+orientados. Não escrever integração, pedir permissões, ler dados reais ou enviar dados.
 
 Este diretório é a fonte canônica para todas as próximas sessões. O handoff de pesquisa
 continua em [`../handoff-kcalix-connector-android.md`](../handoff-kcalix-connector-android.md),
@@ -66,6 +68,30 @@ Se houver divergência, a sessão fica em modo `Especificar`: primeiro os artefa
 corrigidos e apresentados para aprovação. Código só começa depois de Issue `READY` e spec
 `APPROVED`. A seleção automática da próxima Issue nunca prevalece sobre uma decisão de produto
 do usuário que ainda não tenha sido refletida no backlog.
+
+## Divisão de responsabilidade
+
+- Agente/revisor: documentação oficial, versões, arquitetura, schema, permissões, segurança,
+  critérios técnicos, testes automáticos e decisão `APPROVED`/`DONE` baseada em evidência.
+- Usuário: escolhas reais de produto ainda ausentes, autorizações de commit/push/deploy/APK e
+  execução física no aparelho quando receber passos exatos.
+- O usuário não revisa contratos de engenharia. Se a escolha de produto já estiver registrada,
+  o agente não deve criar uma etapa artificial de aprovação.
+- Toda instrução manual deve dizer exatamente o que abrir/colar/tocar, o resultado esperado e
+  qual resposta objetiva devolver.
+
+## Contrato obrigatório de End Session
+
+Antes de encerrar uma sessão do Connector:
+
+1. registrar Issue e spec finais, gate, decisão, arquivos e evidências;
+2. registrar testes que passaram, falharam ou não foram executados;
+3. separar fatos comprovados, hipóteses do aparelho e riscos residuais;
+4. atualizar `ISSUES.md`, `ROADMAP.md`, este índice, `memory/MEMORY.md` e o log em `sessions/`;
+5. preservar mudanças alheias e declarar que commit/push/deploy/APK não ocorreram, salvo pedido;
+6. deixar próxima Issue, modo, resultado, escopo/não escopo e primeira ação exata.
+
+O `/end` genérico da PWA não força versionamento, CHANGELOG ou deploy nesta trilha.
 
 ## Estado permitido
 
